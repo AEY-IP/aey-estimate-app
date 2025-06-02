@@ -575,14 +575,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     
     updateCurrentWorksBlock(prev => ({
       ...prev,
-      blocks: prev.blocks.filter(block => block.id !== blockId)
+      blocks: prev.blocks.filter((block: any) => block.id !== blockId)
     }))
   }
 
   const toggleBlockCollapse = (blockId: string) => {
     updateCurrentWorksBlock(prev => ({
       ...prev,
-      blocks: prev.blocks.map(block => 
+      blocks: prev.blocks.map((block: any) => 
         block.id === blockId 
           ? { ...block, isCollapsed: !block.isCollapsed }
           : block
@@ -608,7 +608,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       
       updateCurrentWorksBlock(prev => ({
         ...prev,
-        blocks: prev.blocks.map(b => 
+        blocks: prev.blocks.map((b: any) => 
           b.id === blockId
             ? { ...b, items: [...b.items, newItem] } : b
         )
@@ -641,7 +641,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     
     updateCurrentWorksBlock(prev => ({
       ...prev,
-      blocks: prev.blocks.map(b => 
+      blocks: prev.blocks.map((b: any) => 
         b.id === blockId
           ? { ...b, items: [...b.items, newItem] }
           : b
