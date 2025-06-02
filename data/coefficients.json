@@ -1,0 +1,56 @@
+{
+  "coefficients": [
+    {
+      "id": "coef_1748462332546",
+      "name": "Econom",
+      "value": 1,
+      "description": "",
+      "category": "Класс ремонта",
+      "isActive": true,
+      "createdAt": "2025-05-28T19:58:52.546Z",
+      "updatedAt": "2025-05-28T22:22:55.618Z"
+    },
+    {
+      "id": "coef_1748462370954",
+      "name": "Откат дизайнерам",
+      "value": 1.1,
+      "description": "Всех умаслить",
+      "category": "Откаты",
+      "isActive": true,
+      "createdAt": "2025-05-28T19:59:30.954Z",
+      "updatedAt": "2025-05-28T19:59:30.955Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "region",
+      "name": "Региональные",
+      "description": "Коэффициенты в зависимости от региона",
+      "allowMultiple": false
+    },
+    {
+      "id": "complexity",
+      "name": "Сложность работ",
+      "description": "Коэффициенты сложности выполнения",
+      "allowMultiple": false
+    },
+    {
+      "id": "urgency",
+      "name": "Срочность",
+      "description": "Коэффициенты в зависимости от сроков",
+      "allowMultiple": false
+    },
+    {
+      "id": "season",
+      "name": "Сезонные",
+      "description": "Коэффициенты по времени года",
+      "allowMultiple": true
+    },
+    {
+      "id": "custom",
+      "name": "Пользовательские",
+      "description": "Дополнительные коэффициенты",
+      "allowMultiple": true
+    }
+  ]
+}

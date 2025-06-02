@@ -1,0 +1,277 @@
+{
+  "estimates": [
+    {
+      "id": "estimate_1748855586063",
+      "title": "Чистая смета без помещений",
+      "type": "rooms",
+      "client": {
+        "id": "client_1748855586063",
+        "name": "Новый клиент",
+        "phone": "+7 (999) 111-22-33",
+        "email": "",
+        "address": "",
+        "createdAt": "2025-06-02T09:13:06.063Z"
+      },
+      "totalWorksPrice": 0,
+      "totalMaterialsPrice": 0,
+      "totalPrice": 0,
+      "status": "draft",
+      "createdAt": "2025-06-02T09:13:06.063Z",
+      "updatedAt": "2025-06-02T13:44:40.714Z",
+      "notes": "",
+      "coefficients": [],
+      "rooms": [
+        {
+          "id": "room_1748855608214",
+          "name": "комната 2",
+          "worksBlock": {
+            "id": "works_1748855608214",
+            "title": "Работы - комната 2",
+            "blocks": [],
+            "totalPrice": 0
+          },
+          "materialsBlock": {
+            "id": "materials_1748855608214",
+            "title": "Материалы - комната 2",
+            "items": [],
+            "totalPrice": 0
+          },
+          "totalWorksPrice": 0,
+          "totalMaterialsPrice": 0,
+          "totalPrice": 0,
+          "manualPrices": [],
+          "createdAt": "2025-06-02T09:13:28.214Z",
+          "updatedAt": "2025-06-02T09:13:28.214Z"
+        },
+        {
+          "id": "room_1748871880714",
+          "name": "Тестовая комната",
+          "worksBlock": {
+            "id": "works_1748871880714",
+            "title": "Работы - Тестовая комната",
+            "blocks": [],
+            "totalPrice": 0
+          },
+          "materialsBlock": {
+            "id": "materials_1748871880714",
+            "title": "Материалы - Тестовая комната",
+            "items": [],
+            "totalPrice": 0
+          },
+          "totalWorksPrice": 0,
+          "totalMaterialsPrice": 0,
+          "totalPrice": 0,
+          "manualPrices": [],
+          "createdAt": "2025-06-02T13:44:40.714Z",
+          "updatedAt": "2025-06-02T13:44:40.714Z"
+        }
+      ],
+      "summaryWorksBlock": {
+        "id": "summary_works_1748855586063",
+        "title": "Сводная смета - Работы",
+        "blocks": [],
+        "totalPrice": 0
+      },
+      "summaryMaterialsBlock": {
+        "id": "summary_materials_1748855586063",
+        "title": "Сводная смета - Материалы",
+        "items": [],
+        "totalPrice": 0
+      }
+    },
+    {
+      "id": "estimate_1748871683365",
+      "title": "12",
+      "type": "rooms",
+      "client": {
+        "id": "client_1748871683365",
+        "name": "21",
+        "phone": "21",
+        "email": "",
+        "address": "",
+        "createdAt": "2025-06-02T13:41:23.365Z"
+      },
+      "totalWorksPrice": 69598,
+      "totalMaterialsPrice": 0,
+      "totalPrice": 69598,
+      "status": "draft",
+      "createdAt": "2025-06-02T13:41:23.365Z",
+      "updatedAt": "2025-06-02T14:05:02.182Z",
+      "notes": "",
+      "coefficients": [
+        "coef_1748462370954"
+      ],
+      "rooms": [
+        {
+          "id": "room_1748871688329",
+          "name": "унц",
+          "worksBlock": {
+            "id": "works_1748871688329",
+            "title": "Работы - унц",
+            "blocks": [
+              {
+                "id": "block_1748871988916",
+                "title": "Вентиляция",
+                "description": "Работы категории: Вентиляция",
+                "items": [
+                  {
+                    "id": "work-1748871990715",
+                    "workId": "work_1748476707099_hcw0cjm7i",
+                    "name": "Врезка в вентиляционный короб",
+                    "unit": "шт.",
+                    "quantity": 12,
+                    "unitPrice": 452,
+                    "totalPrice": 5424
+                  }
+                ],
+                "totalPrice": 0,
+                "isCollapsed": false
+              },
+              {
+                "id": "block_1748872762796",
+                "title": "\"Демонтажные работы - Двери",
+                "description": "Работы категории: \"Демонтажные работы - Двери",
+                "items": [
+                  {
+                    "id": "work-1748872764997",
+                    "workId": "ref-17.001-1748714711068-935",
+                    "name": "окна\"",
+                    "unit": "Демонтаж наличников",
+                    "quantity": 112,
+                    "unitPrice": 123,
+                    "totalPrice": 13776
+                  }
+                ],
+                "totalPrice": 0,
+                "isCollapsed": false
+              }
+            ],
+            "totalPrice": 0
+          },
+          "materialsBlock": {
+            "id": "materials_1748871688329",
+            "title": "Материалы - унц",
+            "items": [],
+            "totalPrice": 0
+          },
+          "totalWorksPrice": 19200,
+          "totalMaterialsPrice": 0,
+          "totalPrice": 19200,
+          "manualPrices": [],
+          "createdAt": "2025-06-02T13:41:28.329Z",
+          "updatedAt": "2025-06-02T13:41:28.329Z"
+        },
+        {
+          "id": "room_1748871961107",
+          "name": "3456",
+          "worksBlock": {
+            "id": "works_1748871961107",
+            "title": "Работы - 3456",
+            "blocks": [
+              {
+                "id": "block_1748872049848",
+                "title": "Вентиляция",
+                "description": "Работы категории: Вентиляция",
+                "items": [
+                  {
+                    "id": "work-1748872053881",
+                    "workId": "work_1748476707099_q5gz03as6",
+                    "name": "Шумо и вибро изоляция вентиляционной шахты и вент каналов",
+                    "unit": "п.м.",
+                    "quantity": 223,
+                    "unitPrice": 226,
+                    "totalPrice": 50398
+                  }
+                ],
+                "totalPrice": 0,
+                "isCollapsed": false
+              }
+            ],
+            "totalPrice": 0
+          },
+          "materialsBlock": {
+            "id": "materials_1748871961107",
+            "title": "Материалы - 3456",
+            "items": [],
+            "totalPrice": 0
+          },
+          "totalWorksPrice": 50398,
+          "totalMaterialsPrice": 0,
+          "totalPrice": 50398,
+          "manualPrices": [],
+          "createdAt": "2025-06-02T13:46:01.107Z",
+          "updatedAt": "2025-06-02T13:46:01.107Z"
+        }
+      ],
+      "summaryWorksBlock": {
+        "id": "summary_works_1748871683365",
+        "title": "Сводная смета - Работы",
+        "blocks": [
+          {
+            "id": "summary_block_1748871988916",
+            "title": "Вентиляция",
+            "description": "Работы категории: Вентиляция",
+            "items": [
+              {
+                "id": "work-1748871990715",
+                "workId": "work_1748476707099_hcw0cjm7i",
+                "name": "Врезка в вентиляционный короб",
+                "unit": "шт.",
+                "quantity": 12,
+                "unitPrice": 452,
+                "totalPrice": 5424
+              },
+              {
+                "id": "work-1748872053881",
+                "workId": "work_1748476707099_q5gz03as6",
+                "name": "Шумо и вибро изоляция вентиляционной шахты и вент каналов",
+                "unit": "п.м.",
+                "quantity": 223,
+                "unitPrice": 226,
+                "totalPrice": 50398
+              }
+            ],
+            "totalPrice": 55822,
+            "isCollapsed": false
+          },
+          {
+            "id": "summary_block_1748872762796",
+            "title": "\"Демонтажные работы - Двери",
+            "description": "Работы категории: \"Демонтажные работы - Двери",
+            "items": [
+              {
+                "id": "work-1748872764997",
+                "workId": "ref-17.001-1748714711068-935",
+                "name": "окна\"",
+                "unit": "Демонтаж наличников",
+                "quantity": 112,
+                "unitPrice": 123,
+                "totalPrice": 13776
+              }
+            ],
+            "totalPrice": 13776,
+            "isCollapsed": false
+          }
+        ],
+        "totalPrice": 69598
+      },
+      "summaryMaterialsBlock": {
+        "id": "summary_materials_1748871683365",
+        "title": "Сводная смета - Материалы",
+        "items": [],
+        "totalPrice": 0
+      },
+      "manualCoefficients": [],
+      "coefficientSettings": {
+        "coef_1748462370954": {
+          "target": [
+            "summary_block_1748871988916"
+          ]
+        }
+      },
+      "manualPrices": [
+        "work-1748872764997"
+      ]
+    }
+  ]
+}

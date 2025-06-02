@@ -1,0 +1,110 @@
+{
+  "timestamp": "2025-05-31T17:28:48.064Z",
+  "totalFixed": 13,
+  "fixes": [
+    {
+      "workId": "work_1748476707097_bvicqkp6q",
+      "name": "Механизированная штукатурка стен (до 200 м2), полная геометрия, сетка на углах и разнородных материалах",
+      "currentPrice": 1,
+      "correctPrice": 1040,
+      "idAEY": "2.02",
+      "csvIdAEY": "2.02"
+    },
+    {
+      "workId": "work_1748476707097_yagxl2o0t",
+      "name": "Облицовка мозаикой на подложке",
+      "currentPrice": 1,
+      "correctPrice": 1956,
+      "idAEY": "3.06",
+      "csvIdAEY": "3.06"
+    },
+    {
+      "workId": "work_1748476707098_l9s8wmqb2",
+      "name": "Устройство коробов",
+      "currentPrice": 1,
+      "correctPrice": 1243,
+      "idAEY": "6.03",
+      "csvIdAEY": "6.03"
+    },
+    {
+      "workId": "work_1748476707099_e5myq538y",
+      "name": "Сборка бра/люстры",
+      "currentPrice": 1,
+      "correctPrice": 1120,
+      "idAEY": "8.01",
+      "csvIdAEY": "8.01"
+    },
+    {
+      "workId": "work_1748476707099_k21evpaca",
+      "name": "Установка реле перекоса фаз",
+      "currentPrice": 1,
+      "correctPrice": 1250,
+      "idAEY": "8.03",
+      "csvIdAEY": "8.03"
+    },
+    {
+      "workId": "work_1748476707099_pdtvhdwci",
+      "name": "Прокладка фреоновой магистрали по потолку выше 4 метров",
+      "currentPrice": 1,
+      "correctPrice": 1538,
+      "idAEY": "12.04",
+      "csvIdAEY": "12.04"
+    },
+    {
+      "workId": "work_1748476707099_gsyi9xtht",
+      "name": "Монтаж закладной для пожарной сигнализации + установка датчика",
+      "currentPrice": 1,
+      "correctPrice": 1000,
+      "idAEY": "12.07",
+      "csvIdAEY": "12.07"
+    },
+    {
+      "workId": "work_1748476707100_idbvd1g74",
+      "name": "Теневой профиль Euro KRAAB",
+      "currentPrice": 1,
+      "correctPrice": 1300,
+      "idAEY": "12.1",
+      "csvIdAEY": "12.1"
+    },
+    {
+      "workId": "work_1748476707101_ty9co383c",
+      "name": "Крепление профиля для парящих/контурных потолков",
+      "currentPrice": 1,
+      "correctPrice": 1500,
+      "idAEY": "12.11",
+      "csvIdAEY": "12.11"
+    },
+    {
+      "workId": "work_1748476707101_jqausbbix",
+      "name": "Монтаж потолочного карниза до 3,5 м",
+      "currentPrice": 1,
+      "correctPrice": 1600,
+      "idAEY": "12.12",
+      "csvIdAEY": "12.12"
+    },
+    {
+      "workId": "work_1748476707101_4a5eek5zp",
+      "name": "Производство нестандартных работ",
+      "currentPrice": 1,
+      "correctPrice": 1120,
+      "idAEY": "12.13",
+      "csvIdAEY": "12.13"
+    },
+    {
+      "workId": "work_1748476707103_ep9rvvlfp",
+      "name": "Демонтаж стен (перегородок) в 2 кирпича",
+      "currentPrice": 1,
+      "correctPrice": 1040,
+      "idAEY": "15.04",
+      "csvIdAEY": "15.04"
+    },
+    {
+      "workId": "work_1748476707103_ns5o4mzlx",
+      "name": "Демонтаж кухонной мойки (с сохранением)*",
+      "currentPrice": 1,
+      "correctPrice": 1040,
+      "idAEY": "19.02",
+      "csvIdAEY": "19.02"
+    }
+  ]
+}

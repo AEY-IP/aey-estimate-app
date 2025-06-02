@@ -1,0 +1,874 @@
+{
+  "timestamp": "2025-05-31T17:24:16.306Z",
+  "totalFixed": 124,
+  "fixes": [
+    {
+      "workId": "work_1748476707097_bypyp2kil",
+      "name": "Устройство звукоизоляции стен ЗИПС панель (с обшивкой ГКЛ 1 слой)",
+      "currentPrice": 1,
+      "correctPrice": 1040,
+      "idAEY": "2.009"
+    },
+    {
+      "workId": "work_1748476707097_tzpn7i8de",
+      "name": "Зашивка гипсокартонном труб и т.д.",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "2.046"
+    },
+    {
+      "workId": "work_1748476707097_q3bafifvx",
+      "name": "Устройство коробов из ГКЛ в 2 слоя",
+      "currentPrice": 1,
+      "correctPrice": 1356,
+      "idAEY": "2.072"
+    },
+    {
+      "workId": "work_1748476707097_w3hiprwxv",
+      "name": "Устройство коробов из ГКЛ для скрытой подсветки",
+      "currentPrice": 1,
+      "correctPrice": 1469,
+      "idAEY": "2.073"
+    },
+    {
+      "workId": "work_1748476707097_prj4zdcj4",
+      "name": "Устройство короба из ГКЛ под раковину",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "2.074"
+    },
+    {
+      "workId": "work_1748476707097_ntlvduwle",
+      "name": "Устройство каркаса из ГКЛ под ванну",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "2.075"
+    },
+    {
+      "workId": "work_1748476707097_yygb37o08",
+      "name": "Венецианская штукатурка",
+      "currentPrice": 1,
+      "correctPrice": 1504,
+      "idAEY": "3.018"
+    },
+    {
+      "workId": "work_1748476707097_5junapmoi",
+      "name": "Укладка керамической плитки стандартного размера (20х30,40) (стены) по диагонали",
+      "currentPrice": 1,
+      "correctPrice": 1359,
+      "idAEY": "3.033"
+    },
+    {
+      "workId": "work_1748476707097_udiu8izu2",
+      "name": "Укладка керамической плитки с декоративными вставками (стены)",
+      "currentPrice": 1,
+      "correctPrice": 1434,
+      "idAEY": "3.034"
+    },
+    {
+      "workId": "work_1748476707097_6hlqmn6iz",
+      "name": "Укладка керамической плитки (более 20х40) (стены)",
+      "currentPrice": 1,
+      "correctPrice": 1524,
+      "idAEY": "3.035"
+    },
+    {
+      "workId": "work_1748476707097_wu91crlyu",
+      "name": "Укладка керамической плитки (более 20х40) по диагонали (стены)",
+      "currentPrice": 1,
+      "correctPrice": 1651,
+      "idAEY": "3.036"
+    },
+    {
+      "workId": "work_1748476707097_yo08a92ob",
+      "name": "Укладка керамической плитки (менее 20х30) (стены)",
+      "currentPrice": 1,
+      "correctPrice": 1493,
+      "idAEY": "3.037"
+    },
+    {
+      "workId": "work_1748476707097_yiz4tb2z8",
+      "name": "Устройство ФАРТУКА керамической плиткой стандартного размера (20х30,40)",
+      "currentPrice": 1,
+      "correctPrice": 1085,
+      "idAEY": "3.039"
+    },
+    {
+      "workId": "work_1748476707097_uybpxsb2e",
+      "name": "Устройство ФАРТУКА кераогранитом (одна из сторон не более 590 мм)",
+      "currentPrice": 1,
+      "correctPrice": 1447,
+      "idAEY": "3.041"
+    },
+    {
+      "workId": "work_1748476707097_zehruqv1s",
+      "name": "Укладка керамической плитки (менее 20х30) по диагонали (стены)",
+      "currentPrice": 1,
+      "correctPrice": 1651,
+      "idAEY": "3.043"
+    },
+    {
+      "workId": "work_1748476707097_bx0rb3rdi",
+      "name": "Укладка плитки не правильной формы (более или менее 4-х углов)",
+      "currentPrice": 1,
+      "correctPrice": 1710,
+      "idAEY": "3.044"
+    },
+    {
+      "workId": "work_1748476707097_ixfmaplk2",
+      "name": "Укладка зеркальной плитки стандартного размера (20х30,40)",
+      "currentPrice": 1,
+      "correctPrice": 1725,
+      "idAEY": "3.048"
+    },
+    {
+      "workId": "work_1748476707097_3mom9w3mj",
+      "name": "Укладка бордюра из мозаики",
+      "currentPrice": 1,
+      "correctPrice": 1304,
+      "idAEY": "3.049"
+    },
+    {
+      "workId": "work_1748476707097_fn4fp2kpk",
+      "name": "Укладка керамогранита (стены)  (одна из сторон не более 590мм)",
+      "currentPrice": 1,
+      "correctPrice": 1315,
+      "idAEY": "3.054"
+    },
+    {
+      "workId": "work_1748476707097_vdzp4whiy",
+      "name": "Укладка керамогранита на стены крупноформатного(одна из сторон более 590мм)",
+      "currentPrice": 1,
+      "correctPrice": 1940,
+      "idAEY": "3.055"
+    },
+    {
+      "workId": "work_1748476707097_dhfrxmewy",
+      "name": "Облицовка плиткой ступеней",
+      "currentPrice": 1,
+      "correctPrice": 1493,
+      "idAEY": "3.063"
+    },
+    {
+      "workId": "work_1748476707097_3q3vdjo64",
+      "name": "Монтаж плиточного порожка",
+      "currentPrice": 1,
+      "correctPrice": 1304,
+      "idAEY": "3.065"
+    },
+    {
+      "workId": "work_1748476707097_hjqmrfc7f",
+      "name": "Укладка мраморной плитки с 2-5мм швом (без декора)",
+      "currentPrice": 1,
+      "correctPrice": 1689,
+      "idAEY": "3.067"
+    },
+    {
+      "workId": "work_1748476707098_zvkl5hlpl",
+      "name": "Облицовка стены декоративным камнем, декоративной, клинкерной плиткой",
+      "currentPrice": 1,
+      "correctPrice": 1634,
+      "idAEY": "3.075"
+    },
+    {
+      "workId": "work_1748476707098_n50hrpd71",
+      "name": "Затирка швов эпоксидной затиркой, швов мелкой плитки, бордюров, формат менее 20*30",
+      "currentPrice": 1,
+      "correctPrice": 1265,
+      "idAEY": "3.079"
+    },
+    {
+      "workId": "work_1748476707098_i12hdvvh1",
+      "name": "Устройство порога, подиума из бетона до 100 мм",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "4.037"
+    },
+    {
+      "workId": "work_1748476707098_7nfvmiiz3",
+      "name": "Укладка паркетной/инженерной доски елочкой",
+      "currentPrice": 1,
+      "correctPrice": 1590,
+      "idAEY": "5.009"
+    },
+    {
+      "workId": "work_1748476707098_b0x037ob3",
+      "name": "Укладка кварцвиниловой плитки елочкой на клею",
+      "currentPrice": 1,
+      "correctPrice": 1152,
+      "idAEY": "5.017"
+    },
+    {
+      "workId": "work_1748476707098_aog3lnf6j",
+      "name": "Укладка кварцвиниловой плитки елочкой замком",
+      "currentPrice": 1,
+      "correctPrice": 1075,
+      "idAEY": "5.018"
+    },
+    {
+      "workId": "work_1748476707098_o56e6wcnx",
+      "name": "Укладка прорезиненного покрытия для спортзала",
+      "currentPrice": 1,
+      "correctPrice": 1400,
+      "idAEY": "5.022"
+    },
+    {
+      "workId": "work_1748476707098_yhgc9llpv",
+      "name": "Укладка керамической плитки стандартного размера (20х30,40) (пол) по диагонали",
+      "currentPrice": 1,
+      "correctPrice": 1235,
+      "idAEY": "5.035"
+    },
+    {
+      "workId": "work_1748476707098_8eqsolyat",
+      "name": "Укладка керамической плитки с декоративными вставками (пол)",
+      "currentPrice": 1,
+      "correctPrice": 1304,
+      "idAEY": "5.036"
+    },
+    {
+      "workId": "work_1748476707098_ki6xpprqf",
+      "name": "Укладка керамической плитки (более 20х40) (пол)",
+      "currentPrice": 1,
+      "correctPrice": 1385,
+      "idAEY": "5.037"
+    },
+    {
+      "workId": "work_1748476707098_08vepblcd",
+      "name": "Укладка керамической плитки (более 20х40) по диагонали (пол)",
+      "currentPrice": 1,
+      "correctPrice": 1501,
+      "idAEY": "5.038"
+    },
+    {
+      "workId": "work_1748476707098_rphhbi1zv",
+      "name": "Укладка керамической плитки (менее 20х30) (пол)",
+      "currentPrice": 1,
+      "correctPrice": 1357,
+      "idAEY": "5.039"
+    },
+    {
+      "workId": "work_1748476707098_03xwx0zvy",
+      "name": "Укладка керамической плитки (менее 20х30) по диагонали (пол)",
+      "currentPrice": 1,
+      "correctPrice": 1501,
+      "idAEY": "5.041"
+    },
+    {
+      "workId": "work_1748476707098_40pky9s0p",
+      "name": "Укладка плитки не правильной формы (более или менее 4-х углов)",
+      "currentPrice": 1,
+      "correctPrice": 1710,
+      "idAEY": "5.042"
+    },
+    {
+      "workId": "work_1748476707098_gbkmj5xui",
+      "name": "Укладка керамической плитки пола панно",
+      "currentPrice": 1,
+      "correctPrice": 1473,
+      "idAEY": "5.044"
+    },
+    {
+      "workId": "work_1748476707098_tls5vg96j",
+      "name": "Укладка зеркальной плитки стандартного размера (20х30,40)",
+      "currentPrice": 1,
+      "correctPrice": 1725,
+      "idAEY": "5.047"
+    },
+    {
+      "workId": "work_1748476707098_4qoknspel",
+      "name": "Укладка бордюра из мозаики",
+      "currentPrice": 1,
+      "correctPrice": 1304,
+      "idAEY": "5.048"
+    },
+    {
+      "workId": "work_1748476707098_ekw0drray",
+      "name": "Укладка керамогранита (пол) (одна из сторон не более 590мм)",
+      "currentPrice": 1,
+      "correctPrice": 1195,
+      "idAEY": "5.053"
+    },
+    {
+      "workId": "work_1748476707098_ub2nhbqqk",
+      "name": "Укладка керамогранита на пол крупноформатного (одна из сторон более 590мм)",
+      "currentPrice": 1,
+      "correctPrice": 1764,
+      "idAEY": "5.054"
+    },
+    {
+      "workId": "work_1748476707098_agndwyhru",
+      "name": "Облицовка мозаикой на подложке",
+      "currentPrice": 1,
+      "correctPrice": 1956,
+      "idAEY": "5.059"
+    },
+    {
+      "workId": "work_1748476707098_tegl8ghzc",
+      "name": "Облицовка плиткой ступеней",
+      "currentPrice": 1,
+      "correctPrice": 1493,
+      "idAEY": "5.062"
+    },
+    {
+      "workId": "work_1748476707098_cy4mnm0xp",
+      "name": "Монтаж плиточного порожка",
+      "currentPrice": 1,
+      "correctPrice": 1304,
+      "idAEY": "5.064"
+    },
+    {
+      "workId": "work_1748476707098_ytxzusk1b",
+      "name": "Укладка мраморной плитки с 2-5мм швом (без декора)",
+      "currentPrice": 1,
+      "correctPrice": 1689,
+      "idAEY": "5.065"
+    },
+    {
+      "workId": "work_1748476707098_h3pbm10hd",
+      "name": "Затирка швов эпоксидной затиркой, швов мелкой плитки, бордюров, формат менее 20*30",
+      "currentPrice": 1,
+      "correctPrice": 1265,
+      "idAEY": "5.074"
+    },
+    {
+      "workId": "work_1748476707098_gqmy7pqbo",
+      "name": "Устройство звукоизоляции на потолок ЗИПС панель (с обшивкой ГКЛ 1 слой)",
+      "currentPrice": 1,
+      "correctPrice": 1680,
+      "idAEY": "6.023"
+    },
+    {
+      "workId": "work_1748476707098_29fpb3cap",
+      "name": "Монтаж ГКЛ потолков (2 слоя)",
+      "currentPrice": 1,
+      "correctPrice": 1017,
+      "idAEY": "6.026"
+    },
+    {
+      "workId": "work_1748476707098_1f5pn7dl1",
+      "name": "Устройство ниш из ГКЛ для скрытой подсветки",
+      "currentPrice": 1,
+      "correctPrice": 1243,
+      "idAEY": "6.031"
+    },
+    {
+      "workId": "work_1748476707098_z8esjx619",
+      "name": "Устройство ниш из ГКЛ под карнизы штор",
+      "currentPrice": 1,
+      "correctPrice": 1017,
+      "idAEY": "6.032"
+    },
+    {
+      "workId": "work_1748476707098_hnrb7sro1",
+      "name": "Монтаж фризовой полосы из ГКЛ шириной до 60 см без ниш",
+      "currentPrice": 1,
+      "correctPrice": 1500,
+      "idAEY": "6.033"
+    },
+    {
+      "workId": "work_1748476707099_vo52o5sna",
+      "name": "Подключение к вводному щиту",
+      "currentPrice": 1,
+      "correctPrice": 1411,
+      "idAEY": "7.051"
+    },
+    {
+      "workId": "work_1748476707099_cb8obr51r",
+      "name": "Установка распределительной панели (накладная)",
+      "currentPrice": 1,
+      "correctPrice": 1956,
+      "idAEY": "7.059"
+    },
+    {
+      "workId": "work_1748476707099_u1ryvhzoo",
+      "name": "Установка люстры с креплением к потолку весом до 3 кг",
+      "currentPrice": 1,
+      "correctPrice": 1243,
+      "idAEY": "8.003"
+    },
+    {
+      "workId": "work_1748476707099_ggl0z5vgq",
+      "name": "Установка контроллера светодиодной подсветки",
+      "currentPrice": 1,
+      "correctPrice": 1114,
+      "idAEY": "8.012"
+    },
+    {
+      "workId": "work_1748476707099_sahprv828",
+      "name": "Установка розетки скрытой подводки для электроплиты",
+      "currentPrice": 1,
+      "correctPrice": 1017,
+      "idAEY": "8.018"
+    },
+    {
+      "workId": "work_1748476707099_mdpw6ivj1",
+      "name": "Установка видеодомофона (1+1)",
+      "currentPrice": 1,
+      "correctPrice": 1452,
+      "idAEY": "8.025"
+    },
+    {
+      "workId": "work_1748476707099_nokgl47ni",
+      "name": "Установка мастер кнопки (с разделением на отключаемую группу)",
+      "currentPrice": 1,
+      "correctPrice": 1391,
+      "idAEY": "8.031"
+    },
+    {
+      "workId": "work_1748476707099_5iy2a3p3a",
+      "name": "Установка кросс-модуля с подключением",
+      "currentPrice": 1,
+      "correctPrice": 1250,
+      "idAEY": "8.033"
+    },
+    {
+      "workId": "work_1748476707099_il6pbg6ip",
+      "name": "Монтаж закладной и установка подвесного светильника (за точку крепления)",
+      "currentPrice": 1,
+      "correctPrice": 1100,
+      "idAEY": "8.042"
+    },
+    {
+      "workId": "work_1748476707099_0xpnpwr5h",
+      "name": "Поворот линии Flexy",
+      "currentPrice": 1,
+      "correctPrice": 1600,
+      "idAEY": "8.053"
+    },
+    {
+      "workId": "work_1748476707099_x7kdxqgnd",
+      "name": "Стык со стеной линии Flexy",
+      "currentPrice": 1,
+      "correctPrice": 1600,
+      "idAEY": "8.054"
+    },
+    {
+      "workId": "work_1748476707099_or02msm86",
+      "name": "Обрыв на заглушке линии Flexy",
+      "currentPrice": 1,
+      "correctPrice": 1000,
+      "idAEY": "8.058"
+    },
+    {
+      "workId": "work_1748476707099_l00v52rzg",
+      "name": "Комплексная разводка труб водоснабжения (полипропилен) до 5 метров",
+      "currentPrice": 1,
+      "correctPrice": 1763,
+      "idAEY": "9.001"
+    },
+    {
+      "workId": "work_1748476707099_mqkngxry0",
+      "name": "Комплексная разводка труб канализации (ПВХ) до 5 метров",
+      "currentPrice": 1,
+      "correctPrice": 1695,
+      "idAEY": "9.006"
+    },
+    {
+      "workId": "work_1748476707099_hswehk0yy",
+      "name": "Установка коллекторов (гребенка)",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "9.014"
+    },
+    {
+      "workId": "work_1748476707099_vr4fd0oiz",
+      "name": "Установка счетчика воды",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "9.016"
+    },
+    {
+      "workId": "work_1748476707099_sa2m7h8d6",
+      "name": "Установка фильтра тонкой очистки",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "9.018"
+    },
+    {
+      "workId": "work_1748476707099_d717cyiw8",
+      "name": "Установка фильтров очистки воды с подсоединением к канализации",
+      "currentPrice": 1,
+      "correctPrice": 1695,
+      "idAEY": "9.019"
+    },
+    {
+      "workId": "work_1748476707099_rgwfpl8do",
+      "name": "Установка и подключение раковины (без смесителя)",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "9.025"
+    },
+    {
+      "workId": "work_1748476707099_zgu2msdb9",
+      "name": "Установка и подключение раковины типа Мойдодыр (без смесителя)",
+      "currentPrice": 1,
+      "correctPrice": 1356,
+      "idAEY": "9.026"
+    },
+    {
+      "workId": "work_1748476707099_yqqtt1379",
+      "name": "Установка и подключение раковины типа Тюльпан (без смесителя)",
+      "currentPrice": 1,
+      "correctPrice": 1356,
+      "idAEY": "9.027"
+    },
+    {
+      "workId": "work_1748476707099_tveasjap1",
+      "name": "Установка готового экрана под ванну",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "9.033"
+    },
+    {
+      "workId": "work_1748476707099_biyaqxsx6",
+      "name": "Шумоизоляция ванны",
+      "currentPrice": 1,
+      "correctPrice": 1440,
+      "idAEY": "9.035"
+    },
+    {
+      "workId": "work_1748476707099_g6t8gdos3",
+      "name": "Монтаж пластиковых штор сантехнических",
+      "currentPrice": 1,
+      "correctPrice": 1017,
+      "idAEY": "9.043"
+    },
+    {
+      "workId": "work_1748476707099_ba91k6dzq",
+      "name": "Установка с подключением смесителя терморегулирующего",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "9.051"
+    },
+    {
+      "workId": "work_1748476707099_vouly3ati",
+      "name": "Установка с подключением электронного смесителя",
+      "currentPrice": 1,
+      "correctPrice": 1695,
+      "idAEY": "9.052"
+    },
+    {
+      "workId": "work_1748476707099_s19bznbse",
+      "name": "Установка радиатора, без замены, для проведения работ по стенам",
+      "currentPrice": 1,
+      "correctPrice": 1356,
+      "idAEY": "9.056"
+    },
+    {
+      "workId": "work_1748476707099_f2mexsp1l",
+      "name": "Монтаж водяных теплых полов",
+      "currentPrice": 1,
+      "correctPrice": 1017,
+      "idAEY": "9.059"
+    },
+    {
+      "workId": "work_1748476707099_elk2eg8jc",
+      "name": "Устройство сантехнического короба",
+      "currentPrice": 1,
+      "correctPrice": 1082,
+      "idAEY": "9.064"
+    },
+    {
+      "workId": "work_1748476707099_dvs6r0ei4",
+      "name": "Установка стиральной машины",
+      "currentPrice": 1,
+      "correctPrice": 1695,
+      "idAEY": "10.008"
+    },
+    {
+      "workId": "work_1748476707099_s2egfohh6",
+      "name": "Установка ревизионного люка под плитку",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "10.011"
+    },
+    {
+      "workId": "work_1748476707099_ezs2277jt",
+      "name": "Изготовление ревизионного люка на магнитном креплении",
+      "currentPrice": 1,
+      "correctPrice": 1356,
+      "idAEY": "10.013"
+    },
+    {
+      "workId": "work_1748476707099_vtivbom06",
+      "name": "Установка накопительного водонагревателя (бойлера)",
+      "currentPrice": 1,
+      "correctPrice": 1921,
+      "idAEY": "10.014"
+    },
+    {
+      "workId": "work_1748476707099_sbvug1hih",
+      "name": "Установка проточного водонагревателя",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "10.015"
+    },
+    {
+      "workId": "work_1748476707099_v4dk6752s",
+      "name": "Установка дверцы в сантехнический шкаф",
+      "currentPrice": 1,
+      "correctPrice": 1130,
+      "idAEY": "10.017"
+    },
+    {
+      "workId": "work_1748476707099_5ioouvf3p",
+      "name": "Установка доводчика",
+      "currentPrice": 1,
+      "correctPrice": 1538,
+      "idAEY": "12.013"
+    },
+    {
+      "workId": "work_1748476707099_egkdhla1g",
+      "name": "Монтаж трассы свыше 5м под кондиционер * 7 или 9 модель (1\\4-3\\8)",
+      "currentPrice": 1,
+      "correctPrice": 1846,
+      "idAEY": "12.026"
+    },
+    {
+      "workId": "work_1748476707099_6e3s8dpko",
+      "name": "Доп. Отверстие",
+      "currentPrice": 1,
+      "correctPrice": 1538,
+      "idAEY": "12.035"
+    },
+    {
+      "workId": "work_1748476707100_2raal2bun",
+      "name": "Монтаж закладной под вентилятор + установка вентилятора",
+      "currentPrice": 1,
+      "correctPrice": 1200,
+      "idAEY": "12.071"
+    },
+    {
+      "workId": "work_1748476707100_vewts5r6v",
+      "name": "Крепление Брус+потолочный профиль",
+      "currentPrice": 1,
+      "correctPrice": 1000,
+      "idAEY": "12.091"
+    },
+    {
+      "workId": "work_1748476707100_pm3h5p978",
+      "name": "Монтаж разделительного профиля",
+      "currentPrice": 1,
+      "correctPrice": 1200,
+      "idAEY": "12.096"
+    },
+    {
+      "workId": "work_1748476707100_s53mnz85d",
+      "name": "Бесщелевой профиль KRAAB 4.0",
+      "currentPrice": 1,
+      "correctPrice": 1500,
+      "idAEY": "12.097"
+    },
+    {
+      "workId": "work_1748476707100_e1aogg6yj",
+      "name": "Обработка внешнего угла Euro KRAAB",
+      "currentPrice": 1,
+      "correctPrice": 1240,
+      "idAEY": "12.102"
+    },
+    {
+      "workId": "work_1748476707100_qutapsugm",
+      "name": "Крепление профиля Euro-Slott для тканевых потолков",
+      "currentPrice": 1,
+      "correctPrice": 1700,
+      "idAEY": "12.103"
+    },
+    {
+      "workId": "work_1748476707100_8pod4aeez",
+      "name": "Обработка внешнего угла Euro-Slott",
+      "currentPrice": 1,
+      "correctPrice": 1235,
+      "idAEY": "12.105"
+    },
+    {
+      "workId": "work_1748476707101_gqj8g62w7",
+      "name": "Парящий профиль для тканевых потолков",
+      "currentPrice": 1,
+      "correctPrice": 1800,
+      "idAEY": "12.112"
+    },
+    {
+      "workId": "work_1748476707101_75zn2wnj3",
+      "name": "Угол ниши с профилем Sigma",
+      "currentPrice": 1,
+      "correctPrice": 1800,
+      "idAEY": "12.116"
+    },
+    {
+      "workId": "work_1748476707101_pf2tkj3rv",
+      "name": "Ниша под скрытый карниз без перегиба полотна",
+      "currentPrice": 1,
+      "correctPrice": 1500,
+      "idAEY": "12.117"
+    },
+    {
+      "workId": "work_1748476707101_yyrq47mnt",
+      "name": "Монтаж закладной под карниз (брус, ширина 8 см)",
+      "currentPrice": 1,
+      "correctPrice": 1100,
+      "idAEY": "12.119"
+    },
+    {
+      "workId": "work_1748476707101_93x3t0v63",
+      "name": "Угол гардины ПК-5",
+      "currentPrice": 1,
+      "correctPrice": 1800,
+      "idAEY": "12.126"
+    },
+    {
+      "workId": "work_1748476707101_lthekbgds",
+      "name": "Разборка/сборка мебели**",
+      "currentPrice": 1,
+      "correctPrice": 1120,
+      "idAEY": "12.133"
+    },
+    {
+      "workId": "work_1748476707101_z5gb5gwx7",
+      "name": "Вынос или занос мебели",
+      "currentPrice": 1,
+      "correctPrice": 1120,
+      "idAEY": "12.135"
+    },
+    {
+      "workId": "work_1748476707101_gciqupvld",
+      "name": "Перестановка мебели для проведения ремонта",
+      "currentPrice": 1,
+      "correctPrice": 1120,
+      "idAEY": "12.141"
+    },
+    {
+      "workId": "work_1748476707101_2ql9t16ld",
+      "name": "Уборка лестничной клетки (сухая уборка)",
+      "currentPrice": 1,
+      "correctPrice": 1000,
+      "idAEY": "12.143"
+    },
+    {
+      "workId": "work_1748476707102_7va1si55t",
+      "name": "Фотопечать экосольвентная односторонняя на потолках (ширина до 3,2 м)",
+      "currentPrice": 1,
+      "correctPrice": 1250,
+      "idAEY": "13.026"
+    },
+    {
+      "workId": "work_1748476707103_lsy2mwhz8",
+      "name": "Резка стен (перегородок) в 1 кирпич",
+      "currentPrice": 1,
+      "correctPrice": 1300,
+      "idAEY": "15.035"
+    },
+    {
+      "workId": "work_1748476707103_funphscfv",
+      "name": "Устройство проема в стенах (перегородках) в 1 кирпич",
+      "currentPrice": 1,
+      "correctPrice": 1559,
+      "idAEY": "15.036"
+    },
+    {
+      "workId": "work_1748476707103_65verhjlk",
+      "name": "Резка стен (перегородок) в 1,5 кирпича",
+      "currentPrice": 1,
+      "correctPrice": 1559,
+      "idAEY": "15.038"
+    },
+    {
+      "workId": "work_1748476707103_eq8ti23aa",
+      "name": "Устройство проема в стенах (перегородках) в 1,5 кирпича",
+      "currentPrice": 1,
+      "correctPrice": 1949,
+      "idAEY": "15.039"
+    },
+    {
+      "workId": "work_1748476707103_7w6spffnu",
+      "name": "Демонтаж стен (перегородок) из бетона, ж/б до 100 мм",
+      "currentPrice": 1,
+      "correctPrice": 1820,
+      "idAEY": "15.043"
+    },
+    {
+      "workId": "work_1748476707103_b5qhrdygw",
+      "name": "Резка стен (перегородок) из бетона, ж/б до 100 мм",
+      "currentPrice": 1,
+      "correctPrice": 1689,
+      "idAEY": "15.044"
+    },
+    {
+      "workId": "work_1748476707103_kh0fk3x2p",
+      "name": "Демонтаж подоконной части стены из кирпича",
+      "currentPrice": 1,
+      "correctPrice": 1949,
+      "idAEY": "15.056"
+    },
+    {
+      "workId": "work_1748476707103_xvhvxmsx3",
+      "name": "Демонтаж душевой кабины (с сохранением)*",
+      "currentPrice": 1,
+      "correctPrice": 1949,
+      "idAEY": "19.006"
+    },
+    {
+      "workId": "work_1748476707103_xpgfvxhar",
+      "name": "Демонтаж бетонного пола сантех кабины",
+      "currentPrice": 1,
+      "correctPrice": 1081,
+      "idAEY": "19.009"
+    },
+    {
+      "workId": "work_1748476707103_dgnsj7qmv",
+      "name": "Демонтаж ванны (с сохранением)*",
+      "currentPrice": 1,
+      "correctPrice": 1949,
+      "idAEY": "19.012"
+    },
+    {
+      "workId": "work_1748476707103_t3tbgvo3x",
+      "name": "Демонтаж гидромассажной ванны (без сохранения)",
+      "currentPrice": 1,
+      "correctPrice": 1559,
+      "idAEY": "19.013"
+    },
+    {
+      "workId": "work_1748476707103_6qnpdg2ub",
+      "name": "Демонтаж водонагревателя (с сохранением)*",
+      "currentPrice": 1,
+      "correctPrice": 1300,
+      "idAEY": "19.016"
+    },
+    {
+      "workId": "work_1748476707103_k8c8ijys8",
+      "name": "Демонтаж унитаза (с сохранением)*",
+      "currentPrice": 1,
+      "correctPrice": 1300,
+      "idAEY": "19.022"
+    },
+    {
+      "workId": "work_1748476707103_9nqcs7vjf",
+      "name": "Демонтаж инсталляции (с сохранением)*",
+      "currentPrice": 1,
+      "correctPrice": 1625,
+      "idAEY": "19.024"
+    },
+    {
+      "workId": "work_1748476707103_ptdbmm57r",
+      "name": "Демонтаж полотенцесушителя (с сохранением)*",
+      "currentPrice": 1,
+      "correctPrice": 1040,
+      "idAEY": "19.027"
+    },
+    {
+      "workId": "work_1748476707103_y6pjv5udf",
+      "name": "Демонтаж радиатора отопления (с сохранением)*",
+      "currentPrice": 1,
+      "correctPrice": 1300,
+      "idAEY": "19.029"
+    },
+    {
+      "workId": "work_1748476707103_iery1s7nt",
+      "name": "Очистка радиатора от краски (до 5 секций)",
+      "currentPrice": 1,
+      "correctPrice": 1133,
+      "idAEY": "19.037"
+    }
+  ]
+}
