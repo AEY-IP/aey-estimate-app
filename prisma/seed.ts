@@ -58,7 +58,43 @@ interface JSONCoefficient {
 }
 
 async function main() {
-  console.log('🚀 Начинаем миграцию данных из JSON в PostgreSQL...')
+  console.log('🌱 Seeding database...')
+
+  // Создаём админа
+  const adminPasswordHash = await bcrypt.hash('admin123', 10)
+  const admin = await prisma.user.upsert({
+    where: { username: 'admin' },
+    update: {},
+    create: {
+      id: 'admin_1',
+      username: 'admin',
+      passwordHash: adminPasswordHash,
+      role: 'ADMIN',
+      name: 'Администратор',
+      phone: '',
+      isActive: true
+    }
+  })
+
+  console.log('✅ Admin created:', admin)
+
+  // Создаём тестового менеджера
+  const managerPasswordHash = await bcrypt.hash('manager123', 10)
+  const manager = await prisma.user.upsert({
+    where: { username: 'manager' },
+    update: {},
+    create: {
+      id: 'manager_1',
+      username: 'manager',
+      passwordHash: managerPasswordHash,
+      role: 'MANAGER',
+      name: 'Тестовый Менеджер',
+      phone: '+7 (999) 123-45-67',
+      isActive: true
+    }
+  })
+
+  console.log('✅ Manager created:', manager)
 
   // Читаем данные из JSON файлов
   const dataPath = path.join(process.cwd(), 'data')
@@ -241,11 +277,10 @@ async function main() {
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect()
-  })
-  .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
+  .catch((e) => {
+    console.error('❌ Seeding failed:', e)
     process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
   }) 
