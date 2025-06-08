@@ -1,25 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
+import { prisma } from '@/lib/database'
 import bcrypt from 'bcryptjs'
-import { User, LoginRequest } from '@/types/auth'
-
-const usersPath = join(process.cwd(), 'data', 'users.json')
-
-function readUsersData() {
-  try {
-    if (!existsSync(usersPath)) {
-      return []
-    }
-    const data = readFileSync(usersPath, 'utf8')
-    const parsed = JSON.parse(data)
-    // Если это массив, возвращаем его, если объект с users - возвращаем users
-    return Array.isArray(parsed) ? parsed : (parsed.users || [])
-  } catch (error) {
-    console.error('Ошибка чтения файла пользователей:', error)
-    return []
-  }
-}
+import { LoginRequest } from '@/types/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,10 +15,23 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const data = readUsersData()
-    const user = data.find((u: User) => u.username === username && u.isActive)
+    const user = await prisma.user.findUnique({
+      where: { 
+        username: username,
+      },
+      select: {
+        id: true,
+        username: true,
+        passwordHash: true,
+        role: true,
+        name: true,
+        phone: true,
+        isActive: true,
+        createdAt: true
+      }
+    })
     
-    if (!user) {
+    if (!user || !user.isActive) {
       return NextResponse.json(
         { error: 'Неверный логин или пароль' },
         { status: 401 }
@@ -59,10 +54,12 @@ export async function POST(request: NextRequest) {
       username: user.username,
       role: user.role,
       name: user.name,
-      email: user.email,
+      phone: user.phone,
       createdAt: user.createdAt,
       isActive: user.isActive
     }
+    
+    console.log('Login successful for user:', user.id)
     
     // Создаем response с cookie
     const response = NextResponse.json({ 
