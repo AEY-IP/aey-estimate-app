@@ -1,37 +1,85 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { join } from 'path'
-import { Estimate, Client } from '@/types/estimate'
-
-const dataPath = join(process.cwd(), 'data', 'estimates.json')
-
-function readEstimatesData() {
-  try {
-    if (!existsSync(dataPath)) {
-      return { estimates: [] }
-    }
-    const data = readFileSync(dataPath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error('Ошибка чтения файла смет:', error)
-    return { estimates: [] }
-  }
-}
-
-function writeEstimatesData(data: any) {
-  try {
-    writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8')
-    return true
-  } catch (error) {
-    console.error('Ошибка записи файла смет:', error)
-    return false
-  }
-}
+import { prisma } from '@/lib/database'
 
 export async function GET(request: NextRequest) {
   try {
-    const data = readEstimatesData()
-    return NextResponse.json({ estimates: data.estimates })
+    // Проверяем аутентификацию
+    const sessionCookie = request.cookies.get('auth-session')
+    if (!sessionCookie) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+
+    const session = JSON.parse(sessionCookie.value)
+    const { searchParams } = new URL(request.url)
+    const clientId = searchParams.get('clientId')
+    
+    let whereClause: any = {}
+    
+    // Фильтрация по клиенту если указан
+    if (clientId) {
+      whereClause.clientId = clientId
+      
+      // Проверяем права доступа к клиенту
+      const client = await prisma.client.findUnique({
+        where: { id: clientId, isActive: true }
+      })
+      
+      if (!client) {
+        return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 })
+      }
+      
+      if (session.role === 'MANAGER' && client.createdBy !== session.id) {
+        return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+      }
+    } else {
+      // Без фильтра по клиенту - показываем только доступные сметы
+      if (session.role === 'MANAGER') {
+        // Менеджеры видят только сметы своих клиентов
+        const myClients = await prisma.client.findMany({
+          where: { createdBy: session.id, isActive: true },
+          select: { id: true }
+        })
+        
+        whereClause.clientId = {
+          in: myClients.map(c => c.id)
+        }
+      }
+      // Админы видят все сметы
+    }
+    
+    const estimates = await prisma.estimate.findMany({
+      where: whereClause,
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        creator: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        rooms: {
+          include: {
+            works: {
+              include: {
+                workItem: true
+              }
+            },
+            materials: true
+          }
+        },
+        coefficients: true
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      }
+    })
+    
+    return NextResponse.json(estimates)
   } catch (error) {
     console.error('Ошибка получения смет:', error)
     return NextResponse.json(
@@ -43,89 +91,68 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Проверяем аутентификацию
+    const sessionCookie = request.cookies.get('auth-session')
+    if (!sessionCookie) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+
+    const session = JSON.parse(sessionCookie.value)
     const body = await request.json()
-    const { title, type = 'apartment', client, coefficients = [] } = body
+    const { title, type = 'rooms', category = 'main', clientId } = body
     
-    if (!title || !client?.name || !client?.phone) {
+    if (!title || !clientId) {
       return NextResponse.json(
-        { error: 'Обязательные поля: title, client.name, client.phone' },
+        { error: 'Обязательные поля: title, clientId' },
         { status: 400 }
       )
     }
     
-    const data = readEstimatesData()
+    // Проверяем существование клиента и права доступа
+    const client = await prisma.client.findUnique({
+      where: { id: clientId, isActive: true }
+    })
     
-    const baseEstimate = {
-      id: `estimate_${Date.now()}`,
-      title,
-      type,
-      client: {
-        id: `client_${Date.now()}`,
-        name: client.name,
-        phone: client.phone,
-        email: client.email || '',
-        address: client.address || '',
-        createdAt: new Date()
+    if (!client) {
+      return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 })
+    }
+    
+    // Менеджеры могут создавать сметы только для своих клиентов
+    if (session.role === 'MANAGER' && client.createdBy !== session.id) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+    
+    const newEstimate = await prisma.estimate.create({
+      data: {
+        title,
+        type,
+        category,
+        clientId,
+        createdBy: session.id,
+        totalWorksPrice: 0,
+        totalMaterialsPrice: 0,
+        totalPrice: 0,
+        status: 'draft'
       },
-      totalWorksPrice: 0,
-      totalMaterialsPrice: 0,
-      totalPrice: 0,
-      status: 'draft' as const,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      notes: '',
-      coefficients: coefficients
-    }
-    
-    let newEstimate: Estimate
-    
-    if (type === 'apartment') {
-      // Классическая смета для всей квартиры
-      newEstimate = {
-        ...baseEstimate,
-        worksBlock: {
-          id: `works_${Date.now()}`,
-          title: 'Работы',
-          blocks: [],
-          totalPrice: 0
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true
+          }
         },
-        materialsBlock: {
-          id: `materials_${Date.now()}`,
-          title: 'Материалы',
-          items: [],
-          totalPrice: 0
-        }
-      }
-    } else {
-      // Смета по помещениям
-      newEstimate = {
-        ...baseEstimate,
-        rooms: [], // Пустой массив помещений - будем добавлять через UI
-        summaryWorksBlock: {
-          id: `summary_works_${Date.now()}`,
-          title: 'Сводная смета - Работы',
-          blocks: [],
-          totalPrice: 0
+        creator: {
+          select: {
+            id: true,
+            username: true
+          }
         },
-        summaryMaterialsBlock: {
-          id: `summary_materials_${Date.now()}`,
-          title: 'Сводная смета - Материалы',
-          items: [],
-          totalPrice: 0
-        }
+        rooms: true,
+        coefficients: true
       }
-    }
+    })
     
-    data.estimates.push(newEstimate)
-    
-    if (writeEstimatesData(data)) {
-      return NextResponse.json({ estimate: newEstimate })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка сохранения сметы' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json(newEstimate)
   } catch (error) {
     console.error('Ошибка создания сметы:', error)
     return NextResponse.json(

@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  role         String    // "ADMIN" | "MANAGER"
+  name         String
+  phone        String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Связи
+  createdClients   Client[]
+  createdEstimates Estimate[]
+
+  @@map("users")
+}
+
+model Client {
+  id             String    @id @default(cuid())
+  name           String
+  phone          String?
+  email          String?
+  address        String?
+  contractNumber String?
+  notes          String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Связи
+  createdBy String
+  creator   User        @relation(fields: [createdBy], references: [id])
+  estimates Estimate[]
+
+  @@map("clients")
+}
+
+model WorkItem {
+  id          String    @id @default(cuid())
+  name        String
+  unit        String
+  basePrice   Float
+  category    String
+  description String?
+  parameterId String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Связи
+  parameter      RoomParameter? @relation(fields: [parameterId], references: [id])
+  estimateWorks  EstimateWork[]
+
+  @@map("work_items")
+}
+
+model RoomParameter {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+
+  // Связи
+  workItems WorkItem[]
+
+  @@map("room_parameters")
+}
+
+model Coefficient {
+  id          String  @id @default(cuid())
+  name        String
+  value       Float
+  description String?
+  isActive    Boolean @default(true)
+
+  @@map("coefficients")
+}
+
+model Estimate {
+  id                   String      @id @default(cuid())
+  title                String
+  type                 String      // "rooms" | "blocks"
+  category             String      // "main" | "additional"
+  totalWorksPrice      Float       @default(0)
+  totalMaterialsPrice  Float       @default(0)
+  totalPrice           Float       @default(0)
+  status               String      @default("draft") // "draft" | "active" | "completed"
+  notes                String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  // Связи
+  clientId  String
+  client    Client @relation(fields: [clientId], references: [id])
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id])
+
+  rooms EstimateRoom[]
+  coefficients EstimateCoefficient[]
+
+  @@map("estimates")
+}
+
+model EstimateRoom {
+  id                  String  @id @default(cuid())
+  name                String
+  totalWorksPrice     Float   @default(0)
+  totalMaterialsPrice Float   @default(0)
+  totalPrice          Float   @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Связи
+  estimateId String
+  estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+
+  works     EstimateWork[]
+  materials EstimateMaterial[]
+
+  @@map("estimate_rooms")
+}
+
+model EstimateWork {
+  id          String  @id @default(cuid())
+  quantity    Float
+  price       Float
+  totalPrice  Float
+  description String?
+
+  // Связи
+  roomId     String
+  room       EstimateRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  workItemId String
+  workItem   WorkItem     @relation(fields: [workItemId], references: [id])
+
+  @@map("estimate_works")
+}
+
+model EstimateMaterial {
+  id          String  @id @default(cuid())
+  name        String
+  unit        String
+  quantity    Float
+  price       Float
+  totalPrice  Float
+  description String?
+
+  // Связи
+  roomId String
+  room   EstimateRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("estimate_materials")
+}
+
+model EstimateCoefficient {
+  id          String @id @default(cuid())
+  name        String
+  value       Float
+  description String?
+
+  // Связи
+  estimateId String
+  estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+
+  @@map("estimate_coefficients")
+} 

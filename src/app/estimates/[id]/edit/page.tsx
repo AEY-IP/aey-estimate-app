@@ -1,11 +1,140 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { generateEstimatePDF } from '@/lib/pdf-export'
 import { Estimate, Coefficient, WorkBlock, WorkItem, RoomParameter, RoomParameterValue, Room } from '@/types/estimate'
 import RoomNavigation from '@/components/RoomNavigation'
+
+// Компонент для отображения названий работ с tooltip
+const WorkNameDisplay = ({ name, className = '' }: { name: string, className?: string }) => {
+  const [showTooltip, setShowTooltip] = useState(false)
+  const [isOverflowing, setIsOverflowing] = useState(false)
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 })
+  const textRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (textRef.current) {
+        const element = textRef.current
+        const isOverflowing = element.scrollHeight > element.clientHeight
+        setIsOverflowing(isOverflowing)
+      }
+    }
+
+    checkOverflow()
+    window.addEventListener('resize', checkOverflow)
+    return () => window.removeEventListener('resize', checkOverflow)
+  }, [name])
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    setTooltipPos({
+      top: e.clientY - 60, // Показываем tooltip выше курсора
+      left: e.clientX + 10  // Немного правее курсора
+    })
+  }
+
+  return (
+    <div 
+      className="relative"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onMouseMove={handleMouseMove}
+    >
+      <div 
+        ref={textRef}
+        className={`work-name-display ${className}`}
+      >
+        {name}
+      </div>
+      {isOverflowing && showTooltip && (
+        <div 
+          className="fixed z-[9999] px-3 py-2 bg-gray-800 text-white text-sm rounded-lg shadow-lg max-w-sm whitespace-normal break-words pointer-events-none"
+          style={{
+            top: `${tooltipPos.top}px`,
+            left: `${tooltipPos.left}px`
+          }}
+        >
+          {name}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Компонент для отображения цены с коэффициентом и tooltip
+const PriceWithTooltip = ({ 
+  price, 
+  item, 
+  normalCoeff, 
+  finalCoeff, 
+  isManualPrice 
+}: { 
+  price: number
+  item: any
+  normalCoeff: number
+  finalCoeff: number
+  isManualPrice: boolean
+}) => {
+  const [showTooltip, setShowTooltip] = useState(false)
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 })
+  
+  // Определяем есть ли коэффициенты для показа tooltip
+  const hasCoefficients = (isManualPrice && finalCoeff !== 1) || 
+                         (!isManualPrice && (normalCoeff !== 1 || finalCoeff !== 1))
+  
+  if (!hasCoefficients) {
+    return (
+      <span className="font-semibold text-gray-900">
+        {Math.round(price).toLocaleString('ru-RU')}
+      </span>
+    )
+  }
+  
+  // Формируем текст для tooltip
+  const getTooltipText = () => {
+    if (isManualPrice) {
+      return `×${finalCoeff.toFixed(2)} (конечный коэфф.)`
+    } else {
+      let coeffs: string[] = []
+      if (normalCoeff !== 1) coeffs.push(`×${normalCoeff.toFixed(2)} (обычный коэфф.)`)
+      if (finalCoeff !== 1) coeffs.push(`×${finalCoeff.toFixed(2)} (конечный коэфф.)`)
+      return coeffs.join(' ')
+    }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    setTooltipPos({
+      top: e.clientY - 50, // Показываем tooltip выше курсора
+      left: e.clientX + 10  // Немного правее курсора
+    })
+  }
+
+  return (
+    <div 
+      className="relative cursor-help"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onMouseMove={handleMouseMove}
+    >
+      <span className="font-semibold text-gray-900 border-b border-dotted border-gray-400">
+        {Math.round(price).toLocaleString('ru-RU')}
+      </span>
+      {showTooltip && (
+        <div 
+          className="fixed z-[9999] px-3 py-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg max-w-xs whitespace-normal break-words pointer-events-none"
+          style={{
+            top: `${tooltipPos.top}px`,
+            left: `${tooltipPos.left}px`
+          }}
+        >
+          {getTooltipText()}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function EditEstimatePage({ params }: { params: { id: string } }) {
   const [estimate, setEstimate] = useState<Estimate | null>(null)
@@ -17,13 +146,10 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   const [showAddBlockModal, setShowAddBlockModal] = useState(false)
   const [workCategories, setWorkCategories] = useState<string[]>([])
   const [manualInputCompleted, setManualInputCompleted] = useState<Set<string>>(new Set())
-  const [showManualCoefficientModal, setShowManualCoefficientModal] = useState(false)
-  const [manualCoefficient, setManualCoefficient] = useState({ name: '', value: 1, description: '' })
-  const [isEditingClient, setIsEditingClient] = useState(false)
+
   const [coefficientMode, setCoefficientMode] = useState<'global' | 'block-specific'>('global')
   const [coefficientSettings, setCoefficientSettings] = useState<{ [coefficientId: string]: { target: 'global' | string[] } }>({})
   const [isCoefficientsCollapsed, setIsCoefficientsCollapsed] = useState(false)
-  const [isClientInfoCollapsed, setIsClientInfoCollapsed] = useState(false)
   const [isWorksCollapsed, setIsWorksCollapsed] = useState(false)
   const [isMaterialsCollapsed, setIsMaterialsCollapsed] = useState(false)
   const [isRoomParametersCollapsed, setIsRoomParametersCollapsed] = useState(false)
@@ -66,7 +192,47 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   // Функция для переключения между помещениями
   const handleRoomSelect = (roomId: string | null) => {
     setCurrentRoomId(roomId)
+    // Загружаем параметры для нового контекста
+    loadCurrentRoomParameters(roomId)
   }
+
+  // Загрузка параметров для текущего помещения или сводной сметы
+  const loadCurrentRoomParameters = (roomId: string | null) => {
+    if (!estimate) return
+
+    if (estimate.type === 'rooms') {
+      if (roomId === null) {
+        // Загружаем параметры сводной сметы
+        if (estimate.roomParameters?.parameters) {
+          setRoomParameterValues(estimate.roomParameters.parameters)
+        } else {
+          setRoomParameterValues([])
+        }
+      } else {
+        // Загружаем параметры конкретного помещения
+        const room = rooms.find(r => r.id === roomId)
+        if (room?.roomParameters?.parameters) {
+          setRoomParameterValues(room.roomParameters.parameters)
+        } else {
+          setRoomParameterValues([])
+        }
+      }
+    } else if (estimate.type === 'apartment') {
+      // Для смет по квартире используем общие параметры
+      if (estimate.roomParameters?.parameters) {
+        setRoomParameterValues(estimate.roomParameters.parameters)
+      } else {
+        setRoomParameterValues([])
+      }
+    }
+  }
+
+  // Загружаем параметры при смене текущего помещения
+  useEffect(() => {
+    if (estimate) {
+      loadCurrentRoomParameters(currentRoomId)
+    }
+  }, [currentRoomId, estimate, rooms])
 
   // Функция для автоматического обновления сводной сметы
   const updateSummaryEstimate = () => {
@@ -244,13 +410,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       if (response.ok) {
         // Преобразуем строки дат в объекты Date
         const estimateWithDates = {
-          ...data.estimate,
-          createdAt: new Date(data.estimate.createdAt),
-          updatedAt: new Date(data.estimate.updatedAt),
-          client: {
-            ...data.estimate.client,
-            createdAt: new Date(data.estimate.client.createdAt)
-          }
+          ...data,
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt)
         }
         setEstimate(estimateWithDates)
         
@@ -279,19 +441,38 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           setManuallyEditedPrices(new Set(estimateWithDates.manualPrices))
         }
         
-        // Обрабатываем ручные коэффициенты
-        if (estimateWithDates.manualCoefficients && estimateWithDates.manualCoefficients.length > 0) {
-          try {
-            // Добавляем ручные коэффициенты в локальный список
-            setCoefficients(prev => {
-              const existingIds = new Set(prev.map((c: Coefficient) => c.id))
-              const newManualCoeffs = estimateWithDates.manualCoefficients!.filter((c: Coefficient) => !existingIds.has(c.id))
-              return [...prev, ...newManualCoeffs]
+        // Восстанавливаем состояние завершенных ручных работ
+        const manualWorksIds = new Set<string>()
+        
+        // Для смет по квартире
+        if (estimateWithDates.type === 'apartment' && estimateWithDates.worksBlock) {
+          estimateWithDates.worksBlock.blocks.forEach((block: any) => {
+            block.items.forEach((item: any) => {
+              // Считаем работу ручной если у неё нет workId и есть название
+              if ((!item.workId || item.workId === '') && item.name && item.name.trim()) {
+                manualWorksIds.add(item.id)
+              }
             })
-          } catch (error) {
-            console.error('Ошибка обработки ручных коэффициентов:', error)
-          }
+          })
         }
+        
+        // Для смет по помещениям
+        if (estimateWithDates.type === 'rooms' && estimateWithDates.rooms) {
+          estimateWithDates.rooms.forEach((room: any) => {
+            room.worksBlock.blocks.forEach((block: any) => {
+              block.items.forEach((item: any) => {
+                // Считаем работу ручной если у неё нет workId и есть название
+                if ((!item.workId || item.workId === '') && item.name && item.name.trim()) {
+                  manualWorksIds.add(item.id)
+                }
+              })
+            })
+          })
+        }
+        
+        setManualInputCompleted(manualWorksIds)
+        
+
       } else {
         setError(data.error || 'Ошибка загрузки сметы')
       }
@@ -327,20 +508,33 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       setSaving(true)
       
       if (estimate.type === 'apartment' && estimate.worksBlock) {
-        // Логика для смет по квартире (существующая)
-        const updatedBlocks = estimate.worksBlock.blocks.map(block => ({
-          ...block,
-          totalPrice: block.items.reduce((sum, item) => sum + item.totalPrice, 0)
-        }))
-        
-        const manualCoeffsForEstimate = coefficients.filter(c => c.id.startsWith('manual_'))
+        // Логика для смет по квартире - обновляем с новой логикой коэффициентов
+        const updatedBlocks = estimate.worksBlock.blocks.map(block => {
+          const blockCoeff = calculateBlockCoefficientNew(block.id)
+          
+          const updatedItems = block.items.map(item => {
+            // Для ручных цен коэффициент не применяется
+            const priceWithCoeff = manuallyEditedPrices.has(item.id) ? item.unitPrice : (item.unitPrice * blockCoeff)
+            const itemTotalPrice = Math.round(priceWithCoeff) * item.quantity
+            
+            return {
+              ...item,
+              totalPrice: itemTotalPrice
+            }
+          })
+          
+          return {
+            ...block,
+            items: updatedItems,
+            totalPrice: updatedItems.reduce((sum, item) => sum + item.totalPrice, 0)
+          }
+        })
         
         const updatedEstimate = {
           ...estimate,
           totalWorksPrice,
           totalMaterialsPrice,
           totalPrice: grandTotal,
-          manualCoefficients: manualCoeffsForEstimate,
           coefficientSettings,
           manualPrices: Array.from(manuallyEditedPrices),
           roomParameters: roomParameterValues.length > 0 ? {
@@ -369,13 +563,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         
         if (response.ok) {
           const estimateWithDates = {
-            ...result.estimate,
-            createdAt: new Date(result.estimate.createdAt),
-            updatedAt: new Date(result.estimate.updatedAt),
-            client: {
-              ...result.estimate.client,
-              createdAt: new Date(result.estimate.client.createdAt)
-            }
+            ...result,
+            createdAt: new Date(result.createdAt),
+            updatedAt: new Date(result.updatedAt)
           }
           setEstimate(estimateWithDates)
           alert('Смета успешно сохранена!')
@@ -384,37 +574,58 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         }
       } else if (estimate.type === 'rooms') {
         // Логика для смет по помещениям
-        const manualCoeffsForEstimate = coefficients.filter(c => c.id.startsWith('manual_'))
         
-        // Пересчитываем итоговые суммы
-        const updatedRooms = rooms.map(room => ({
-          ...room,
-          totalWorksPrice: room.worksBlock.blocks.reduce((sum, block) => 
-            sum + block.items.reduce((itemSum, item) => itemSum + item.totalPrice, 0), 0
-          ),
-          totalMaterialsPrice: room.materialsBlock.items.reduce((sum, item) => sum + item.totalPrice, 0),
-          totalPrice: room.worksBlock.blocks.reduce((sum, block) => 
-            sum + block.items.reduce((itemSum, item) => itemSum + item.totalPrice, 0), 0
-          ) + room.materialsBlock.items.reduce((sum, item) => sum + item.totalPrice, 0)
-        }))
+        // Пересчитываем итоговые суммы с учетом новой логики коэффициентов
+        const updatedRooms = rooms.map(room => {
+          // Для каждого помещения рассчитываем totalPrice с учетом коэффициентов
+          const roomWorksPrice = room.worksBlock.blocks.reduce((blockSum, block) => {
+            const blockCoeff = calculateBlockCoefficientNew(block.id)
+            
+            const blockTotal = block.items.reduce((itemSum, item) => {
+              // Для ручных цен коэффициент не применяется
+              const priceWithCoeff = manuallyEditedPrices.has(item.id) ? item.unitPrice : (item.unitPrice * blockCoeff)
+              const itemTotal = Math.round(priceWithCoeff) * item.quantity
+              return itemSum + itemTotal
+            }, 0)
+            
+            return blockSum + blockTotal
+          }, 0)
+          
+          const roomMaterialsPrice = room.materialsBlock.items.reduce((sum, item) => sum + item.totalPrice, 0)
+          
+          return {
+            ...room,
+            totalWorksPrice: roomWorksPrice,
+            totalMaterialsPrice: roomMaterialsPrice,
+            totalPrice: roomWorksPrice + roomMaterialsPrice
+          }
+        })
         
-        // Агрегируем данные для сводной сметы
+        // Агрегируем данные для сводной сметы используя новую логику
         const summaryWorksBlocks: any[] = []
         const summaryMaterialsItems: any[] = []
         
-        // Собираем все блоки работ из всех помещений
+        // Собираем все блоки работ из всех помещений с правильным расчетом цен
         updatedRooms.forEach(room => {
           room.worksBlock.blocks.forEach(block => {
             const existingBlock = summaryWorksBlocks.find(sb => sb.title === block.title)
+            const blockCoeff = calculateBlockCoefficientNew(block.id)
+            
             if (existingBlock) {
               // Объединяем работы в существующий блок
               block.items.forEach(item => {
                 const existingItem = existingBlock.items.find((ei: any) => ei.name === item.name && ei.unit === item.unit)
+                const priceWithCoeff = manuallyEditedPrices.has(item.id) ? item.unitPrice : (item.unitPrice * blockCoeff)
+                const itemTotalPrice = Math.round(priceWithCoeff) * item.quantity
+                
                 if (existingItem) {
                   existingItem.quantity += item.quantity
-                  existingItem.totalPrice += item.totalPrice
+                  existingItem.totalPrice += itemTotalPrice
                 } else {
-                  existingBlock.items.push({ ...item })
+                  existingBlock.items.push({ 
+                    ...item, 
+                    totalPrice: itemTotalPrice 
+                  })
                 }
               })
             } else {
@@ -422,7 +633,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
               summaryWorksBlocks.push({
                 ...block,
                 id: `summary_${block.id}`,
-                items: block.items.map(item => ({ ...item }))
+                items: block.items.map(item => {
+                  const priceWithCoeff = manuallyEditedPrices.has(item.id) ? item.unitPrice : (item.unitPrice * blockCoeff)
+                  const itemTotalPrice = Math.round(priceWithCoeff) * item.quantity
+                  return { 
+                    ...item, 
+                    totalPrice: itemTotalPrice 
+                  }
+                })
               })
             }
           })
@@ -454,15 +672,12 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           totalWorksPrice: totalSummaryWorksPrice,
           totalMaterialsPrice: totalSummaryMaterialsPrice,
           totalPrice: totalSummaryWorksPrice + totalSummaryMaterialsPrice,
-          manualCoefficients: manualCoeffsForEstimate,
+
           coefficientSettings,
           manualPrices: Array.from(manuallyEditedPrices),
-          roomParameters: roomParameterValues.length > 0 ? {
-            id: estimate.roomParameters?.id || 'room_params_' + Date.now(),
-            title: 'Параметры помещения',
-            parameters: roomParameterValues
-          } : undefined,
-          rooms: updatedRooms,
+          // Для смет по помещениям параметры хранятся либо в сводной, либо в каждом помещении отдельно
+          roomParameters: estimate.roomParameters, // Сохраняем сводные параметры как есть
+          rooms: updatedRooms, // Параметры помещений уже включены в updatedRooms
           summaryWorksBlock: {
             ...estimate.summaryWorksBlock!,
             blocks: summaryWorksBlocks,
@@ -485,13 +700,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         
         if (response.ok) {
           const estimateWithDates = {
-            ...result.estimate,
-            createdAt: new Date(result.estimate.createdAt),
-            updatedAt: new Date(result.estimate.updatedAt),
-            client: {
-              ...result.estimate.client,
-              createdAt: new Date(result.estimate.client.createdAt)
-            }
+            ...result,
+            createdAt: new Date(result.createdAt),
+            updatedAt: new Date(result.updatedAt)
           }
           setEstimate(estimateWithDates)
           
@@ -788,8 +999,19 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     // TODO: Добавить поддержку материалов для смет по помещениям
   }
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!estimate) return
+    
+    // Загружаем информацию о клиенте
+    let clientData = null
+    try {
+      const response = await fetch(`/api/clients/${estimate.clientId}`)
+      if (response.ok) {
+        clientData = await response.json()
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки клиента:', error)
+    }
     
     const estimateForExport = {
       ...estimate,
@@ -798,102 +1020,61 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       totalPrice: grandTotal,
     }
     
-    generateEstimatePDF(estimateForExport)
+    generateEstimatePDF(estimateForExport, coefficients, clientData)
   }
+
+
 
   const handleCoefficientToggle = (coefficientId: string) => {
+    // Игнорируем ручные коэффициенты
+    if (coefficientId.startsWith('manual_')) return
+    
     setEstimate(prev => {
-      if (!prev) return null
+      if (!prev) return prev
       
-      const currentCoefficients = prev.coefficients || []
-      const isCurrentlySelected = currentCoefficients.includes(coefficientId)
-      
-      if (isCurrentlySelected) {
-        // Убираем коэффициент из выбранных
-        const newCoefficients = currentCoefficients.filter(id => id !== coefficientId)
+      // Для смет по квартире или смет по помещениям в режиме сводной сметы
+      if (prev.type === 'apartment' || (prev.type === 'rooms' && isSummaryView)) {
+        const currentCoefficients = prev.coefficients || []
+        const isCurrentlySelected = currentCoefficients.includes(coefficientId)
         
-        // Убираем настройки для этого коэффициента
-        setCoefficientSettings(prevSettings => {
-          const newSettings = { ...prevSettings }
-          delete newSettings[coefficientId]
-          return newSettings
-        })
-        
-        // Для пользовательских коэффициентов НЕ удаляем их из списка, только убираем из выбранных
-        return {
-          ...prev,
-          coefficients: newCoefficients
-        }
-      } else {
-        // Добавляем коэффициент в выбранные
-        const newCoefficients = [...currentCoefficients, coefficientId]
-        
-        // Устанавливаем настройки по умолчанию (применить ко всей смете)
-        setCoefficientSettings(prevSettings => ({
-          ...prevSettings,
-          [coefficientId]: { target: 'global' as 'global' | string[] }
-        }))
-        
-        return {
-          ...prev,
-          coefficients: newCoefficients
+        if (isCurrentlySelected) {
+          // Убираем коэффициент из выбранных
+          const newCoefficients = currentCoefficients.filter(id => id !== coefficientId)
+          
+          // Убираем настройки для этого коэффициента
+          setCoefficientSettings(prevSettings => {
+            const newSettings = { ...prevSettings }
+            delete newSettings[coefficientId]
+            return newSettings
+          })
+          
+          // Для пользовательских коэффициентов НЕ удаляем их из списка, только убираем из выбранных
+          return {
+            ...prev,
+            coefficients: newCoefficients
+          }
+        } else {
+          // Добавляем коэффициент в выбранные
+          const newCoefficients = [...currentCoefficients, coefficientId]
+          
+          // Устанавливаем настройки по умолчанию (применить ко всей смете)
+          setCoefficientSettings(prevSettings => ({
+            ...prevSettings,
+            [coefficientId]: { target: 'global' as 'global' | string[] }
+          }))
+          
+          return {
+            ...prev,
+            coefficients: newCoefficients
+          }
         }
       }
+      
+      return prev
     })
   }
 
-  const createManualCoefficient = () => {
-    if (!manualCoefficient.name.trim() || manualCoefficient.value <= 0) {
-      alert('Введите название и корректное значение коэффициента')
-      return
-    }
 
-    const newCoefficient: Coefficient = {
-      id: `manual_${Date.now()}`,
-      name: manualCoefficient.name,
-      value: manualCoefficient.value,
-      description: manualCoefficient.description,
-      category: 'custom',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-
-    // Добавляем коэффициент в локальный список
-    setCoefficients(prev => [...prev, newCoefficient])
-    
-    // Автоматически применяем его к смете
-    setEstimate(prev => prev ? {
-      ...prev,
-      coefficients: [...(prev.coefficients || []), newCoefficient.id],
-      manualCoefficients: [...(prev.manualCoefficients || []), newCoefficient]
-    } : null)
-
-    // Сбрасываем форму и закрываем модальное окно
-    setManualCoefficient({ name: '', value: 1, description: '' })
-    setShowManualCoefficientModal(false)
-  }
-
-  const deleteManualCoefficient = (coefficientId: string) => {
-    if (!confirm('Удалить этот коэффициент?')) return
-    
-    // Убираем коэффициент из локального списка
-    setCoefficients(prevCoeffs => prevCoeffs.filter(c => c.id !== coefficientId))
-    
-    // Убираем из выбранных коэффициентов сметы
-    setEstimate(prev => prev ? {
-      ...prev,
-      coefficients: (prev.coefficients || []).filter(id => id !== coefficientId),
-      manualCoefficients: (prev.manualCoefficients || []).filter(c => c.id !== coefficientId)
-    } : null)
-    
-    // Убираем настройки для этого коэффициента
-    setCoefficientSettings(prevSettings => {
-      const newSettings = { ...prevSettings }
-      delete newSettings[coefficientId]
-      return newSettings
-    })
-  }
 
   const getCoefficientsForBlock = (blockId: string) => {
     const selectedCoefficients = getSelectedCoefficients()
@@ -908,6 +1089,43 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     return selectedCoefficients.filter(coef => 
       coefficientSettings[coef.id]?.target === 'global'
     )
+  }
+
+  // Новые функции для работы с типами коэффициентов
+  const getNormalCoefficientsForBlock = (blockId: string) => {
+    return getCoefficientsForBlock(blockId).filter(coef => (coef.type || 'normal') === 'normal')
+  }
+
+  const getFinalCoefficientsForBlock = (blockId: string) => {
+    return getCoefficientsForBlock(blockId).filter(coef => coef.type === 'final')
+  }
+
+  const getNormalGlobalCoefficients = () => {
+    return getGlobalCoefficients().filter(coef => (coef.type || 'normal') === 'normal')
+  }
+
+  const getFinalGlobalCoefficients = () => {
+    return getGlobalCoefficients().filter(coef => coef.type === 'final')
+  }
+
+  const calculateNormalCoefficients = (blockId?: string) => {
+    let coeffs: Coefficient[] = []
+    if (blockId) {
+      coeffs = [...getNormalCoefficientsForBlock(blockId), ...getNormalGlobalCoefficients()]
+    } else {
+      coeffs = getNormalGlobalCoefficients()
+    }
+    return coeffs.reduce((total, coef) => total * coef.value, 1)
+  }
+
+  const calculateFinalCoefficients = (blockId?: string) => {
+    let coeffs: Coefficient[] = []
+    if (blockId) {
+      coeffs = [...getFinalCoefficientsForBlock(blockId), ...getFinalGlobalCoefficients()]
+    } else {
+      coeffs = getFinalGlobalCoefficients()
+    }
+    return coeffs.reduce((total, coef) => total * coef.value, 1)
   }
 
   const calculateBlockCoefficient = (blockId: string) => {
@@ -945,7 +1163,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     return labels[category] || category
   }
 
-  const groupedCoefficients = coefficients.reduce((groups, coef) => {
+  const groupedCoefficients = coefficients.filter(coef => !coef.id.startsWith('manual_')).reduce((groups, coef) => {
     const category = coef.category
     if (!groups[category]) {
       groups[category] = []
@@ -956,7 +1174,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
   const getSelectedCoefficients = () => {
     if (!estimate?.coefficients) return []
-    return coefficients.filter(c => estimate.coefficients?.includes(c.id))
+    return coefficients.filter(c => estimate.coefficients?.includes(c.id) && !c.id.startsWith('manual_'))
   }
 
   const calculateTotalCoefficient = () => {
@@ -973,37 +1191,53 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     return paramValue?.value || 0
   }
 
-  // Расчет общих сумм
+  // Расчет общих сумм - просто суммируем отображаемые на странице стоимости
   const totalWorksPrice = (() => {
     const currentWorksBlock = getCurrentWorksBlock()
     if (!currentWorksBlock || !currentWorksBlock.blocks) return 0
     
     return currentWorksBlock.blocks.reduce((blockSum, block) => {
-      // Применяем коэффициенты только к позициям без ручной цены
-      const manualPriceTotal = block.items
-        .filter(item => manuallyEditedPrices.has(item.id))
-        .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+      // Вычисляем обычные и конечные коэффициенты отдельно (как в таблице)
+      const normalCoeff = calculateNormalCoefficients(block.id)
+      const finalCoeff = calculateFinalCoefficients(block.id)
       
-      const autoPriceTotal = block.items
-        .filter(item => !manuallyEditedPrices.has(item.id))
-        .reduce((sum, item) => sum + item.totalPrice, 0)
+      const blockTotal = block.items.reduce((itemSum, item) => {
+        // Применяем коэффициенты в зависимости от типа цены (точно как в таблице)
+        let adjustedTotalPrice: number
+        
+        if (manuallyEditedPrices.has(item.id)) {
+          // Для ручных цен применяем только конечные коэффициенты
+          const adjustedUnitPrice = item.unitPrice * finalCoeff
+          adjustedTotalPrice = adjustedUnitPrice * item.quantity
+        } else {
+          // Для автоматических цен применяем сначала обычные, потом конечные
+          const adjustedUnitPrice = item.unitPrice * normalCoeff * finalCoeff
+          adjustedTotalPrice = adjustedUnitPrice * item.quantity
+        }
+        
+        // Округляем точно как в колонке "Стоимость"
+        return itemSum + Math.round(adjustedTotalPrice)
+      }, 0)
       
-      const blockCoeff = calculateBlockCoefficientNew(block.id)
-      const totalWithCoeff = manualPriceTotal + (autoPriceTotal * blockCoeff)
-      
-      return blockSum + totalWithCoeff
+      return blockSum + blockTotal
     }, 0)
   })()
   
   const totalMaterialsPrice = (() => {
     const currentMaterialsBlock = getCurrentMaterialsBlock()
     if (!currentMaterialsBlock || !currentMaterialsBlock.items) return 0
-    return currentMaterialsBlock.items.reduce((sum, item) => sum + item.totalPrice, 0)
+    
+    // Для материалов суммируем стоимость точно как отображается в таблице
+    return currentMaterialsBlock.items.reduce((sum, item) => {
+      // Для материалов применяем глобальный коэффициент (как в таблице)
+      const globalCoeff = calculateGlobalCoefficient()
+      const displayedPrice = Math.round(item.unitPrice * globalCoeff * item.quantity)
+      return sum + displayedPrice
+    }, 0)
   })()
   
-  const globalCoefficient = calculateGlobalCoefficient()
-  const subtotal = totalWorksPrice + totalMaterialsPrice
-  const grandTotal = subtotal * globalCoefficient
+  // Общая сумма = просто сумма работ + материалы (без дополнительных коэффициентов)
+  const grandTotal = totalWorksPrice + totalMaterialsPrice
 
   const handleBlockToggleForCoefficient = (coefficientId: string, blockId: string) => {
     setCoefficientSettings(prev => {
@@ -1050,6 +1284,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
   // Функции для работы с параметрами помещения
   const updateRoomParameterValue = (parameterId: string, value: number) => {
+    // Обновляем локальное состояние
     setRoomParameterValues(prev => {
       const existing = prev.find(p => p.parameterId === parameterId)
       if (existing) {
@@ -1059,8 +1294,62 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       }
     })
     
+    // Сохраняем параметры в зависимости от текущего контекста
+    if (estimate?.type === 'rooms') {
+      if (currentRoomId === null) {
+        // Сохраняем в сводную смету
+        setEstimate(prev => prev ? {
+          ...prev,
+          roomParameters: {
+            id: prev.roomParameters?.id || `room_params_summary_${Date.now()}`,
+            title: 'Параметры сводной сметы',
+            parameters: roomParameterValues.map(p => 
+              p.parameterId === parameterId ? { ...p, value } : p
+            ).concat(
+              roomParameterValues.find(p => p.parameterId === parameterId) 
+                ? [] 
+                : [{ parameterId, value }]
+            )
+          }
+        } : null)
+      } else {
+        // Сохраняем в конкретное помещение
+        setRooms(prev => prev.map(room => 
+          room.id === currentRoomId ? {
+            ...room,
+            roomParameters: {
+              id: room.roomParameters?.id || `room_params_${room.id}_${Date.now()}`,
+              title: `Параметры помещения - ${room.name}`,
+              parameters: (room.roomParameters?.parameters || []).map(p => 
+                p.parameterId === parameterId ? { ...p, value } : p
+              ).concat(
+                (room.roomParameters?.parameters || []).find(p => p.parameterId === parameterId)
+                  ? []
+                  : [{ parameterId, value }]
+              )
+            }
+          } : room
+        ))
+      }
+    } else if (estimate?.type === 'apartment') {
+      // Для смет по квартире сохраняем в общие параметры
+      setEstimate(prev => prev ? {
+        ...prev,
+        roomParameters: {
+          id: prev.roomParameters?.id || `room_params_${Date.now()}`,
+          title: 'Параметры помещения',
+          parameters: roomParameterValues.map(p => 
+            p.parameterId === parameterId ? { ...p, value } : p
+          ).concat(
+            roomParameterValues.find(p => p.parameterId === parameterId) 
+              ? [] 
+              : [{ parameterId, value }]
+          )
+        }
+      } : null)
+    }
+    
     // Автоматически обновляем количество в работах с привязкой к этому параметру
-    // Добавляем небольшую задержку, чтобы убедиться, что все данные загружены
     setTimeout(() => {
       updateWorkQuantitiesForParameter(parameterId, value)
     }, 100)
@@ -1075,7 +1364,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     console.log('Обновляем количество для параметра:', parameterId, 'значение:', value)
     
     setEstimate(prev => {
-      if (!prev) return null
+      if (!prev || prev.type !== 'apartment' || !prev.worksBlock) return prev
       
       let updatedCount = 0
       const updatedBlocks = prev.worksBlock.blocks.map(block => ({
@@ -1135,17 +1424,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             <div className="flex gap-3">
               <button 
                 onClick={() => {
-                  const allCollapsed = isClientInfoCollapsed && isRoomParametersCollapsed && isWorksCollapsed && isMaterialsCollapsed && isCoefficientsCollapsed
-                  setIsClientInfoCollapsed(!allCollapsed)
-                  setIsRoomParametersCollapsed(!allCollapsed)
-                  setIsWorksCollapsed(!allCollapsed)
-                  setIsMaterialsCollapsed(!allCollapsed)
+                  const allCollapsed = isCoefficientsCollapsed && isWorksCollapsed && isMaterialsCollapsed && isRoomParametersCollapsed
                   setIsCoefficientsCollapsed(!allCollapsed)
+                  setIsWorksCollapsed(!allCollapsed)
                 }}
                 className="btn-secondary flex items-center text-sm"
               >
                 <ChevronDown className="h-4 w-4 mr-2" />
-                {(isClientInfoCollapsed && isRoomParametersCollapsed && isWorksCollapsed && isMaterialsCollapsed && isCoefficientsCollapsed) ? 'Развернуть все' : 'Свернуть все'}
+                {(isCoefficientsCollapsed && isWorksCollapsed && isMaterialsCollapsed && isRoomParametersCollapsed) ? 'Развернуть все' : 'Свернуть все'}
               </button>
               <button 
                 onClick={handleExportPDF}
@@ -1182,180 +1468,15 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       <div className="container mx-auto px-6 py-8">
         <div className={`grid gap-8 ${
           (estimate?.type === 'apartment' || (estimate?.type === 'rooms' && isSummaryView)) 
-            ? 'lg:grid-cols-4' 
+            ? 'lg:grid-cols-3' 
             : 'lg:grid-cols-1'
         }`}>
           {/* Левая колонка - основной контент */}
           <div className={`space-y-8 ${
             (estimate?.type === 'apartment' || (estimate?.type === 'rooms' && isSummaryView)) 
-              ? 'lg:col-span-3' 
+              ? 'lg:col-span-2' 
               : 'lg:col-span-1'
           }`}>
-            {/* Информация о клиенте */}
-            <div className="card fade-in">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Информация о клиенте</h2>
-              </div>
-              
-              {/* Кнопка сворачивания в стиле Apple */}
-              <div className="mb-6">
-                <button
-                  onClick={() => setIsClientInfoCollapsed(!isClientInfoCollapsed)}
-                  className="apple-collapse-btn"
-                  title={isClientInfoCollapsed ? "Развернуть информацию о клиенте" : "Свернуть информацию о клиенте"}
-                >
-                  <ChevronDown className={`h-4 w-4 mr-2 rotate-icon ${isClientInfoCollapsed ? '' : 'rotated'}`} />
-                  {isClientInfoCollapsed ? 'Показать информацию о клиенте' : 'Скрыть информацию о клиенте'}
-                </button>
-              </div>
-              
-              <div className={`collapsible-content ${isClientInfoCollapsed ? 'collapsed' : 'expanded'}`}>
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-sm text-gray-600">
-                    {isEditingClient ? 'Редактирование информации о клиенте' : 'Просмотр информации о клиенте'}
-                  </span>
-                  <button
-                    onClick={() => setIsEditingClient(!isEditingClient)}
-                    className={`btn-secondary text-sm ${isEditingClient ? 'bg-green-100 text-green-700 border-green-200' : ''}`}
-                  >
-                    {isEditingClient ? 'Сохранить' : 'Редактировать'}
-                  </button>
-                </div>
-                
-                {isEditingClient ? (
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">ФИО</label>
-                      <input
-                        type="text"
-                        value={estimate?.client.name || ''}
-                        onChange={(e) => setEstimate(prev => prev ? {
-                          ...prev,
-                          client: { ...prev.client, name: e.target.value }
-                        } : null)}
-                        className="input-field"
-                        placeholder="Введите ФИО клиента"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Телефон</label>
-                      <input
-                        type="tel"
-                        value={estimate?.client.phone || ''}
-                        onChange={(e) => setEstimate(prev => prev ? {
-                          ...prev,
-                          client: { ...prev.client, phone: e.target.value }
-                        } : null)}
-                        className="input-field"
-                        placeholder="Введите номер телефона"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                      <input
-                        type="email"
-                        value={estimate?.client.email || ''}
-                        onChange={(e) => setEstimate(prev => prev ? {
-                          ...prev,
-                          client: { ...prev.client, email: e.target.value }
-                        } : null)}
-                        className="input-field"
-                        placeholder="Введите email"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Адрес</label>
-                      <input
-                        type="text"
-                        value={estimate?.client.address || ''}
-                        onChange={(e) => setEstimate(prev => prev ? {
-                          ...prev,
-                          client: { ...prev.client, address: e.target.value }
-                        } : null)}
-                        className="input-field"
-                        placeholder="Введите адрес"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Класс ремонта</label>
-                      <select
-                        value={estimate?.client.repairClass || 'Не определено'}
-                        onChange={(e) => setEstimate(prev => prev ? {
-                          ...prev,
-                          client: { ...prev.client, repairClass: e.target.value }
-                        } : null)}
-                        className="input-field"
-                      >
-                        <option value="Не определено">Не определено</option>
-                        <option value="Эконом">Эконом</option>
-                        <option value="Комфорт">Комфорт</option>
-                        <option value="Бизнес">Бизнес</option>
-                        <option value="Элит">Элит</option>
-                      </select>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Комментарий</label>
-                      <textarea
-                        value={estimate?.client.comment || ''}
-                        onChange={(e) => setEstimate(prev => prev ? {
-                          ...prev,
-                          client: { ...prev.client, comment: e.target.value }
-                        } : null)}
-                        className="input-field"
-                        rows={3}
-                        placeholder="Дополнительная информация о клиенте или проекте"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">ФИО</p>
-                      <p className="text-gray-900 font-medium">{estimate?.client.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Телефон</p>
-                      <p className="text-gray-900 font-medium">{estimate?.client.phone}</p>
-                    </div>
-                    {estimate?.client.email && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Email</p>
-                        <p className="text-gray-900 font-medium">{estimate.client.email}</p>
-                      </div>
-                    )}
-                    {estimate?.client.address && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Адрес</p>
-                        <p className="text-gray-900 font-medium">{estimate.client.address}</p>
-                      </div>
-                    )}
-                    {estimate?.client.repairClass && estimate.client.repairClass !== 'Не определено' && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Класс ремонта</p>
-                        <p className="text-gray-900 font-medium">
-                          <span className={`px-2 py-1 rounded-full text-sm font-medium ${
-                            estimate.client.repairClass === 'Эконом' ? 'bg-green-100 text-green-800' :
-                            estimate.client.repairClass === 'Комфорт' ? 'bg-blue-100 text-blue-800' :
-                            estimate.client.repairClass === 'Бизнес' ? 'bg-purple-100 text-purple-800' :
-                            estimate.client.repairClass === 'Элит' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {estimate.client.repairClass}
-                          </span>
-                        </p>
-                      </div>
-                    )}
-                    {estimate?.client.comment && (
-                      <div className="md:col-span-2">
-                        <p className="text-sm font-medium text-gray-500 mb-1">Комментарий</p>
-                        <p className="text-gray-900">{estimate.client.comment}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Параметры помещения */}
             <div className="card fade-in">
               <div className="flex items-center justify-between mb-4">
@@ -1363,7 +1484,26 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3">
                     <Settings className="h-5 w-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900">Параметры помещения</h2>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Параметры помещения
+                      {estimate?.type === 'rooms' && (
+                        <span className="ml-2 text-sm font-normal text-gray-600">
+                          {isSummaryView ? '(Сводная смета)' : currentRoom ? `(${currentRoom.name})` : ''}
+                        </span>
+                      )}
+                    </h2>
+                    {estimate?.type === 'rooms' && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {isSummaryView 
+                          ? 'Общие параметры для всей сметы'
+                          : currentRoom 
+                            ? `Индивидуальные параметры для помещения "${currentRoom.name}"`
+                            : 'Выберите помещение для редактирования параметров'
+                        }
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
               
@@ -1429,7 +1569,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                               const value = parseFloat(e.target.value) || 0
                               updateRoomParameterValue(parameter.id, value)
                             }}
-                            className="input-field w-full text-lg font-semibold number-arrows-left"
+                            className="input-field w-full text-lg font-semibold no-number-arrows"
                             placeholder="0"
                             min="0"
                             step="1"
@@ -1554,15 +1694,17 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                               type="text"
                               value={block.title}
                               onChange={(e) => {
-                                setEstimate(prev => prev ? {
-                                  ...prev,
-                                  worksBlock: {
-                                    ...prev.worksBlock,
-                                    blocks: prev.worksBlock.blocks.map(b => 
-                                      b.id === block.id ? { ...b, title: e.target.value } : b
-                                    )
-                                  }
-                                } : null)
+                                if (estimate?.type === 'apartment' && estimate.worksBlock) {
+                                  setEstimate(prev => prev ? {
+                                    ...prev,
+                                    worksBlock: {
+                                      ...prev.worksBlock!,
+                                      blocks: prev.worksBlock!.blocks.map(b => 
+                                        b.id === block.id ? { ...b, title: e.target.value } : b
+                                      )
+                                    }
+                                  } : null)
+                                }
                               }}
                               className="font-semibold text-gray-900 bg-transparent border-none outline-none text-lg"
                               placeholder="Название блока"
@@ -1572,6 +1714,10 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                         <div className="text-sm text-gray-600 mr-4 text-right">
                           <div className="text-lg font-semibold text-gray-900">
                             {(() => {
+                              // Вычисляем обычные и конечные коэффициенты отдельно
+                              const normalCoeff = calculateNormalCoefficients(block.id)
+                              const finalCoeff = calculateFinalCoefficients(block.id)
+                              
                               // Раздельный расчет для ручных и автоматических цен
                               const manualPriceTotal = block.items
                                 .filter(item => manuallyEditedPrices.has(item.id))
@@ -1635,25 +1781,40 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                             <table className="w-full">
                               <thead>
                                 <tr>
-                                  <th>Наименование</th>
-                                  <th>Ед. изм.</th>
-                                  <th>Кол-во</th>
-                                  <th>Цена за ед.</th>
-                                  <th>Стоимость</th>
+                                  <th className="w-2/5">Наименование</th>
+                                  <th className="w-20">Ед. изм.</th>
+                                  <th className="w-16">Кол-во</th>
+                                  <th className="w-24">Цена за ед.</th>
+                                  <th className="w-18">Цена с коэфф.</th>
+                                  <th className="w-28">Стоимость</th>
                                   <th className="w-10"></th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {block.items.map((item) => {
-                                  const blockCoeff = calculateBlockCoefficientNew(block.id)
-                                  const adjustedUnitPrice = item.unitPrice * blockCoeff
-                                  const adjustedTotalPrice = item.totalPrice * blockCoeff
+                                  // Вычисляем обычные и конечные коэффициенты отдельно
+                                  const normalCoeff = calculateNormalCoefficients(block.id)
+                                  const finalCoeff = calculateFinalCoefficients(block.id)
+                                  
+                                  // Применяем коэффициенты в зависимости от типа цены
+                                  let adjustedUnitPrice: number
+                                  let adjustedTotalPrice: number
+                                  
+                                  if (manuallyEditedPrices.has(item.id)) {
+                                    // Для ручных цен применяем только конечные коэффициенты
+                                    adjustedUnitPrice = item.unitPrice * finalCoeff
+                                    adjustedTotalPrice = adjustedUnitPrice * item.quantity
+                                  } else {
+                                    // Для автоматических цен применяем сначала обычные, потом конечные
+                                    adjustedUnitPrice = item.unitPrice * normalCoeff * finalCoeff
+                                    adjustedTotalPrice = adjustedUnitPrice * item.quantity
+                                  }
                                   
                                   return (
                                   <tr key={item.id}>
                                     <td>
                                       {isSummaryView ? (
-                                        <div className="text-sm text-gray-900">{item.name}</div>
+                                        <WorkNameDisplay name={item.name} className="text-sm text-gray-900" />
                                       ) : !item.workId && !manualInputCompleted.has(item.id) ? (
                                         <div className="space-y-2">
                                           <select
@@ -1721,7 +1882,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                 setManualInputCompleted(prev => new Set(Array.from(prev).concat(item.id)))
                                               }
                                             }}
-                                            className="input-field text-sm"
+                                            className="input-field text-sm work-name-input"
                                             placeholder="Или введите название вручную"
                                           />
                                         </div>
@@ -1732,7 +1893,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                               type="text"
                                               value={item.name}
                                               onChange={(e) => updateWorkInBlock(block.id, item.id, 'name', e.target.value)}
-                                              className="input-field text-sm w-full"
+                                              className="input-field text-sm w-full work-name-input"
                                               placeholder="Название работы"
                                             />
                                           </div>
@@ -1763,7 +1924,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                           type="text"
                                           value={item.unit}
                                           onChange={(e) => updateWorkInBlock(block.id, item.id, 'unit', e.target.value)}
-                                          className="input-field w-20 text-sm"
+                                          className="input-field w-16 text-sm"
                                           placeholder="м²"
                                         />
                                       )}
@@ -1797,7 +1958,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                 }
                                               }
                                             }}
-                                            className={`input-field w-24 text-sm number-arrows-left ${
+                                            className={`input-field w-16 no-number-arrows ${
                                               item.workId && (() => {
                                                 const workInCatalog = availableWorks.find(w => w.id === item.workId)
                                                 const isManuallyEdited = manuallyEditedQuantities.has(item.id)
@@ -1850,60 +2011,38 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                     </td>
                                     <td>
                                       {isSummaryView ? (
-                                        <span className="text-sm text-gray-900 font-medium">
-                                          {Math.round(manuallyEditedPrices.has(item.id) ? item.unitPrice : adjustedUnitPrice).toLocaleString('ru-RU')} ₽
-                                        </span>
+                                        <span className="text-sm text-gray-900 font-medium">{item.unitPrice.toLocaleString('ru-RU')}</span>
                                       ) : (
                                         <div className="relative">
                                           <input
                                             type="number"
-                                            value={Math.round(manuallyEditedPrices.has(item.id) ? item.unitPrice : adjustedUnitPrice)}
+                                            value={item.unitPrice}
                                             onChange={(e) => {
-                                              const newAdjustedPrice = parseFloat(e.target.value) || 0
-                                              
-                                              // Если цена вводится вручную, сохраняем её как есть без применения коэффициентов
-                                              updateWorkInBlock(block.id, item.id, 'unitPrice', newAdjustedPrice)
-                                              
-                                              // Помечаем как ручную цену
-                                              setManuallyEditedPrices(prev => new Set([...Array.from(prev), item.id]))
-                                            }}
-                                            className={`input-field w-full text-sm number-arrows-left text-center ${
-                                              item.workId && (() => {
+                                              const newPrice = parseFloat(e.target.value) || 0
+                                              updateWorkInBlock(block.id, item.id, 'unitPrice', newPrice)
+                                              // Помечаем как ручную цену если цена отличается от справочника
+                                              if (item.workId) {
                                                 const workInCatalog = availableWorks.find(w => w.id === item.workId)
-                                                return workInCatalog?.basePrice === 0 ? 'bg-yellow-50 border-yellow-300 focus:border-yellow-500' : ''
-                                              })()
-                                            } ${
+                                                if (workInCatalog && newPrice !== workInCatalog.basePrice) {
+                                                  setManuallyEditedPrices(prev => new Set([...Array.from(prev), item.id]))
+                                                } else if (workInCatalog && newPrice === workInCatalog.basePrice) {
+                                                  setManuallyEditedPrices(prev => {
+                                                    const newSet = new Set(prev)
+                                                    newSet.delete(item.id)
+                                                    return newSet
+                                                  })
+                                                }
+                                              } else {
+                                                // Для работ без workId всегда считаем ручными
+                                                setManuallyEditedPrices(prev => new Set([...Array.from(prev), item.id]))
+                                              }
+                                            }}
+                                            className={`input-field w-24 no-number-arrows ${
                                               manuallyEditedPrices.has(item.id) ? 'bg-orange-50 border-orange-300' : ''
                                             }`}
                                             min="0"
                                             step="1"
-                                            title={(() => {
-                                              const blockCoeff = calculateBlockCoefficientNew(block.id)
-                                              let title = ''
-                                              
-                                              if (manuallyEditedPrices.has(item.id)) {
-                                                title = 'Цена установлена вручную - коэффициенты не применяются'
-                                              } else {
-                                                title = blockCoeff !== 1 ? `Базовая цена: ${item.unitPrice.toFixed(2)} ₽ × коэффициент ${blockCoeff.toFixed(2)}` : 'Цена за единицу'
-                                              }
-                                              
-                                              // Добавляем информацию об оригинальной цене для работ с нулевой ценой
-                                              if (item.workId) {
-                                                const workInCatalog = availableWorks.find(w => w.id === item.workId)
-                                                if (workInCatalog?.basePrice === 0 && workInCatalog.description) {
-                                                  const priceMatch = workInCatalog.description.match(/Цена:\s*(.+?)(?:\.|$)/)
-                                                  if (priceMatch) {
-                                                    title += `\nОригинальная цена: ${priceMatch[1]}`
-                                                  }
-                                                }
-                                              }
-                                              
-                                              return title
-                                            })()}
-                                            placeholder={item.workId && (() => {
-                                              const workInCatalog = availableWorks.find(w => w.id === item.workId)
-                                              return workInCatalog?.basePrice === 0 ? 'Введите цену' : undefined
-                                            })()}
+                                            title="Базовая цена за единицу"
                                           />
                                           {manuallyEditedPrices.has(item.id) && (
                                             <div className="absolute top-1 right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer group hover:bg-orange-600 transition-colors"
@@ -1925,12 +2064,11 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                   }
                                                 }
                                               }}
-                                              title="Убрать ручную цену и применить коэффициенты"
+                                              title="Убрать ручную цену и применить цену из справочника"
                                             >
                                               <span className="text-white text-xs font-bold">✕</span>
-                                              {/* CSS Tooltip */}
                                               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
-                                                Вернуть автоматический расчет
+                                                Вернуть цену из справочника
                                               </div>
                                             </div>
                                           )}
@@ -1938,19 +2076,18 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                       )}
                                     </td>
                                     <td>
+                                      <PriceWithTooltip 
+                                        price={adjustedUnitPrice}
+                                        item={item}
+                                        normalCoeff={normalCoeff}
+                                        finalCoeff={finalCoeff}
+                                        isManualPrice={manuallyEditedPrices.has(item.id)}
+                                      />
+                                    </td>
+                                    <td>
                                       <span className="font-semibold text-gray-900">
-                                        {(() => {
-                                          // Если цена установлена вручную, рассчитываем без коэффициентов
-                                          const isManualPrice = manuallyEditedPrices.has(item.id)
-                                          const displayPrice = isManualPrice ? (item.unitPrice * item.quantity) : adjustedTotalPrice
-                                          return displayPrice.toLocaleString('ru-RU') + ' ₽'
-                                        })()}
+                                        {Math.round(adjustedTotalPrice).toLocaleString('ru-RU')}
                                       </span>
-                                      {manuallyEditedPrices.has(item.id) && (
-                                        <div className="text-xs text-orange-600 mt-1">
-                                          Ручная цена
-                                        </div>
-                                      )}
                                     </td>
                                     <td>
                                       {!isSummaryView && (
@@ -2068,11 +2205,12 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   <table className="w-full">
                     <thead>
                       <tr>
-                        <th>Наименование</th>
-                        <th>Ед. изм.</th>
-                        <th>Кол-во</th>
-                        <th>Цена за ед.</th>
-                        <th>Стоимость</th>
+                        <th className="w-2/5">Наименование</th>
+                        <th className="w-20">Ед. изм.</th>
+                        <th className="w-16">Кол-во</th>
+                        <th className="w-24">Цена за ед.</th>
+                        <th className="w-18">Цена с коэфф.</th>
+                        <th className="w-28">Стоимость</th>
                         <th className="w-10"></th>
                       </tr>
                     </thead>
@@ -2081,13 +2219,13 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                         <tr key={item.id}>
                           <td>
                             {isSummaryView ? (
-                              <span className="text-sm text-gray-900">{item.name}</span>
+                              <WorkNameDisplay name={item.name} className="text-sm text-gray-900" />
                             ) : (
                               <input
                                 type="text"
                                 value={item.name}
                                 onChange={(e) => updateMaterialItem(item.id, 'name', e.target.value)}
-                                className="input-field"
+                                className="input-field work-name-input"
                                 placeholder="Название материала"
                               />
                             )}
@@ -2100,7 +2238,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                 type="text"
                                 value={item.unit}
                                 onChange={(e) => updateMaterialItem(item.id, 'unit', e.target.value)}
-                                className="input-field w-20"
+                                className="input-field w-16"
                                 placeholder="шт"
                               />
                             )}
@@ -2113,7 +2251,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                 type="number"
                                 value={item.quantity}
                                 onChange={(e) => updateMaterialItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                                className="input-field w-24 number-arrows-left"
+                                className="input-field w-16 no-number-arrows"
                                 min="0"
                                 step="1"
                               />
@@ -2121,21 +2259,39 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                           </td>
                           <td>
                             {isSummaryView ? (
-                              <span className="text-sm text-gray-900 font-medium">{item.unitPrice.toLocaleString('ru-RU')} ₽</span>
+                              <span className="text-sm text-gray-900 font-medium">{item.unitPrice.toLocaleString('ru-RU')}</span>
                             ) : (
                               <input
                                 type="number"
                                 value={item.unitPrice}
                                 onChange={(e) => updateMaterialItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                                className="input-field w-32 number-arrows-left"
+                                className="input-field w-24 no-number-arrows"
                                 min="0"
                                 step="1"
                               />
                             )}
                           </td>
                           <td>
+                            {(() => {
+                              const globalCoeff = calculateGlobalCoefficient()
+                              return (
+                                <PriceWithTooltip 
+                                  price={item.unitPrice * globalCoeff}
+                                  item={item}
+                                  normalCoeff={globalCoeff}
+                                  finalCoeff={1}
+                                  isManualPrice={false}
+                                />
+                              )
+                            })()}
+                          </td>
+                          <td>
                             <span className="font-semibold text-gray-900">
-                              {item.totalPrice.toLocaleString('ru-RU')} ₽
+                              {(() => {
+                                // Для материалов пока применяем глобальный коэффициент
+                                const globalCoeff = calculateGlobalCoefficient()
+                                return Math.round(item.unitPrice * globalCoeff * item.quantity).toLocaleString('ru-RU')
+                              })()}
                             </span>
                           </td>
                           <td>
@@ -2191,16 +2347,6 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   <span className="text-gray-700">Материалы:</span>
                   <span className="font-semibold text-gray-900">{totalMaterialsPrice.toLocaleString('ru-RU')} ₽</span>
                 </div>
-                <div className="flex justify-between items-center text-lg">
-                  <span className="text-gray-700">Промежуточная сумма:</span>
-                  <span className="font-semibold text-gray-900">{subtotal.toLocaleString('ru-RU')} ₽</span>
-                </div>
-                {globalCoefficient !== 1 && (
-                  <div className="flex justify-between items-center text-lg">
-                    <span className="text-gray-700">Коэффициент:</span>
-                    <span className="font-semibold text-blue-600">×{globalCoefficient.toFixed(2)}</span>
-                  </div>
-                )}
                 <hr className="border-gray-300" />
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-gray-900">Общая сумма:</span>
@@ -2252,12 +2398,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                     }
                   </p>
 
-                  <button
-                    onClick={() => setShowManualCoefficientModal(true)}
-                    className="w-full mb-6 p-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-                  >
-                    + Добавить коэффициент вручную
-                  </button>
+
 
                   {Object.keys(groupedCoefficients).length === 0 ? (
                     <p className="text-gray-500 text-sm">Коэффициенты не найдены</p>
@@ -2284,28 +2425,24 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                     />
                                     <div className="flex-1">
                                       <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-gray-900">
-                                          {coefficient.name}
-                                        </span>
+                                        <div className="flex items-center">
+                                          <span className="text-sm font-medium text-gray-900 mr-2">
+                                            {coefficient.name}
+                                          </span>
+                                          {/* Визуальная пометка типа коэффициента */}
+                                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                            coefficient.type === 'final' 
+                                              ? 'bg-red-100 text-red-700 border border-red-200' 
+                                              : 'bg-blue-100 text-blue-700 border border-blue-200'
+                                          }`}>
+                                            {coefficient.type === 'final' ? 'Конечный' : 'Обычный'}
+                                          </span>
+                                        </div>
                                         <div className="flex items-center">
                                           <span className="text-sm font-bold text-blue-600 mr-2">
                                             ×{coefficient.value.toFixed(2)}
                                           </span>
-                                          {coefficient.id.startsWith('manual_') && (
-                                            <button
-                                              onClick={(e) => {
-                                                e.preventDefault()
-                                                e.stopPropagation()
-                                                deleteManualCoefficient(coefficient.id)
-                                              }}
-                                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                                              title="Удалить коэффициент"
-                                            >
-                                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                              </svg>
-                                            </button>
-                                          )}
+
                                         </div>
                                       </div>
                                       {coefficient.description && (
@@ -2398,8 +2535,17 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                           </div>
                           <div className="text-xs text-blue-800 space-y-1">
                             {getGlobalCoefficients().map(coef => (
-                              <div key={coef.id} className="flex justify-between">
-                                <span>{coef.name}</span>
+                              <div key={coef.id} className="flex justify-between items-center">
+                                <div className="flex items-center">
+                                  <span className="mr-2">{coef.name}</span>
+                                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                                    coef.type === 'final' 
+                                      ? 'bg-red-200 text-red-800' 
+                                      : 'bg-blue-200 text-blue-800'
+                                  }`}>
+                                    {coef.type === 'final' ? 'К' : 'О'}
+                                  </span>
+                                </div>
                                 <span className="font-semibold">×{coef.value.toFixed(2)}</span>
                               </div>
                             ))}
@@ -2427,8 +2573,17 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                             </div>
                             <div className="text-xs text-green-800 space-y-1">
                               {blockCoeffs.map(coef => (
-                                <div key={coef.id} className="flex justify-between">
-                                  <span>{coef.name}</span>
+                                <div key={coef.id} className="flex justify-between items-center">
+                                  <div className="flex items-center">
+                                    <span className="mr-2">{coef.name}</span>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                                      coef.type === 'final' 
+                                        ? 'bg-red-200 text-red-800' 
+                                        : 'bg-green-200 text-green-800'
+                                    }`}>
+                                      {coef.type === 'final' ? 'К' : 'О'}
+                                    </span>
+                                  </div>
                                   <span className="font-semibold">×{coef.value.toFixed(2)}</span>
                                 </div>
                               ))}
@@ -2533,80 +2688,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         </div>
       )}
 
-      {showManualCoefficientModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Добавить коэффициент вручную</h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Название коэффициента *
-                  </label>
-                  <input
-                    type="text"
-                    value={manualCoefficient.name}
-                    onChange={(e) => setManualCoefficient(prev => ({ ...prev, name: e.target.value }))}
-                    className="input-field w-full"
-                    placeholder="Например: Доплата за сложность"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Значение коэффициента *
-                  </label>
-                  <input
-                    type="number"
-                    value={manualCoefficient.value}
-                    onChange={(e) => setManualCoefficient(prev => ({ ...prev, value: parseFloat(e.target.value) || 1 }))}
-                    className="input-field w-full"
-                    min="0.01"
-                    step="0.01"
-                    placeholder="1.0"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Например: 1.2 (увеличение на 20%) или 0.9 (скидка 10%)
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Описание (необязательно)
-                  </label>
-                  <textarea
-                    value={manualCoefficient.description}
-                    onChange={(e) => setManualCoefficient(prev => ({ ...prev, description: e.target.value }))}
-                    className="input-field w-full"
-                    rows={3}
-                    placeholder="Краткое описание коэффициента"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-3 mt-8">
-                <button
-                  onClick={() => {
-                    setShowManualCoefficientModal(false)
-                    setManualCoefficient({ name: '', value: 1, description: '' })
-                  }}
-                  className="btn-secondary"
-                >
-                  Отмена
-                </button>
-                <button
-                  onClick={createManualCoefficient}
-                  className="btn-primary"
-                  disabled={!manualCoefficient.name.trim() || manualCoefficient.value <= 0}
-                >
-                  Добавить коэффициент
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   )
-} 
+}

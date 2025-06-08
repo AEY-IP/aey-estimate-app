@@ -7,19 +7,19 @@ const dataPath = join(process.cwd(), 'data', 'estimates.json')
 function readEstimatesData() {
   try {
     if (!existsSync(dataPath)) {
-      return { estimates: [] }
+      return []
     }
     const data = readFileSync(dataPath, 'utf8')
     return JSON.parse(data)
   } catch (error) {
     console.error('Ошибка чтения файла смет:', error)
-    return { estimates: [] }
+    return []
   }
 }
 
-function writeEstimatesData(data: any) {
+function writeEstimatesData(estimates: any[]) {
   try {
-    writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8')
+    writeFileSync(dataPath, JSON.stringify(estimates, null, 2), 'utf8')
     return true
   } catch (error) {
     console.error('Ошибка записи файла смет:', error)
@@ -32,8 +32,19 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const data = readEstimatesData()
-    const estimate = data.estimates.find((est: any) => est.id === params.id)
+    const estimates = readEstimatesData()
+    console.log('estimates:', estimates, 'type:', typeof estimates, 'isArray:', Array.isArray(estimates))
+    
+    // Проверяем что estimates является массивом
+    if (!Array.isArray(estimates)) {
+      console.error('estimates не является массивом:', estimates)
+      return NextResponse.json(
+        { error: 'Ошибка структуры данных' },
+        { status: 500 }
+      )
+    }
+    
+    const estimate = estimates.find((est: any) => est.id === params.id)
     
     if (!estimate) {
       return NextResponse.json(
@@ -42,7 +53,7 @@ export async function GET(
       )
     }
     
-    return NextResponse.json({ estimate })
+    return NextResponse.json(estimate)
   } catch (error) {
     console.error('Ошибка получения сметы:', error)
     return NextResponse.json(
@@ -58,9 +69,9 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const data = readEstimatesData()
+    const estimates = readEstimatesData()
     
-    const estimateIndex = data.estimates.findIndex((est: any) => est.id === params.id)
+    const estimateIndex = estimates.findIndex((est: any) => est.id === params.id)
     
     if (estimateIndex === -1) {
       return NextResponse.json(
@@ -71,15 +82,15 @@ export async function PUT(
     
     // Обновляем смету
     const updatedEstimate = {
-      ...data.estimates[estimateIndex],
+      ...estimates[estimateIndex],
       ...body,
       updatedAt: new Date()
     }
     
-    data.estimates[estimateIndex] = updatedEstimate
+    estimates[estimateIndex] = updatedEstimate
     
-    if (writeEstimatesData(data)) {
-      return NextResponse.json({ estimate: updatedEstimate })
+    if (writeEstimatesData(estimates)) {
+      return NextResponse.json(updatedEstimate)
     } else {
       return NextResponse.json(
         { error: 'Ошибка сохранения сметы' },
@@ -100,9 +111,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const data = readEstimatesData()
+    const estimates = readEstimatesData()
     
-    const estimateIndex = data.estimates.findIndex((est: any) => est.id === params.id)
+    const estimateIndex = estimates.findIndex((est: any) => est.id === params.id)
     
     if (estimateIndex === -1) {
       return NextResponse.json(
@@ -112,9 +123,9 @@ export async function DELETE(
     }
     
     // Удаляем смету из массива
-    data.estimates.splice(estimateIndex, 1)
+    estimates.splice(estimateIndex, 1)
     
-    if (writeEstimatesData(data)) {
+    if (writeEstimatesData(estimates)) {
       return NextResponse.json({ message: 'Смета успешно удалена' })
     } else {
       return NextResponse.json(

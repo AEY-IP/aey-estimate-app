@@ -35,6 +35,16 @@ export default function RoomNavigation({
       return
     }
 
+    // Проверяем дублирование названий помещений
+    const existingRoom = rooms.find(room => 
+      room.name.toLowerCase().trim() === newRoomName.toLowerCase().trim()
+    )
+    
+    if (existingRoom) {
+      showToast('warning', 'Помещение уже существует', `Помещение с названием "${newRoomName}" уже добавлено`)
+      return
+    }
+
     setLoading(true)
     try {
       const response = await fetch(`/api/estimates/${estimateId}/rooms`, {
@@ -66,6 +76,17 @@ export default function RoomNavigation({
   const handleRenameRoom = async (roomId: string) => {
     if (!editingName.trim()) {
       showToast('warning', 'Введите новое название помещения')
+      return
+    }
+
+    // Проверяем дублирование названий помещений (исключая текущее)
+    const existingRoom = rooms.find(room => 
+      room.id !== roomId && 
+      room.name.toLowerCase().trim() === editingName.toLowerCase().trim()
+    )
+    
+    if (existingRoom) {
+      showToast('warning', 'Помещение уже существует', `Помещение с названием "${editingName}" уже есть`)
       return
     }
 
@@ -141,7 +162,7 @@ export default function RoomNavigation({
 
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-3">
-      <div className="flex items-center space-x-2 overflow-x-auto">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Сводная смета */}
         <button
           onClick={() => onRoomSelect(null)}

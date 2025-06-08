@@ -1,0 +1,47 @@
+[
+  {
+    "id": "1748968565199",
+    "name": "Клиент тест",
+    "phone": "123321",
+    "address": "123321",
+    "contractNumber": "123321",
+    "notes": "123321",
+    "createdBy": "admin_1",
+    "createdAt": "2025-06-03T16:36:05.199Z",
+    "isActive": true
+  },
+  {
+    "id": "1748985179797",
+    "name": "Ромашка123",
+    "phone": "+.9104303098",
+    "email": "asergey@gmail.com",
+    "address": "Расковой 14",
+    "contractNumber": "1242",
+    "notes": "Заказчик лох ебаный",
+    "createdBy": "admin_1",
+    "createdAt": "2025-06-03T21:12:59.797Z",
+    "isActive": true
+  },
+  {
+    "id": "1749055520439",
+    "name": "Клиент Клиентов",
+    "phone": "+79856170888",
+    "email": "kolabazhan@gmail.com",
+    "address": "Большая Набережная 9",
+    "contractNumber": "123228",
+    "notes": "классный чел",
+    "createdBy": "admin_1",
+    "createdAt": "2025-06-04T16:45:20.439Z",
+    "isActive": true,
+    "updatedAt": "2025-06-08T14:22:03.622Z"
+  },
+  {
+    "id": "1749403895610",
+    "name": "ИП Алексеев",
+    "phone": "888888",
+    "contractNumber": "1212121",
+    "createdBy": "admin_1",
+    "createdAt": "2025-06-08T17:31:35.610Z",
+    "isActive": true
+  }
+]

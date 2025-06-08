@@ -25,6 +25,15 @@ export default function WorksPage() {
   const [editingParameter, setEditingParameter] = useState<RoomParameter | null>(null)
   const [showEditWorkModal, setShowEditWorkModal] = useState(false)
   const [editingWork, setEditingWork] = useState<WorkItem | null>(null)
+  const [showAddWorkModal, setShowAddWorkModal] = useState(false)
+  const [newWork, setNewWork] = useState({
+    name: '',
+    unit: '',
+    basePrice: 0,
+    category: '',
+    description: '',
+    parameterId: ''
+  })
 
   useEffect(() => {
     loadWorks()
@@ -198,7 +207,7 @@ export default function WorksPage() {
           basePrice: editingWork.basePrice,
           description: editingWork.description?.trim() || undefined,
           isActive: editingWork.isActive,
-          parameterId: editingWork.parameterId || null
+          parameterId: editingWork.parameterId || undefined
         }),
       })
 
@@ -214,6 +223,66 @@ export default function WorksPage() {
     } catch (error) {
       console.error('Ошибка обновления работы:', error)
       alert('Ошибка обновления работы')
+    }
+  }
+
+  const addWork = async () => {
+    // Валидация обязательных полей
+    if (!newWork.name.trim()) {
+      alert('Название работы обязательно для заполнения')
+      return
+    }
+
+    if (!newWork.category.trim()) {
+      alert('Категория работы обязательна для заполнения')
+      return
+    }
+
+    if (!newWork.unit.trim()) {
+      alert('Единица измерения обязательна для заполнения')
+      return
+    }
+
+    if (newWork.basePrice < 0) {
+      alert('Базовая цена не может быть отрицательной')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/works', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newWork.name.trim(),
+          category: newWork.category.trim(),
+          unit: newWork.unit.trim(),
+          basePrice: newWork.basePrice,
+          description: newWork.description?.trim() || undefined,
+          parameterId: newWork.parameterId || undefined
+        }),
+      })
+
+      if (response.ok) {
+        setShowAddWorkModal(false)
+        setNewWork({
+          name: '',
+          unit: '',
+          basePrice: 0,
+          category: '',
+          description: '',
+          parameterId: ''
+        })
+        loadWorks()
+        alert('Работа успешно добавлена!')
+      } else {
+        const data = await response.json()
+        alert(`Ошибка создания: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Ошибка создания работы:', error)
+      alert('Ошибка создания работы')
     }
   }
 
@@ -376,6 +445,13 @@ export default function WorksPage() {
             <div className="flex gap-3">
               {activeTab === 'works' ? (
                 <>
+                  <button
+                    onClick={() => setShowAddWorkModal(true)}
+                    className="btn-primary flex items-center"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Добавить работу
+                  </button>
                   <button
                     onClick={downloadTemplate}
                     className="btn-secondary flex items-center"
@@ -1108,6 +1184,146 @@ export default function WorksPage() {
                   className="btn-primary flex-1"
                 >
                   Сохранить
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Work Modal */}
+        {showAddWorkModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Добавить новую работу</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Название работы *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: Покраска стен"
+                    value={newWork.name}
+                    onChange={(e) => setNewWork({ ...newWork, name: e.target.value })}
+                    className="input-field w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Категория *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: Отделочные работы"
+                    value={newWork.category}
+                    onChange={(e) => setNewWork({ ...newWork, category: e.target.value })}
+                    className="input-field w-full"
+                    list="categories-list"
+                  />
+                  <datalist id="categories-list">
+                    {categories.map(category => (
+                      <option key={category} value={category} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Единица измерения *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Например: м²"
+                    value={newWork.unit}
+                    onChange={(e) => setNewWork({ ...newWork, unit: e.target.value })}
+                    className="input-field w-full"
+                    list="units-list"
+                  />
+                  <datalist id="units-list">
+                    <option value="м²">м² (квадратные метры)</option>
+                    <option value="м.п.">м.п. (погонные метры)</option>
+                    <option value="шт.">шт. (штуки)</option>
+                    <option value="м³">м³ (кубические метры)</option>
+                    <option value="кг">кг (килограммы)</option>
+                    <option value="л">л (литры)</option>
+                    <option value="упак.">упак. (упаковки)</option>
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Базовая цена *
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Например: 150"
+                    value={newWork.basePrice}
+                    onChange={(e) => setNewWork({ ...newWork, basePrice: parseFloat(e.target.value) || 0 })}
+                    className="input-field w-full"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Привязка к параметру помещения
+                  </label>
+                  <select
+                    value={newWork.parameterId}
+                    onChange={(e) => setNewWork({ ...newWork, parameterId: e.target.value })}
+                    className="input-field w-full"
+                  >
+                    <option value="">Не привязывать</option>
+                    {roomParameters.map(param => (
+                      <option key={param.id} value={param.id}>
+                        {param.name} ({param.unit})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    При привязке количество будет автоматически подставляться из параметров помещения
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Описание
+                  </label>
+                  <textarea
+                    placeholder="Дополнительное описание работы..."
+                    value={newWork.description}
+                    onChange={(e) => setNewWork({ ...newWork, description: e.target.value })}
+                    className="input-field w-full"
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowAddWorkModal(false)
+                    setNewWork({
+                      name: '',
+                      unit: '',
+                      basePrice: 0,
+                      category: '',
+                      description: '',
+                      parameterId: ''
+                    })
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={addWork}
+                  className="btn-primary flex-1"
+                >
+                  Добавить работу
                 </button>
               </div>
             </div>

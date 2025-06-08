@@ -5,22 +5,22 @@ import { Estimate, Room } from '@/types/estimate'
 
 const dataPath = join(process.cwd(), 'data', 'estimates.json')
 
-function readEstimatesData() {
+function readEstimatesData(): Estimate[] {
   try {
     if (!existsSync(dataPath)) {
-      return { estimates: [] }
+      return []
     }
     const data = readFileSync(dataPath, 'utf8')
     return JSON.parse(data)
   } catch (error) {
     console.error('Ошибка чтения файла смет:', error)
-    return { estimates: [] }
+    return []
   }
 }
 
-function writeEstimatesData(data: any) {
+function writeEstimatesData(estimates: Estimate[]): boolean {
   try {
-    writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8')
+    writeFileSync(dataPath, JSON.stringify(estimates, null, 2), 'utf8')
     return true
   } catch (error) {
     console.error('Ошибка записи файла смет:', error)
@@ -28,7 +28,7 @@ function writeEstimatesData(data: any) {
   }
 }
 
-// POST /api/estimates/[id]/rooms - добавить новое помещение
+// POST /api/estimates/[id]/rooms - добавить помещение
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { name } = await request.json()
@@ -40,8 +40,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       )
     }
     
-    const data = readEstimatesData()
-    const estimate = data.estimates.find((e: Estimate) => e.id === params.id)
+    const estimates = readEstimatesData()
+    const estimate = estimates.find((e: Estimate) => e.id === params.id)
     
     if (!estimate) {
       return NextResponse.json(
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     estimate.rooms.push(newRoom)
     estimate.updatedAt = new Date()
     
-    if (writeEstimatesData(data)) {
+    if (writeEstimatesData(estimates)) {
       return NextResponse.json({ room: newRoom })
     } else {
       return NextResponse.json(
@@ -117,8 +117,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
     
-    const data = readEstimatesData()
-    const estimate = data.estimates.find((e: Estimate) => e.id === params.id)
+    const estimates = readEstimatesData()
+    const estimate = estimates.find((e: Estimate) => e.id === params.id)
     
     if (!estimate) {
       return NextResponse.json(
@@ -145,7 +145,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     estimate.rooms.splice(roomIndex, 1)
     estimate.updatedAt = new Date()
     
-    if (writeEstimatesData(data)) {
+    if (writeEstimatesData(estimates)) {
       return NextResponse.json({ success: true })
     } else {
       return NextResponse.json(
@@ -183,8 +183,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
     
-    const data = readEstimatesData()
-    const estimate = data.estimates.find((e: Estimate) => e.id === params.id)
+    const estimates = readEstimatesData()
+    const estimate = estimates.find((e: Estimate) => e.id === params.id)
     
     if (!estimate) {
       return NextResponse.json(
@@ -214,7 +214,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     room.updatedAt = new Date()
     estimate.updatedAt = new Date()
     
-    if (writeEstimatesData(data)) {
+    if (writeEstimatesData(estimates)) {
       return NextResponse.json({ room })
     } else {
       return NextResponse.json(

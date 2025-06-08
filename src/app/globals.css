@@ -254,8 +254,32 @@
   }
 }
 
-/* Стили для перемещения стрелочек влево от числа */
-.number-arrows-left {
-  direction: rtl;
-  text-align: left;
+/* Скрытие стрелочек в полях ввода чисел */
+.no-number-arrows {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.no-number-arrows::-webkit-outer-spin-button,
+.no-number-arrows::-webkit-inner-spin-button {
+  -webkit-appearance: none; /* Chrome, Safari, Edge */
+  margin: 0;
+}
+
+/* Многострочный текст с ограничением до 2 строк */
+.work-name-display {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  max-height: 2.8em; /* 2 строки * 1.4 line-height */
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Input поле для названий работ */
+.work-name-input {
+  min-height: 2.5rem;
+  line-height: 1.4;
+  padding: 0.5rem;
 } 

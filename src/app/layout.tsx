@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import { ToastProvider } from '@/components/Toast'
+import { AuthProvider } from '@/components/AuthProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,12 +20,14 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className={inter.className}>
-        <ToastProvider>
-          <Navigation />
-          <div className="min-h-screen bg-gray-50">
-            {children}
-          </div>
-        </ToastProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <Navigation />
+            <div className="min-h-screen bg-gray-50">
+              {children}
+            </div>
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   )

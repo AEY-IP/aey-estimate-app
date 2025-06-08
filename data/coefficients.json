@@ -11,14 +11,26 @@
       "updatedAt": "2025-05-28T22:22:55.618Z"
     },
     {
-      "id": "coef_1748462370954",
-      "name": "Откат дизайнерам",
-      "value": 1.1,
-      "description": "Всех умаслить",
+      "id": "coef_1749147382294",
+      "name": "Откат 2",
+      "value": 2,
+      "description": "",
       "category": "Откаты",
+      "type": "final",
       "isActive": true,
-      "createdAt": "2025-05-28T19:59:30.954Z",
-      "updatedAt": "2025-05-28T19:59:30.955Z"
+      "createdAt": "2025-06-05T18:16:22.294Z",
+      "updatedAt": "2025-06-07T18:46:07.859Z"
+    },
+    {
+      "id": "coef_1749321992115",
+      "name": "Тестовый",
+      "value": 100,
+      "description": "",
+      "category": "urgency",
+      "type": "normal",
+      "isActive": true,
+      "createdAt": "2025-06-07T18:46:32.115Z",
+      "updatedAt": "2025-06-07T18:46:32.115Z"
     }
   ],
   "categories": [

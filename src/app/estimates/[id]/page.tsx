@@ -25,13 +25,9 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
       if (response.ok) {
         // Преобразуем строки дат в объекты Date
         const estimateWithDates = {
-          ...data.estimate,
-          createdAt: new Date(data.estimate.createdAt),
-          updatedAt: new Date(data.estimate.updatedAt),
-          client: {
-            ...data.estimate.client,
-            createdAt: new Date(data.estimate.client.createdAt)
-          }
+          ...data,
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt)
         }
         setEstimate(estimateWithDates)
       } else {
@@ -80,13 +76,44 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
     )
   }
 
+  // Проверяем что смета имеет нужную структуру в зависимости от типа
+  if (estimate.type === 'apartment' && (!estimate.worksBlock || !estimate.materialsBlock)) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <p className="text-red-500">Ошибка: неполная структура сметы по квартире</p>
+          <Link href="/estimates" className="btn-primary mt-4">
+            Вернуться к списку смет
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (estimate.type === 'rooms' && (!estimate.summaryWorksBlock || !estimate.summaryMaterialsBlock)) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <p className="text-red-500">Ошибка: неполная структура сметы по помещениям</p>
+          <Link href="/estimates" className="btn-primary mt-4">
+            Вернуться к списку смет
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Получаем блоки работ и материалов в зависимости от типа сметы
+  const worksBlock = estimate.type === 'apartment' ? estimate.worksBlock! : estimate.summaryWorksBlock!
+  const materialsBlock = estimate.type === 'apartment' ? estimate.materialsBlock! : estimate.summaryMaterialsBlock!
+
   // Расчет общей суммы работ из всех блоков
-  const totalWorksPrice = estimate.worksBlock.blocks.reduce((blockSum, block) => {
+  const totalWorksPrice = worksBlock.blocks.reduce((blockSum, block) => {
     const blockTotal = block.items.reduce((itemSum, item) => itemSum + item.totalPrice, 0)
     return blockSum + blockTotal
   }, 0)
   
-  const totalMaterialsPrice = estimate.materialsBlock.items.reduce((sum, item) => sum + item.totalPrice, 0)
+  const totalMaterialsPrice = materialsBlock.items.reduce((sum, item) => sum + item.totalPrice, 0)
   const grandTotal = totalWorksPrice + totalMaterialsPrice
 
   const handleExportPDF = () => {
@@ -128,7 +155,7 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
                 {statusLabels[estimate.status]}
               </span>
             </div>
-            <p className="text-gray-600">Клиент: {estimate.client.name}</p>
+            <p className="text-gray-600">ID клиента: {estimate.clientId}</p>
           </div>
         </div>
         
@@ -144,30 +171,26 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
         </div>
       </div>
 
-      {/* Информация о клиенте */}
+      {/* Информация о смете */}
       <div className="card mb-8">
-        <h2 className="text-xl font-semibold mb-4">Информация о клиенте</h2>
+        <h2 className="text-xl font-semibold mb-4">Информация о смете</h2>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <span className="text-sm font-medium text-gray-500">ФИО:</span>
-            <p className="text-gray-900">{estimate.client.name}</p>
+            <span className="text-sm font-medium text-gray-500">Тип сметы:</span>
+            <p className="text-gray-900">{estimate.type === 'apartment' ? 'По квартире' : 'По помещениям'}</p>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-500">Телефон:</span>
-            <p className="text-gray-900">{estimate.client.phone}</p>
+            <span className="text-sm font-medium text-gray-500">Категория:</span>
+            <p className="text-gray-900">{estimate.category}</p>
           </div>
-          {estimate.client.email && (
-            <div>
-              <span className="text-sm font-medium text-gray-500">Email:</span>
-              <p className="text-gray-900">{estimate.client.email}</p>
-            </div>
-          )}
-          {estimate.client.address && (
-            <div>
-              <span className="text-sm font-medium text-gray-500">Адрес объекта:</span>
-              <p className="text-gray-900">{estimate.client.address}</p>
-            </div>
-          )}
+          <div>
+            <span className="text-sm font-medium text-gray-500">Создана:</span>
+            <p className="text-gray-900">{new Date(estimate.createdAt).toLocaleString('ru-RU')}</p>
+          </div>
+          <div>
+            <span className="text-sm font-medium text-gray-500">Обновлена:</span>
+            <p className="text-gray-900">{new Date(estimate.updatedAt).toLocaleString('ru-RU')}</p>
+          </div>
         </div>
       </div>
 
@@ -178,9 +201,9 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
           <h2 className="text-xl font-semibold">Работы</h2>
         </div>
 
-        {estimate.worksBlock.blocks.length > 0 ? (
+        {worksBlock.blocks.length > 0 ? (
           <div className="space-y-4">
-            {estimate.worksBlock.blocks.map((block, blockIndex) => (
+            {worksBlock.blocks.map((block, blockIndex) => (
               <div key={block.id} className="border border-gray-200 rounded-lg">
                 {/* Заголовок блока */}
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
@@ -266,7 +289,7 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
           <h2 className="text-xl font-semibold">Материалы</h2>
         </div>
 
-        {estimate.materialsBlock.items.length > 0 ? (
+        {materialsBlock.items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -280,7 +303,7 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
                 </tr>
               </thead>
               <tbody>
-                {estimate.materialsBlock.items.map((item, index) => (
+                {materialsBlock.items.map((item, index) => (
                   <tr key={item.id} className="border-b border-gray-100">
                     <td className="py-3 px-4 text-gray-600">{index + 1}</td>
                     <td className="py-3 px-4 font-medium">{item.name}</td>

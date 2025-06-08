@@ -29,7 +29,8 @@ export default function CoefficientsPage() {
     name: '',
     value: '',
     description: '',
-    category: 'custom'
+    category: 'custom',
+    type: 'normal' as 'normal' | 'final'
   })
 
   useEffect(() => {
@@ -101,6 +102,7 @@ export default function CoefficientsPage() {
           value: parseFloat(newCoefficient.value),
           description: newCoefficient.description,
           category: newCoefficient.category,
+          type: newCoefficient.type,
         }),
       })
 
@@ -112,7 +114,8 @@ export default function CoefficientsPage() {
           name: '',
           value: '',
           description: '',
-          category: 'custom'
+          category: 'custom',
+          type: 'normal'
         })
         loadCoefficients()
         loadCategories()
@@ -148,6 +151,7 @@ export default function CoefficientsPage() {
           value: editingCoefficient.value,
           description: editingCoefficient.description,
           category: editingCoefficient.category,
+          type: editingCoefficient.type,
           isActive: editingCoefficient.isActive,
         }),
       })
@@ -373,7 +377,16 @@ export default function CoefficientsPage() {
                   {filteredCoefficients.map((coefficient) => (
                     <tr key={coefficient.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4">
-                        <div className="font-medium text-gray-900">{coefficient.name}</div>
+                        <div className="flex items-center">
+                          <div className="font-medium text-gray-900 mr-2">{coefficient.name}</div>
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            coefficient.type === 'final' 
+                              ? 'bg-red-100 text-red-700 border border-red-200' 
+                              : 'bg-blue-100 text-blue-700 border border-blue-200'
+                          }`}>
+                            {coefficient.type === 'final' ? 'Конечный' : 'Обычный'}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
@@ -509,53 +522,73 @@ export default function CoefficientsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Категория
+                    Тип коэффициента
                   </label>
-                  {showNewCategoryInput ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            createNewCategory()
-                          } else if (e.key === 'Escape') {
-                            cancelNewCategory()
-                          }
-                        }}
-                        className="input-field flex-1"
-                        placeholder="Название новой категории"
-                        autoFocus
-                      />
-                      <button
-                        onClick={createNewCategory}
-                        className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                        title="Создать категорию"
-                      >
-                        ✓
-                      </button>
-                      <button
-                        onClick={cancelNewCategory}
-                        className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                        title="Отменить"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <select
-                      value={newCoefficient.category}
-                      onChange={(e) => handleCategoryChange(e.target.value)}
-                      className="input-field"
-                    >
-                      {Object.entries(getAllAvailableCategories()).map(([key, label]) => (
-                        <option key={key} value={key}>{label}</option>
-                      ))}
-                      <option value="CREATE_NEW">+ Создать новую категорию</option>
-                    </select>
-                  )}
+                  <select
+                    value={newCoefficient.type}
+                    onChange={(e) => setNewCoefficient({ ...newCoefficient, type: e.target.value as 'normal' | 'final' })}
+                    className="input-field"
+                  >
+                    <option value="normal">Обычный</option>
+                    <option value="final">Конечный</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {newCoefficient.type === 'normal' 
+                      ? 'Применяется только к базовым ценам'
+                      : 'Применяется ко всем ценам, включая ручные'
+                    }
+                  </p>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Категория
+                </label>
+                {showNewCategoryInput ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          createNewCategory()
+                        } else if (e.key === 'Escape') {
+                          cancelNewCategory()
+                        }
+                      }}
+                      className="input-field flex-1"
+                      placeholder="Название новой категории"
+                      autoFocus
+                    />
+                    <button
+                      onClick={createNewCategory}
+                      className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                      title="Создать категорию"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={cancelNewCategory}
+                      className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                      title="Отменить"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={newCoefficient.category}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className="input-field"
+                  >
+                    {Object.entries(getAllAvailableCategories()).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                    <option value="CREATE_NEW">+ Создать новую категорию</option>
+                  </select>
+                )}
               </div>
 
               <div>
@@ -640,53 +673,73 @@ export default function CoefficientsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Категория
+                    Тип коэффициента
                   </label>
-                  {showNewCategoryInput ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            createNewCategory()
-                          } else if (e.key === 'Escape') {
-                            cancelNewCategory()
-                          }
-                        }}
-                        className="input-field flex-1"
-                        placeholder="Название новой категории"
-                        autoFocus
-                      />
-                      <button
-                        onClick={createNewCategory}
-                        className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                        title="Создать категорию"
-                      >
-                        ✓
-                      </button>
-                      <button
-                        onClick={cancelNewCategory}
-                        className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                        title="Отменить"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <select
-                      value={editingCoefficient.category}
-                      onChange={(e) => handleCategoryChange(e.target.value, true)}
-                      className="input-field"
-                    >
-                      {Object.entries(getAllAvailableCategories()).map(([key, label]) => (
-                        <option key={key} value={key}>{label}</option>
-                      ))}
-                      <option value="CREATE_NEW">+ Создать новую категорию</option>
-                    </select>
-                  )}
+                  <select
+                    value={editingCoefficient.type || 'normal'}
+                    onChange={(e) => setEditingCoefficient({ ...editingCoefficient, type: e.target.value as 'normal' | 'final' })}
+                    className="input-field"
+                  >
+                    <option value="normal">Обычный</option>
+                    <option value="final">Конечный</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {(editingCoefficient.type || 'normal') === 'normal' 
+                      ? 'Применяется только к базовым ценам'
+                      : 'Применяется ко всем ценам, включая ручные'
+                    }
+                  </p>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Категория
+                </label>
+                {showNewCategoryInput ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          createNewCategory()
+                        } else if (e.key === 'Escape') {
+                          cancelNewCategory()
+                        }
+                      }}
+                      className="input-field flex-1"
+                      placeholder="Название новой категории"
+                      autoFocus
+                    />
+                    <button
+                      onClick={createNewCategory}
+                      className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                      title="Создать категорию"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={cancelNewCategory}
+                      className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                      title="Отменить"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={editingCoefficient.category}
+                    onChange={(e) => handleCategoryChange(e.target.value, true)}
+                    className="input-field"
+                  >
+                    {Object.entries(getAllAvailableCategories()).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                    <option value="CREATE_NEW">+ Создать новую категорию</option>
+                  </select>
+                )}
               </div>
 
               <div>

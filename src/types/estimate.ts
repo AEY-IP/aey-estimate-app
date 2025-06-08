@@ -92,6 +92,9 @@ export interface Client {
 // Типы смет
 export type EstimateType = 'apartment' | 'rooms'
 
+// Категории смет
+export type EstimateCategory = 'main' | 'additional'
+
 // Помещение для смет по помещениям
 export interface Room {
   id: string
@@ -123,7 +126,8 @@ export interface Estimate {
   id: string
   title: string
   type: EstimateType // новое поле для типа сметы
-  client: Client
+  category: EstimateCategory // категория сметы: основная или дополнительные работы
+  clientId: string // ID клиента (ссылка на Client)
   
   // Для смет всей квартиры (type: 'apartment')
   worksBlock?: EstimateWorksBlock
@@ -139,13 +143,14 @@ export interface Estimate {
   totalMaterialsPrice: number
   totalPrice: number
   status: 'draft' | 'in_progress' | 'completed' | 'cancelled'
+  createdBy: string // ID менеджера
   createdAt: Date
   updatedAt: Date
   notes?: string
   discount?: number
   discountType?: 'percentage' | 'fixed'
   coefficients?: string[] // ID выбранных коэффициентов (применяются ко всем помещениям)
-  manualCoefficients?: Coefficient[] // Ручные коэффициенты, привязанные к смете
+
   coefficientSettings?: { [coefficientId: string]: { target: 'global' | string[] } } // Настройки применения коэффициентов
   manualPrices?: string[] // ID позиций работ с ручной ценой (только для apartment)
 }
@@ -177,6 +182,7 @@ export interface Coefficient {
   value: number
   description?: string
   category: 'region' | 'complexity' | 'urgency' | 'season' | 'custom'
+  type: 'normal' | 'final' // обычный или конечный коэффициент
   isActive: boolean
   createdAt: string
   updatedAt: string

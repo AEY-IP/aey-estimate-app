@@ -1,0 +1,21 @@
+[
+  {
+    "id": "admin_1",
+    "username": "admin",
+    "passwordHash": "$2b$10$86/VkZFtyhEUtRSBhs5uxO.l6oK9nitoz03EWQS0sBHChYtwS9HQa",
+    "role": "ADMIN",
+    "name": "Администратор",
+    "phone": "+7 (999) 123-45-67",
+    "createdAt": "2024-01-28T00:00:00.000Z",
+    "isActive": true
+  },
+  {
+    "id": "1748965485850",
+    "username": "ProSlave1",
+    "passwordHash": "$2b$10$qAlg40rxWTO58/T01nWpCuO1LXSmBDC2aUjuaG026HczRrJkQ1/cm",
+    "name": "Курол",
+    "role": "MANAGER",
+    "createdAt": "2025-06-03T15:44:45.850Z",
+    "isActive": true
+  }
+]

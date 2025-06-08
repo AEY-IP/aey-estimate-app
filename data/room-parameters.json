@@ -175,6 +175,15 @@
       "isActive": true,
       "createdAt": "2025-05-28T23:57:55.453Z",
       "updatedAt": "2025-05-28T23:57:55.453Z"
+    },
+    {
+      "id": "param_1749392875960",
+      "name": "Тест",
+      "unit": "м2",
+      "description": "",
+      "isActive": true,
+      "createdAt": "2025-06-08T14:27:55.960Z",
+      "updatedAt": "2025-06-08T14:27:55.960Z"
     }
   ]
 }
