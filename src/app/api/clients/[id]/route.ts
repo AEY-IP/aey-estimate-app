@@ -7,42 +7,53 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log('GET client by ID:', params.id)
+    console.log('=== CLIENT API GET START ===')
+    console.log('Requested client ID:', params.id)
+    console.log('Request URL:', request.url)
     
     // Проверяем аутентификацию
     const sessionCookie = request.cookies.get('auth-session')
+    console.log('Session cookie exists:', !!sessionCookie)
+    
     if (!sessionCookie) {
+      console.log('No session cookie found')
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
     const session = JSON.parse(sessionCookie.value)
-    console.log('Session:', session)
+    console.log('Session data:', { id: session.id, role: session.role, username: session.username })
     
     // Сначала найдём клиента по ID
+    console.log('Searching for client in database...')
     const client = await prisma.client.findUnique({
       where: { 
         id: params.id 
       }
     })
     
-    console.log('Found client:', client)
+    console.log('Database query result:', client ? { id: client.id, name: client.name, isActive: client.isActive, createdBy: client.createdBy } : 'null')
 
     if (!client) {
+      console.log('Client not found in database')
       return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 })
     }
     
     if (!client.isActive) {
+      console.log('Client is inactive')
       return NextResponse.json({ error: 'Клиент деактивирован' }, { status: 404 })
     }
     
     // Проверяем права доступа для менеджеров
     if (session.role === 'MANAGER' && client.createdBy !== session.id) {
+      console.log('Access denied for manager. Session ID:', session.id, 'Client createdBy:', client.createdBy)
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
+    console.log('Client access granted, returning data')
+    console.log('=== CLIENT API GET END ===')
     return NextResponse.json(client)
   } catch (error) {
-    console.error('Error fetching client:', error)
+    console.error('Error in client GET API:', error)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
   }
 }
