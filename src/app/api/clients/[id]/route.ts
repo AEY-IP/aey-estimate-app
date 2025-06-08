@@ -7,6 +7,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('GET client by ID:', params.id)
+    
     // Проверяем аутентификацию
     const sessionCookie = request.cookies.get('auth-session')
     if (!sessionCookie) {
@@ -14,21 +16,28 @@ export async function GET(
     }
 
     const session = JSON.parse(sessionCookie.value)
+    console.log('Session:', session)
     
-    const where: any = {
-      id: params.id,
-      isActive: true
-    }
+    // Сначала найдём клиента по ID
+    const client = await prisma.client.findUnique({
+      where: { 
+        id: params.id 
+      }
+    })
     
-    // Менеджеры видят только своих клиентов
-    if (session.role === 'MANAGER') {
-      where.createdBy = session.id
-    }
-
-    const client = await prisma.client.findFirst({ where })
+    console.log('Found client:', client)
 
     if (!client) {
       return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 })
+    }
+    
+    if (!client.isActive) {
+      return NextResponse.json({ error: 'Клиент деактивирован' }, { status: 404 })
+    }
+    
+    // Проверяем права доступа для менеджеров
+    if (session.role === 'MANAGER' && client.createdBy !== session.id) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     return NextResponse.json(client)
@@ -52,22 +61,24 @@ export async function PUT(
 
     const session = JSON.parse(sessionCookie.value)
     
-    const whereCondition: any = {
-      id: params.id,
-      isActive: true
-    }
-    
-    // Менеджеры могут редактировать только своих клиентов
-    if (session.role === 'MANAGER') {
-      whereCondition.createdBy = session.id
-    }
-
-    const existingClient = await prisma.client.findFirst({ 
-      where: whereCondition 
+    // Сначала найдём клиента по ID
+    const existingClient = await prisma.client.findUnique({
+      where: { 
+        id: params.id 
+      }
     })
 
     if (!existingClient) {
       return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 })
+    }
+    
+    if (!existingClient.isActive) {
+      return NextResponse.json({ error: 'Клиент деактивирован' }, { status: 404 })
+    }
+    
+    // Проверяем права доступа для менеджеров
+    if (session.role === 'MANAGER' && existingClient.createdBy !== session.id) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     const body = await request.json()
