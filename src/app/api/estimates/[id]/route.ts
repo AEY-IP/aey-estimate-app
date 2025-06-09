@@ -172,7 +172,7 @@ export async function PUT(
     // Фильтруем только допустимые поля для модели Estimate
     const allowedFields = [
       'title', 'type', 'category', 'totalWorksPrice', 
-      'totalMaterialsPrice', 'totalPrice', 'status', 'notes', 'clientId'
+      'totalMaterialsPrice', 'totalPrice', 'status', 'notes'
     ]
     
     const updateData: any = {}
