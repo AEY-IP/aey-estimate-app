@@ -1,29 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, writeFileSync } from 'fs'
-import { join } from 'path'
-import { Coefficient } from '@/types/estimate'
+import { PrismaClient } from '@prisma/client'
 
-const dataPath = join(process.cwd(), 'data', 'coefficients.json')
-
-function readCoefficientsData() {
-  try {
-    const data = readFileSync(dataPath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error('Ошибка чтения файла коэффициентов:', error)
-    return { coefficients: [], categories: [] }
-  }
-}
-
-function writeCoefficientsData(data: any) {
-  try {
-    writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8')
-    return true
-  } catch (error) {
-    console.error('Ошибка записи файла коэффициентов:', error)
-    return false
-  }
-}
+const prisma = new PrismaClient()
 
 export async function PUT(
   request: NextRequest,
@@ -31,34 +9,16 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const data = readCoefficientsData()
-    
-    const coefficientIndex = data.coefficients.findIndex(
-      (coef: Coefficient) => coef.id === params.id
-    )
-    
-    if (coefficientIndex === -1) {
-      return NextResponse.json(
-        { error: 'Коэффициент не найден' },
-        { status: 404 }
-      )
-    }
     
     // Обновляем коэффициент
-    data.coefficients[coefficientIndex] = {
-      ...data.coefficients[coefficientIndex],
-      ...body,
-      updatedAt: new Date().toISOString()
-    }
+    const updatedCoefficient = await prisma.coefficient.update({
+      where: { id: params.id },
+      data: {
+        ...body
+      }
+    })
     
-    if (writeCoefficientsData(data)) {
-      return NextResponse.json({ coefficient: data.coefficients[coefficientIndex] })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка сохранения коэффициента' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json({ coefficient: updatedCoefficient })
   } catch (error) {
     console.error('Ошибка обновления коэффициента:', error)
     return NextResponse.json(
@@ -73,30 +33,12 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const data = readCoefficientsData()
-    
-    const coefficientIndex = data.coefficients.findIndex(
-      (coef: Coefficient) => coef.id === params.id
-    )
-    
-    if (coefficientIndex === -1) {
-      return NextResponse.json(
-        { error: 'Коэффициент не найден' },
-        { status: 404 }
-      )
-    }
-    
     // Удаляем коэффициент
-    data.coefficients.splice(coefficientIndex, 1)
+    await prisma.coefficient.delete({
+      where: { id: params.id }
+    })
     
-    if (writeCoefficientsData(data)) {
-      return NextResponse.json({ success: true })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка удаления коэффициента' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Ошибка удаления коэффициента:', error)
     return NextResponse.json(

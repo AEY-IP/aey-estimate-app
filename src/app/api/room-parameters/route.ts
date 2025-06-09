@@ -1,37 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { join } from 'path'
-import { RoomParameter } from '@/types/estimate'
+import { PrismaClient } from '@prisma/client'
 
-const dataPath = join(process.cwd(), 'data', 'room-parameters.json')
-
-function readRoomParametersData() {
-  try {
-    if (!existsSync(dataPath)) {
-      return { parameters: [] }
-    }
-    const data = readFileSync(dataPath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error('Ошибка чтения файла параметров помещения:', error)
-    return { parameters: [] }
-  }
-}
-
-function writeRoomParametersData(data: any) {
-  try {
-    writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8')
-    return true
-  } catch (error) {
-    console.error('Ошибка записи файла параметров помещения:', error)
-    return false
-  }
-}
+const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
   try {
-    const data = readRoomParametersData()
-    return NextResponse.json({ parameters: data.parameters })
+    const parameters = await prisma.roomParameter.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' }
+    })
+    
+    return NextResponse.json({ parameters })
   } catch (error) {
     console.error('Ошибка получения параметров помещения:', error)
     return NextResponse.json(
@@ -43,38 +22,24 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { name, unit, description } = body
+    const { name, description } = await request.json()
     
-    if (!name || !unit) {
+    if (!name?.trim()) {
       return NextResponse.json(
-        { error: 'Обязательные поля: name, unit' },
+        { error: 'Название параметра обязательно' },
         { status: 400 }
       )
     }
     
-    const data = readRoomParametersData()
+    const parameter = await prisma.roomParameter.create({
+      data: {
+        name: name.trim(),
+        description: description?.trim() || '',
+        isActive: true
+      }
+    })
     
-    const newParameter: RoomParameter = {
-      id: `param_${Date.now()}`,
-      name,
-      unit,
-      description: description || '',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-    
-    data.parameters.push(newParameter)
-    
-    if (writeRoomParametersData(data)) {
-      return NextResponse.json({ parameter: newParameter })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка сохранения параметра' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json({ parameter })
   } catch (error) {
     console.error('Ошибка создания параметра помещения:', error)
     return NextResponse.json(

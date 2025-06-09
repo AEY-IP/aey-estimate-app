@@ -1,29 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { join } from 'path'
+import { PrismaClient } from '@prisma/client'
 
-const dataPath = join(process.cwd(), 'data', 'room-parameters.json')
+const prisma = new PrismaClient()
 
-function readRoomParametersData() {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    if (!existsSync(dataPath)) {
-      return { parameters: [] }
+    const parameter = await prisma.roomParameter.findUnique({
+      where: { id: params.id }
+    })
+    
+    if (!parameter) {
+      return NextResponse.json(
+        { error: 'Параметр не найден' },
+        { status: 404 }
+      )
     }
-    const data = readFileSync(dataPath, 'utf8')
-    return JSON.parse(data)
+    
+    return NextResponse.json({ parameter })
   } catch (error) {
-    console.error('Ошибка чтения файла параметров помещения:', error)
-    return { parameters: [] }
-  }
-}
-
-function writeRoomParametersData(data: any) {
-  try {
-    writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8')
-    return true
-  } catch (error) {
-    console.error('Ошибка записи файла параметров помещения:', error)
-    return false
+    console.error('Ошибка получения параметра помещения:', error)
+    return NextResponse.json(
+      { error: 'Ошибка получения параметра помещения' },
+      { status: 500 }
+    )
   }
 }
 
@@ -32,38 +34,22 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json()
-    const data = readRoomParametersData()
+    const { name, description, isActive } = await request.json()
     
-    const parameterIndex = data.parameters.findIndex((param: any) => param.id === params.id)
+    const updatedParameter = await prisma.roomParameter.update({
+      where: { id: params.id },
+      data: {
+        ...(name && { name: name.trim() }),
+        ...(description !== undefined && { description: description?.trim() || '' }),
+        ...(isActive !== undefined && { isActive })
+      }
+    })
     
-    if (parameterIndex === -1) {
-      return NextResponse.json(
-        { error: 'Параметр не найден' },
-        { status: 404 }
-      )
-    }
-    
-    const updatedParameter = {
-      ...data.parameters[parameterIndex],
-      ...body,
-      updatedAt: new Date()
-    }
-    
-    data.parameters[parameterIndex] = updatedParameter
-    
-    if (writeRoomParametersData(data)) {
-      return NextResponse.json({ parameter: updatedParameter })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка сохранения параметра' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json({ parameter: updatedParameter })
   } catch (error) {
-    console.error('Ошибка обновления параметра:', error)
+    console.error('Ошибка обновления параметра помещения:', error)
     return NextResponse.json(
-      { error: 'Ошибка обновления параметра' },
+      { error: 'Ошибка обновления параметра помещения' },
       { status: 500 }
     )
   }
@@ -74,31 +60,15 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const data = readRoomParametersData()
+    await prisma.roomParameter.delete({
+      where: { id: params.id }
+    })
     
-    const parameterIndex = data.parameters.findIndex((param: any) => param.id === params.id)
-    
-    if (parameterIndex === -1) {
-      return NextResponse.json(
-        { error: 'Параметр не найден' },
-        { status: 404 }
-      )
-    }
-    
-    data.parameters.splice(parameterIndex, 1)
-    
-    if (writeRoomParametersData(data)) {
-      return NextResponse.json({ message: 'Параметр успешно удален' })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка удаления параметра' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Ошибка удаления параметра:', error)
+    console.error('Ошибка удаления параметра помещения:', error)
     return NextResponse.json(
-      { error: 'Ошибка удаления параметра' },
+      { error: 'Ошибка удаления параметра помещения' },
       { status: 500 }
     )
   }

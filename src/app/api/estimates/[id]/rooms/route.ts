@@ -1,36 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { join } from 'path'
-import { Estimate, Room } from '@/types/estimate'
+import { PrismaClient } from '@prisma/client'
+import { cookies } from 'next/headers'
 
-const dataPath = join(process.cwd(), 'data', 'estimates.json')
+const prisma = new PrismaClient()
 
-function readEstimatesData(): Estimate[] {
-  try {
-    if (!existsSync(dataPath)) {
-      return []
-    }
-    const data = readFileSync(dataPath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error('Ошибка чтения файла смет:', error)
-    return []
+// Проверка авторизации
+async function checkAuth() {
+  const cookieStore = cookies()
+  const sessionCookie = cookieStore.get('auth-session')
+  
+  if (!sessionCookie) {
+    return null
   }
-}
-
-function writeEstimatesData(estimates: Estimate[]): boolean {
+  
   try {
-    writeFileSync(dataPath, JSON.stringify(estimates, null, 2), 'utf8')
-    return true
+    const sessionData = JSON.parse(sessionCookie.value)
+    return sessionData
   } catch (error) {
-    console.error('Ошибка записи файла смет:', error)
-    return false
+    return null
   }
 }
 
 // POST /api/estimates/[id]/rooms - добавить помещение
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    // Проверяем авторизацию
+    const session = await checkAuth()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
     const { name } = await request.json()
     
     if (!name?.trim()) {
@@ -40,8 +42,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       )
     }
     
-    const estimates = readEstimatesData()
-    const estimate = estimates.find((e: Estimate) => e.id === params.id)
+    // Проверяем что смета существует и имеет тип "rooms"
+    const estimate = await prisma.estimate.findUnique({
+      where: { id: params.id }
+    })
     
     if (!estimate) {
       return NextResponse.json(
@@ -57,18 +61,36 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       )
     }
     
-    const newRoom: Room = {
-      id: `room_${Date.now()}`,
-      name: name.trim(),
+    // Создаём новое помещение
+    const newRoom = await prisma.estimateRoom.create({
+      data: {
+        name: name.trim(),
+        estimateId: params.id,
+        totalWorksPrice: 0,
+        totalMaterialsPrice: 0,
+        totalPrice: 0
+      }
+    })
+    
+    // Обновляем время изменения сметы
+    await prisma.estimate.update({
+      where: { id: params.id },
+      data: { updatedAt: new Date() }
+    })
+    
+    // Формируем полную структуру помещения как ожидает фронтенд
+    const fullRoom = {
+      id: newRoom.id,
+      name: newRoom.name,
       worksBlock: {
-        id: `works_${Date.now()}`,
-        title: `Работы - ${name.trim()}`,
+        id: `works_${newRoom.id}`,
+        title: `Работы - ${newRoom.name}`,
         blocks: [],
         totalPrice: 0
       },
       materialsBlock: {
-        id: `materials_${Date.now()}`,
-        title: `Материалы - ${name.trim()}`,
+        id: `materials_${newRoom.id}`,
+        title: `Материалы - ${newRoom.name}`,
         items: [],
         totalPrice: 0
       },
@@ -76,25 +98,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       totalMaterialsPrice: 0,
       totalPrice: 0,
       manualPrices: [],
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: newRoom.createdAt,
+      updatedAt: newRoom.updatedAt
     }
     
-    if (!estimate.rooms) {
-      estimate.rooms = []
-    }
-    
-    estimate.rooms.push(newRoom)
-    estimate.updatedAt = new Date()
-    
-    if (writeEstimatesData(estimates)) {
-      return NextResponse.json({ room: newRoom })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка сохранения помещения' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json({ room: fullRoom })
   } catch (error) {
     console.error('Ошибка создания помещения:', error)
     return NextResponse.json(
@@ -107,6 +115,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 // DELETE /api/estimates/[id]/rooms?roomId=xxx - удалить помещение
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    // Проверяем авторизацию
+    const session = await checkAuth()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
     const url = new URL(request.url)
     const roomId = url.searchParams.get('roomId')
     
@@ -117,8 +134,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
     
-    const estimates = readEstimatesData()
-    const estimate = estimates.find((e: Estimate) => e.id === params.id)
+    // Проверяем что смета и помещение существуют
+    const estimate = await prisma.estimate.findUnique({
+      where: { id: params.id }
+    })
     
     if (!estimate) {
       return NextResponse.json(
@@ -127,32 +146,32 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
 
-    if (estimate.type !== 'rooms' || !estimate.rooms) {
-      return NextResponse.json(
-        { error: 'Неверный тип сметы или отсутствуют помещения' },
-        { status: 400 }
-      )
-    }
+    const room = await prisma.estimateRoom.findFirst({
+      where: { 
+        id: roomId,
+        estimateId: params.id
+      }
+    })
     
-    const roomIndex = estimate.rooms.findIndex((room: Room) => room.id === roomId)
-    if (roomIndex === -1) {
+    if (!room) {
       return NextResponse.json(
         { error: 'Помещение не найдено' },
         { status: 404 }
       )
     }
     
-    estimate.rooms.splice(roomIndex, 1)
-    estimate.updatedAt = new Date()
+    // Удаляем помещение (связанные работы и материалы удалятся автоматически через CASCADE)
+    await prisma.estimateRoom.delete({
+      where: { id: roomId }
+    })
     
-    if (writeEstimatesData(estimates)) {
-      return NextResponse.json({ success: true })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка удаления помещения' },
-        { status: 500 }
-      )
-    }
+    // Обновляем время изменения сметы
+    await prisma.estimate.update({
+      where: { id: params.id },
+      data: { updatedAt: new Date() }
+    })
+    
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Ошибка удаления помещения:', error)
     return NextResponse.json(
@@ -165,6 +184,15 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 // PUT /api/estimates/[id]/rooms?roomId=xxx - переименовать помещение
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    // Проверяем авторизацию
+    const session = await checkAuth()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
     const url = new URL(request.url)
     const roomId = url.searchParams.get('roomId')
     const { name } = await request.json()
@@ -183,8 +211,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
     
-    const estimates = readEstimatesData()
-    const estimate = estimates.find((e: Estimate) => e.id === params.id)
+    // Проверяем что смета и помещение существуют
+    const estimate = await prisma.estimate.findUnique({
+      where: { id: params.id }
+    })
     
     if (!estimate) {
       return NextResponse.json(
@@ -193,14 +223,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    if (estimate.type !== 'rooms' || !estimate.rooms) {
-      return NextResponse.json(
-        { error: 'Неверный тип сметы или отсутствуют помещения' },
-        { status: 400 }
-      )
-    }
+    const room = await prisma.estimateRoom.findFirst({
+      where: { 
+        id: roomId,
+        estimateId: params.id
+      }
+    })
     
-    const room = estimate.rooms.find((room: Room) => room.id === roomId)
     if (!room) {
       return NextResponse.json(
         { error: 'Помещение не найдено' },
@@ -208,20 +237,46 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
     
-    room.name = name.trim()
-    room.worksBlock.title = `Работы - ${name.trim()}`
-    room.materialsBlock.title = `Материалы - ${name.trim()}`
-    room.updatedAt = new Date()
-    estimate.updatedAt = new Date()
+    // Обновляем название помещения
+    const updatedRoom = await prisma.estimateRoom.update({
+      where: { id: roomId },
+      data: { 
+        name: name.trim(),
+        updatedAt: new Date()
+      }
+    })
     
-    if (writeEstimatesData(estimates)) {
-      return NextResponse.json({ room })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка переименования помещения' },
-        { status: 500 }
-      )
+    // Обновляем время изменения сметы
+    await prisma.estimate.update({
+      where: { id: params.id },
+      data: { updatedAt: new Date() }
+    })
+    
+    // Формируем полную структуру помещения как ожидает фронтенд
+    const fullRoom = {
+      id: updatedRoom.id,
+      name: updatedRoom.name,
+      worksBlock: {
+        id: `works_${updatedRoom.id}`,
+        title: `Работы - ${updatedRoom.name}`,
+        blocks: [],
+        totalPrice: 0
+      },
+      materialsBlock: {
+        id: `materials_${updatedRoom.id}`,
+        title: `Материалы - ${updatedRoom.name}`,
+        items: [],
+        totalPrice: 0
+      },
+      totalWorksPrice: updatedRoom.totalWorksPrice,
+      totalMaterialsPrice: updatedRoom.totalMaterialsPrice,
+      totalPrice: updatedRoom.totalPrice,
+      manualPrices: [],
+      createdAt: updatedRoom.createdAt,
+      updatedAt: updatedRoom.updatedAt
     }
+    
+    return NextResponse.json({ room: fullRoom })
   } catch (error) {
     console.error('Ошибка переименования помещения:', error)
     return NextResponse.json(
