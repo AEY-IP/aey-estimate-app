@@ -1,29 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { join } from 'path'
+import { PrismaClient } from '@prisma/client'
+import { cookies } from 'next/headers'
 
-const dataPath = join(process.cwd(), 'data', 'estimates.json')
+const prisma = new PrismaClient()
 
-function readEstimatesData() {
-  try {
-    if (!existsSync(dataPath)) {
-      return []
-    }
-    const data = readFileSync(dataPath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error('Ошибка чтения файла смет:', error)
-    return []
+// Проверка авторизации
+async function checkAuth() {
+  const cookieStore = cookies()
+  const sessionCookie = cookieStore.get('auth-session')
+  
+  if (!sessionCookie) {
+    return null
   }
-}
-
-function writeEstimatesData(estimates: any[]) {
+  
   try {
-    writeFileSync(dataPath, JSON.stringify(estimates, null, 2), 'utf8')
-    return true
+    const sessionData = JSON.parse(sessionCookie.value)
+    return sessionData
   } catch (error) {
-    console.error('Ошибка записи файла смет:', error)
-    return false
+    return null
   }
 }
 
@@ -32,26 +26,52 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const estimates = readEstimatesData()
-    console.log('estimates:', estimates, 'type:', typeof estimates, 'isArray:', Array.isArray(estimates))
-    
-    // Проверяем что estimates является массивом
-    if (!Array.isArray(estimates)) {
-      console.error('estimates не является массивом:', estimates)
+    // Проверяем авторизацию
+    const session = await checkAuth()
+    if (!session) {
       return NextResponse.json(
-        { error: 'Ошибка структуры данных' },
-        { status: 500 }
+        { error: 'Не авторизован' },
+        { status: 401 }
       )
     }
-    
-    const estimate = estimates.find((est: any) => est.id === params.id)
-    
+
+    console.log('=== ESTIMATE API GET START ===')
+    console.log('Requested estimate ID:', params.id)
+    console.log('Session data:', session)
+
+    // Ищем смету в базе данных
+    const estimate = await prisma.estimate.findUnique({
+      where: { id: params.id },
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        creator: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        rooms: true,
+        coefficients: true
+      }
+    })
+
+    console.log('Database query result:', estimate ? { id: estimate.id, title: estimate.title } : 'null')
+
     if (!estimate) {
+      console.log('Estimate not found')
       return NextResponse.json(
         { error: 'Смета не найдена' },
         { status: 404 }
       )
     }
+
+    console.log('Estimate access granted, returning data')
+    console.log('=== ESTIMATE API GET END ===')
     
     return NextResponse.json(estimate)
   } catch (error) {
@@ -68,12 +88,23 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Проверяем авторизацию
+    const session = await checkAuth()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
-    const estimates = readEstimatesData()
     
-    const estimateIndex = estimates.findIndex((est: any) => est.id === params.id)
+    // Проверяем что смета существует
+    const existingEstimate = await prisma.estimate.findUnique({
+      where: { id: params.id }
+    })
     
-    if (estimateIndex === -1) {
+    if (!existingEstimate) {
       return NextResponse.json(
         { error: 'Смета не найдена' },
         { status: 404 }
@@ -81,22 +112,31 @@ export async function PUT(
     }
     
     // Обновляем смету
-    const updatedEstimate = {
-      ...estimates[estimateIndex],
-      ...body,
-      updatedAt: new Date()
-    }
+    const updatedEstimate = await prisma.estimate.update({
+      where: { id: params.id },
+      data: {
+        ...body,
+        updatedAt: new Date()
+      },
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        creator: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        rooms: true,
+        coefficients: true
+      }
+    })
     
-    estimates[estimateIndex] = updatedEstimate
-    
-    if (writeEstimatesData(estimates)) {
-      return NextResponse.json(updatedEstimate)
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка сохранения сметы' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json(updatedEstimate)
   } catch (error) {
     console.error('Ошибка обновления сметы:', error)
     return NextResponse.json(
@@ -111,28 +151,33 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const estimates = readEstimatesData()
+    // Проверяем авторизацию
+    const session = await checkAuth()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
     
-    const estimateIndex = estimates.findIndex((est: any) => est.id === params.id)
+    // Проверяем что смета существует
+    const existingEstimate = await prisma.estimate.findUnique({
+      where: { id: params.id }
+    })
     
-    if (estimateIndex === -1) {
+    if (!existingEstimate) {
       return NextResponse.json(
         { error: 'Смета не найдена' },
         { status: 404 }
       )
     }
     
-    // Удаляем смету из массива
-    estimates.splice(estimateIndex, 1)
+    // Удаляем смету
+    await prisma.estimate.delete({
+      where: { id: params.id }
+    })
     
-    if (writeEstimatesData(estimates)) {
-      return NextResponse.json({ message: 'Смета успешно удалена' })
-    } else {
-      return NextResponse.json(
-        { error: 'Ошибка удаления сметы' },
-        { status: 500 }
-      )
-    }
+    return NextResponse.json({ message: 'Смета успешно удалена' })
   } catch (error) {
     console.error('Ошибка удаления сметы:', error)
     return NextResponse.json(
