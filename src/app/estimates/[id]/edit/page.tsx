@@ -1728,7 +1728,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                           )}
                           
                           {linkedWorksCount > 0 && currentValue > 0 && (
-                            <div className="mt-2 text-xs text-green-700 bg-green-100 px-2 py-1 rounded">
+                            <div className="mt-2 text-xs text-teal-700 bg-teal-100 px-2 py-1 rounded">
                               ✓ Обновлено количество в {linkedWorksCount} работах
                             </div>
                           )}
@@ -2275,7 +2275,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             <div className="card fade-in">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
                     <Package className="h-5 w-5 text-white" />
                   </div>
                   <h2 className="text-xl font-semibold text-gray-900">Материалы</h2>
@@ -2440,7 +2440,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                     {!isSummaryView && (
                       <button
                         onClick={addMaterialItem}
-                        className="text-green-600 hover:text-green-800 font-medium"
+                        className="text-teal-600 hover:text-teal-800 font-medium"
                       >
                         Добавить первый материал
                       </button>
@@ -2720,14 +2720,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                         if (blockCoeffs.length === 0) return null
                         
                         return (
-                          <div key={block.id} className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
+                          <div key={block.id} className="p-4 bg-gradient-to-r from-teal-50 to-teal-100 rounded-xl border border-teal-200">
                             <div className="flex items-center mb-3">
-                              <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                              <span className="text-sm font-semibold text-green-900">
+                                                              <CheckCircle className="h-4 w-4 text-teal-600 mr-2" />
+                                                              <span className="text-sm font-semibold text-teal-900">
                                 {block.title}
                               </span>
                             </div>
-                            <div className="text-xs text-green-800 space-y-1">
+                                                          <div className="text-xs text-teal-800 space-y-1">
                               {blockCoeffs.map(coef => (
                                 <div key={coef.id} className="flex justify-between items-center">
                                   <div className="flex items-center">
@@ -2735,7 +2735,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                     <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                                       coef.type === 'final' 
                                         ? 'bg-red-200 text-red-800' 
-                                        : 'bg-green-200 text-green-800'
+                                        : 'bg-teal-200 text-teal-800'
                                     }`}>
                                       {coef.type === 'final' ? 'К' : 'О'}
                                     </span>
@@ -2743,7 +2743,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                   <span className="font-semibold">×{coef.value.toFixed(2)}</span>
                                 </div>
                               ))}
-                              <hr className="my-2 border-green-300" />
+                              <hr className="my-2 border-teal-300" />
                               <div className="flex justify-between font-bold">
                                 <span>Итого:</span>
                                 <span>×{(calculateNormalCoefficients(block.id) * calculateFinalCoefficients(block.id)).toFixed(2)}</span>

@@ -24,12 +24,12 @@ export const StatusBadge = ({
       },
       in_progress: {
         label: 'В работе',
-        color: 'bg-blue-100 text-blue-700 border-blue-200',
+        color: 'bg-pink-100 text-pink-700 border-pink-200',
         icon: Clock
       },
       completed: {
         label: 'Завершено',
-        color: 'bg-green-100 text-green-700 border-green-200',
+        color: 'bg-teal-100 text-teal-700 border-teal-200',
         icon: CheckCircle
       },
       cancelled: {
@@ -39,7 +39,7 @@ export const StatusBadge = ({
       },
       active: {
         label: 'Активно',
-        color: 'bg-green-100 text-green-700 border-green-200',
+        color: 'bg-teal-100 text-teal-700 border-teal-200',
         icon: CheckCircle
       },
       inactive: {

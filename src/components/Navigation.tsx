@@ -89,7 +89,7 @@ const Navigation = () => {
         {/* Основная панель навигации */}
         <div className="flex items-center justify-between py-3">
           <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center">
               <Calculator className="h-4 w-4 text-white" />
             </div>
             <div className="hidden sm:block">
@@ -108,7 +108,7 @@ const Navigation = () => {
                 href="/clients" 
                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                   isActive('/clients') 
-                    ? 'bg-blue-100 text-blue-700 shadow-sm' 
+                    ? 'bg-pink-100 text-pink-700 shadow-sm' 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
@@ -123,7 +123,7 @@ const Navigation = () => {
                     href="/works" 
                     className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive('/works') 
-                        ? 'bg-green-100 text-green-700 shadow-sm' 
+                        ? 'bg-teal-100 text-teal-700 shadow-sm' 
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
@@ -167,7 +167,7 @@ const Navigation = () => {
                     </p>
                   </div>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold ${
-                    session.user.role === 'ADMIN' ? 'bg-red-500' : 'bg-blue-500'
+                    session.user.role === 'ADMIN' ? 'bg-red-500' : 'bg-pink-500'
                   }`}>
                     {session.user.name.charAt(0).toUpperCase()}
                   </div>
@@ -201,7 +201,7 @@ const Navigation = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                   isActive('/clients') 
-                    ? 'bg-blue-100 text-blue-700 shadow-sm' 
+                    ? 'bg-pink-100 text-pink-700 shadow-sm' 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
@@ -217,7 +217,7 @@ const Navigation = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive('/works') 
-                        ? 'bg-green-100 text-green-700 shadow-sm' 
+                        ? 'bg-teal-100 text-teal-700 shadow-sm' 
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >

@@ -59,14 +59,14 @@ export default function HomePage() {
 
             {/* Feature 2 */}
             <div className="card group hover:scale-105 transition-all duration-300 fade-in" style={{animationDelay: '0.1s'}}>
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
+              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
                 <Wrench className="h-6 w-6 text-white" />
               </div>
               <h4 className="text-xl font-semibold text-gray-900 mb-3">Справочник работ</h4>
               <p className="text-gray-600 leading-relaxed">
                 Обширная база данных работ с возможностью импорта из CSV и гибкой категоризацией
               </p>
-              <Link href="/works" className="inline-flex items-center text-green-500 hover:text-green-600 mt-4 font-medium">
+              <Link href="/works" className="inline-flex items-center text-teal-500 hover:text-teal-600 mt-4 font-medium">
                 Открыть справочник
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

@@ -260,7 +260,7 @@ export default function NewEstimatePage() {
           {/* Тип сметы */}
           <div className="card mb-8">
             <div className="flex items-center mb-6">
-              <Building className="h-6 w-6 text-green-600 mr-3" />
+              <Building className="h-6 w-6 text-teal-600 mr-3" />
               <h2 className="text-xl font-semibold">Тип сметы</h2>
             </div>
             
@@ -311,7 +311,7 @@ export default function NewEstimatePage() {
 
                 <label className={`relative cursor-pointer rounded-xl border-2 p-6 transition-all duration-200 ${
                   estimateType === 'rooms' 
-                    ? 'border-green-500 bg-green-50' 
+                    ? 'border-teal-500 bg-teal-50' 
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                 }`}>
                   <input
@@ -324,16 +324,16 @@ export default function NewEstimatePage() {
                   />
                   <div className="flex items-center">
                     <Building className={`h-6 w-6 mr-3 ${
-                      estimateType === 'rooms' ? 'text-green-600' : 'text-gray-400'
+                      estimateType === 'rooms' ? 'text-teal-600' : 'text-gray-400'
                     }`} />
                     <div>
                       <h3 className={`font-semibold ${
-                        estimateType === 'rooms' ? 'text-green-900' : 'text-gray-900'
+                                                  estimateType === 'rooms' ? 'text-teal-900' : 'text-gray-900'
                       }`}>
                         Смета по помещениям
                       </h3>
                       <p className={`text-sm mt-1 ${
-                        estimateType === 'rooms' ? 'text-green-700' : 'text-gray-600'
+                                                  estimateType === 'rooms' ? 'text-teal-700' : 'text-gray-600'
                       }`}>
                         Отдельная смета для каждого помещения + сводная
                       </p>
@@ -341,7 +341,7 @@ export default function NewEstimatePage() {
                   </div>
                   {estimateType === 'rooms' && (
                     <div className="absolute top-2 right-2">
-                      <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center">
+                      <div className="w-4 h-4 bg-teal-600 rounded-full flex items-center justify-center">
                         <div className="w-2 h-2 bg-white rounded-full"></div>
                       </div>
                     </div>
@@ -362,9 +362,9 @@ export default function NewEstimatePage() {
               )}
               
               {estimateType === 'rooms' && (
-                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="text-sm font-semibold text-green-900 mb-2">Смета по помещениям</h4>
-                  <ul className="text-sm text-green-800 space-y-1">
+                <div className="mt-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">
+                  <h4 className="text-sm font-semibold text-teal-900 mb-2">Смета по помещениям</h4>
+                  <ul className="text-sm text-teal-800 space-y-1">
                     <li>• Детализация по каждому помещению</li>
                     <li>• Автоматическая сводная смета</li>
                     <li>• Централизованное управление коэффициентами</li>

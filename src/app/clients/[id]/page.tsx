@@ -127,7 +127,7 @@ export default function ClientDetailPage() {
       <div className="container mx-auto px-6 py-12">
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-500">Загрузка клиента...</p>
           </div>
         </div>
@@ -189,8 +189,8 @@ export default function ClientDetailPage() {
         <div className="lg:col-span-1">
           <div className="card">
             <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
-                <Building2 className="h-6 w-6 text-blue-600" />
+                        <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mr-4">
+            <Building2 className="h-6 w-6 text-pink-600" />
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">Информация о клиенте</h2>
@@ -262,7 +262,7 @@ export default function ClientDetailPage() {
           <div className="card">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
-                <Calculator className="h-6 w-6 text-blue-600 mr-3" />
+                <Calculator className="h-6 w-6 text-pink-600 mr-3" />
                 <h2 className="text-xl font-semibold text-gray-900">Сметы</h2>
               </div>
               <Link
@@ -276,7 +276,7 @@ export default function ClientDetailPage() {
 
             {estimatesLoading ? (
               <div className="text-center py-12">
-                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-gray-500">Загрузка смет...</p>
               </div>
             ) : estimates.length === 0 ? (
@@ -385,7 +385,7 @@ export default function ClientDetailPage() {
                           </Link>
                           <Link
                             href={`/estimates/${estimate.id}/edit`}
-                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
                             title="Редактировать"
                           >
                             <Edit2 className="h-4 w-4" />

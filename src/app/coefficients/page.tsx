@@ -406,7 +406,7 @@ export default function CoefficientsPage() {
                           onClick={() => toggleCoefficientStatus(coefficient.id)}
                           className={`px-3 py-1 rounded-full text-xs font-medium ${
                             coefficient.isActive
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-teal-100 text-teal-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}
                         >
@@ -452,11 +452,11 @@ export default function CoefficientsPage() {
           <div className="text-2xl font-bold text-blue-600">{coefficients.length}</div>
           <div className="text-sm text-blue-600">Всего коэффициентов</div>
         </div>
-        <div className="bg-green-50 p-4 rounded-lg">
-          <div className="text-2xl font-bold text-green-600">
-            {coefficients.filter(c => c.isActive).length}
-          </div>
-          <div className="text-sm text-green-600">Активных</div>
+                      <div className="bg-teal-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-teal-600">
+                  {coefficients.filter(c => c.isActive).length}
+                </div>
+                <div className="text-sm text-teal-600">Активных</div>
         </div>
         <div className="bg-yellow-50 p-4 rounded-lg">
           <div className="text-2xl font-bold text-yellow-600">

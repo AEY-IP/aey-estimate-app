@@ -202,7 +202,7 @@ export default function RoomNavigation({
                 <button
                   onClick={() => handleRenameRoom(room.id)}
                   disabled={loading}
-                  className="ml-1 p-1 text-green-600 hover:text-green-700 disabled:opacity-50"
+                  className="ml-1 p-1 text-teal-600 hover:text-teal-700 disabled:opacity-50"
                 >
                   <Check className="h-4 w-4" />
                 </button>
@@ -221,7 +221,7 @@ export default function RoomNavigation({
                   onClick={() => onRoomSelect(room.id)}
                   className={`px-3 py-2 rounded-l-lg text-sm font-medium transition-all duration-200 ${
                     activeRoomId === room.id
-                      ? 'bg-green-600 text-white'
+                      ? 'bg-teal-600 text-white'
                       : 'text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -269,7 +269,7 @@ export default function RoomNavigation({
             <button
               onClick={handleAddRoom}
               disabled={loading}
-              className="ml-1 p-1 text-green-600 hover:text-green-700 disabled:opacity-50"
+                              className="ml-1 p-1 text-teal-600 hover:text-teal-700 disabled:opacity-50"
             >
               <Check className="h-4 w-4" />
             </button>

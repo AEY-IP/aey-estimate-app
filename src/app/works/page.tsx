@@ -398,8 +398,8 @@ export default function WorksPage() {
     }
     
     const colors = [
-      'bg-blue-100 text-blue-700',
-      'bg-green-100 text-green-700',
+              'bg-pink-100 text-pink-700',
+              'bg-teal-100 text-teal-700',
       'bg-purple-100 text-purple-700',
       'bg-orange-100 text-orange-700',
       'bg-pink-100 text-pink-700',
@@ -430,7 +430,7 @@ export default function WorksPage() {
         <div className="container mx-auto px-6 py-12">
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-gray-500">Загрузка работ...</p>
             </div>
           </div>
@@ -501,7 +501,7 @@ export default function WorksPage() {
                 onClick={() => setActiveTab('works')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'works'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-pink-500 text-pink-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -512,7 +512,7 @@ export default function WorksPage() {
                 onClick={() => setActiveTab('parameters')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'parameters'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-pink-500 text-pink-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -597,7 +597,7 @@ export default function WorksPage() {
             <div className="grid md:grid-cols-4 gap-6 mb-8">
               <div className="card p-6">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
                     <Wrench className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -609,7 +609,7 @@ export default function WorksPage() {
 
               <div className="card p-6">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-4">
                     <Eye className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -748,7 +748,7 @@ export default function WorksPage() {
                                 onClick={() => toggleWorkStatus(work.id, work.isActive)}
                                 className={`status-badge whitespace-nowrap ${
                                   work.isActive 
-                                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                    ? 'bg-teal-100 text-teal-700 hover:bg-teal-200' 
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 } transition-colors cursor-pointer`}
                               >
@@ -759,7 +759,7 @@ export default function WorksPage() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => editWork(work)}
-                                  className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                                  className="p-1 text-pink-600 hover:text-pink-800 hover:bg-pink-50 rounded transition-colors"
                                   title="Редактировать работу"
                                 >
                                   <Edit className="h-4 w-4" />
@@ -785,7 +785,7 @@ export default function WorksPage() {
             {/* Import Instructions */}
             {works.length > 0 && (
               <div className="mt-12">
-                <div className="card bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                <div className="card bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Импорт работ из CSV</h3>
                   <p className="text-gray-600 mb-4">
                     Для массового добавления работ используйте CSV файл с колонками: name, category, unit, basePrice
@@ -831,7 +831,7 @@ export default function WorksPage() {
 
               <div className="card p-6">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-4">
                     <Eye className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -878,7 +878,7 @@ export default function WorksPage() {
                             <div className="font-medium text-gray-900">{parameter.name}</div>
                           </td>
                           <td>
-                            <span className="status-badge bg-blue-100 text-blue-700">
+                            <span className="status-badge bg-pink-100 text-pink-700">
                               {parameter.unit}
                             </span>
                           </td>
@@ -888,7 +888,7 @@ export default function WorksPage() {
                           <td>
                             <span className={`status-badge whitespace-nowrap ${
                               parameter.isActive 
-                                ? 'bg-green-100 text-green-700' 
+                                ? 'bg-teal-100 text-teal-700' 
                                 : 'bg-gray-100 text-gray-700'
                             }`}>
                               {parameter.isActive ? 'Активен' : 'Неактивен'}
@@ -898,7 +898,7 @@ export default function WorksPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => editParameter(parameter)}
-                                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                                className="p-1 text-pink-600 hover:text-pink-800 hover:bg-pink-50 rounded transition-colors"
                                 title="Редактировать параметр"
                               >
                                 <Edit className="h-4 w-4" />
@@ -922,7 +922,7 @@ export default function WorksPage() {
 
             {/* Info Card */}
             <div className="mt-8">
-              <div className="card bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+              <div className="card bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Как работают параметры помещения?</h3>
                 <div className="space-y-2 text-gray-600">
                   <p>• <strong>Параметры помещения</strong> — это характеристики объекта (площадь пола, потолка, периметр стен и т.д.)</p>

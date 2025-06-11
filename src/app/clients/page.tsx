@@ -111,7 +111,7 @@ export default function ClientsPage() {
       <div className="container mx-auto px-6 py-12">
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-500">Загрузка клиентов...</p>
           </div>
         </div>
@@ -266,13 +266,13 @@ export default function ClientsPage() {
           {clients.map((client) => (
             <div
               key={client.id}
-              className="card hover:shadow-lg transition-all duration-200 group hover:border-blue-200 relative"
+              className="card hover:shadow-lg transition-all duration-200 group hover:border-pink-200 relative"
             >
               {/* Кнопки действий */}
               <div className="absolute top-4 right-4 flex space-x-1 opacity-0 group-hover:opacity-100">
                 <Link
                   href={`/clients/${client.id}/edit`}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="p-2 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-colors"
                   title="Редактировать клиента"
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -301,11 +301,11 @@ export default function ClientsPage() {
               >
                 <div className="flex items-start justify-between mb-4 pr-20">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
-                      <Building2 className="h-6 w-6 text-blue-600" />
+                                      <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mr-3 group-hover:bg-pink-200 transition-colors">
+                    <Building2 className="h-6 w-6 text-pink-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 text-lg group-hover:text-blue-900 transition-colors">{client.name}</h3>
+                                              <h3 className="font-semibold text-gray-900 text-lg group-hover:text-pink-900 transition-colors">{client.name}</h3>
                       {client.contractNumber && (
                         <p className="text-sm text-gray-500">№ {client.contractNumber}</p>
                       )}
@@ -347,7 +347,7 @@ export default function ClientsPage() {
                     Создан {new Date(client.createdAt).toLocaleDateString('ru-RU')}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="text-sm text-blue-600 group-hover:text-blue-700 font-medium">
+                    <div className="text-sm text-pink-600 group-hover:text-pink-700 font-medium">
                       Открыть →
                     </div>
                   </div>
