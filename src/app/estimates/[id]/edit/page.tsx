@@ -160,6 +160,8 @@ const PriceWithTooltip = ({
 }
 
 export default function EditEstimatePage({ params }: { params: { id: string } }) {
+  console.log('🔄 EditEstimatePage render started', { timestamp: Date.now() })
+  
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -192,6 +194,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   const currentRoom = currentRoomId ? rooms.find(r => r.id === currentRoomId) : null
 
   useEffect(() => {
+    console.log('🚀 Initial load useEffect triggered', { paramsId: params.id })
     loadEstimate()
     loadCoefficients()
     loadAvailableWorks()
@@ -200,6 +203,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
   // Пересчитываем ручные цены после загрузки справочника работ
   useEffect(() => {
+    console.log('💰 Manual prices useEffect triggered', { estimateId: estimate?.id, availableWorksLength: availableWorks.length })
     if (estimate && availableWorks.length > 0) {
       const manualPricesSet = new Set<string>(estimate.manualPrices || [])
       
@@ -290,6 +294,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
   // Загружаем параметры при смене текущего помещения
   useEffect(() => {
+    console.log('🏠 Room parameters useEffect triggered', { currentRoomId, estimateId: estimate?.id })
     if (estimate) {
       loadCurrentRoomParameters(currentRoomId)
     }
@@ -1478,50 +1483,50 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     return paramValue?.value || 0
   }
 
-  // Расчет общих сумм - просто суммируем отображаемые на странице стоимости
-  const totalWorksPrice = useMemo(() => {
-    const currentWorksBlock = getCurrentWorksBlock()
-    if (!currentWorksBlock || !currentWorksBlock.blocks) return 0
-    
-    return currentWorksBlock.blocks.reduce((blockSum, block) => {
-      // Вычисляем обычные и конечные коэффициенты отдельно (как в таблице)
-      const normalCoeff = calculateNormalCoefficients(block.id)
-      const finalCoeff = calculateFinalCoefficients(block.id)
-      
-      const blockTotal = block.items.reduce((itemSum, item) => {
-        // Применяем коэффициенты в зависимости от типа цены (точно как в таблице)
-        let adjustedTotalPrice: number
-        
-        if (manuallyEditedPrices.has(item.id)) {
-          // Для ручных цен применяем только конечные коэффициенты
-          const adjustedUnitPrice = item.unitPrice * finalCoeff
-          adjustedTotalPrice = adjustedUnitPrice * item.quantity
-        } else {
-          // Для автоматических цен применяем сначала обычные, потом конечные
-          const adjustedUnitPrice = item.unitPrice * normalCoeff * finalCoeff
-          adjustedTotalPrice = adjustedUnitPrice * item.quantity
-        }
-        
-        // Округляем точно как в колонке "Стоимость"
-        return itemSum + Math.round(adjustedTotalPrice)
-      }, 0)
-      
-      return blockSum + blockTotal
-    }, 0)
-  }, [estimate?.id, rooms.length, coefficientSettings, manuallyEditedPrices, currentRoomId, isSummaryView])
+  // Расчет общих сумм - ВРЕМЕННО УПРОЩЕНО ДЛЯ ОТЛАДКИ
+  const totalWorksPrice = 0 // useMemo(() => {
+  //   const currentWorksBlock = getCurrentWorksBlock()
+  //   if (!currentWorksBlock || !currentWorksBlock.blocks) return 0
+  //   
+  //   return currentWorksBlock.blocks.reduce((blockSum, block) => {
+  //     // Вычисляем обычные и конечные коэффициенты отдельно (как в таблице)
+  //     const normalCoeff = calculateNormalCoefficients(block.id)
+  //     const finalCoeff = calculateFinalCoefficients(block.id)
+  //     
+  //     const blockTotal = block.items.reduce((itemSum, item) => {
+  //       // Применяем коэффициенты в зависимости от типа цены (точно как в таблице)
+  //       let adjustedTotalPrice: number
+  //       
+  //       if (manuallyEditedPrices.has(item.id)) {
+  //         // Для ручных цен применяем только конечные коэффициенты
+  //         const adjustedUnitPrice = item.unitPrice * finalCoeff
+  //         adjustedTotalPrice = adjustedUnitPrice * item.quantity
+  //       } else {
+  //         // Для автоматических цен применяем сначала обычные, потом конечные
+  //         const adjustedUnitPrice = item.unitPrice * normalCoeff * finalCoeff
+  //         adjustedTotalPrice = adjustedUnitPrice * item.quantity
+  //       }
+  //       
+  //       // Округляем точно как в колонке "Стоимость"
+  //       return itemSum + Math.round(adjustedTotalPrice)
+  //     }, 0)
+  //     
+  //     return blockSum + blockTotal
+  //   }, 0)
+  // }, [estimate?.id, rooms.length, coefficientSettings, manuallyEditedPrices, currentRoomId, isSummaryView])
   
-  const totalMaterialsPrice = useMemo(() => {
-    const currentMaterialsBlock = getCurrentMaterialsBlock()
-    if (!currentMaterialsBlock || !currentMaterialsBlock.items) return 0
-    
-    // Для материалов суммируем стоимость точно как отображается в таблице
-    return currentMaterialsBlock.items.reduce((sum, item) => {
-      // Для материалов применяем глобальный коэффициент (как в таблице)
-      const globalCoeff = calculateGlobalCoefficient()
-      const displayedPrice = Math.round(item.unitPrice * globalCoeff * item.quantity)
-      return sum + displayedPrice
-    }, 0)
-  }, [estimate?.id, rooms.length, coefficientSettings, currentRoomId, isSummaryView])
+  const totalMaterialsPrice = 0 // useMemo(() => {
+  //   const currentMaterialsBlock = getCurrentMaterialsBlock()
+  //   if (!currentMaterialsBlock || !currentMaterialsBlock.items) return 0
+  //   
+  //   // Для материалов суммируем стоимость точно как отображается в таблице
+  //   return currentMaterialsBlock.items.reduce((sum, item) => {
+  //     // Для материалов применяем глобальный коэффициент (как в таблице)
+  //     const globalCoeff = calculateGlobalCoefficient()
+  //     const displayedPrice = Math.round(item.unitPrice * globalCoeff * item.quantity)
+  //     return sum + displayedPrice
+  //   }, 0)
+  // }, [estimate?.id, rooms.length, coefficientSettings, currentRoomId, isSummaryView])
   
   // Общая сумма = просто сумма работ + материалы (без дополнительных коэффициентов)
   const grandTotal = totalWorksPrice + totalMaterialsPrice
