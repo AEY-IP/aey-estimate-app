@@ -372,7 +372,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         totalPrice: totalSummaryMaterialsPrice
       }
     } : null)
-  }, [estimate, rooms])
+  }, [rooms]) // Убираем estimate из зависимостей чтобы избежать бесконечного цикла
 
   // Утилиты для работы с текущим блоком работ
   const getCurrentWorksBlock = () => {
@@ -1340,22 +1340,25 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     })
   }
 
+  const getSelectedCoefficients = useCallback(() => {
+    if (!estimate?.coefficients) return []
+    return coefficients.filter(c => estimate.coefficients?.includes(c.id) && !c.id.startsWith('manual_'))
+  }, [estimate?.coefficients, coefficients])
 
-
-  const getCoefficientsForBlock = (blockId: string) => {
+  const getCoefficientsForBlock = useCallback((blockId: string) => {
     const selectedCoefficients = getSelectedCoefficients()
     return selectedCoefficients.filter(coef => {
       const setting = coefficientSettings[coef.id]
       return Array.isArray(setting?.target) && setting.target.includes(blockId)
     })
-  }
+  }, [getSelectedCoefficients, coefficientSettings])
 
-  const getGlobalCoefficients = () => {
+  const getGlobalCoefficients = useCallback(() => {
     const selectedCoefficients = getSelectedCoefficients()
     return selectedCoefficients.filter(coef => 
       coefficientSettings[coef.id]?.target === 'global'
     )
-  }
+  }, [getSelectedCoefficients, coefficientSettings])
 
   // Новые функции для работы с типами коэффициентов
   const getNormalCoefficientsForBlock = (blockId: string) => {
@@ -1461,11 +1464,6 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     return groups
   }, {} as { [key: string]: Coefficient[] })
 
-  const getSelectedCoefficients = () => {
-    if (!estimate?.coefficients) return []
-    return coefficients.filter(c => estimate.coefficients?.includes(c.id) && !c.id.startsWith('manual_'))
-  }
-
   const calculateTotalCoefficient = () => {
     const selectedCoefficients = getSelectedCoefficients()
     
@@ -1481,7 +1479,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   }
 
   // Расчет общих сумм - просто суммируем отображаемые на странице стоимости
-  const totalWorksPrice = (() => {
+  const totalWorksPrice = useMemo(() => {
     const currentWorksBlock = getCurrentWorksBlock()
     if (!currentWorksBlock || !currentWorksBlock.blocks) return 0
     
@@ -1510,9 +1508,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       
       return blockSum + blockTotal
     }, 0)
-  })()
+  }, [estimate, rooms, coefficientSettings, manuallyEditedPrices, currentRoomId, isSummaryView])
   
-  const totalMaterialsPrice = (() => {
+  const totalMaterialsPrice = useMemo(() => {
     const currentMaterialsBlock = getCurrentMaterialsBlock()
     if (!currentMaterialsBlock || !currentMaterialsBlock.items) return 0
     
@@ -1523,7 +1521,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       const displayedPrice = Math.round(item.unitPrice * globalCoeff * item.quantity)
       return sum + displayedPrice
     }, 0)
-  })()
+  }, [estimate, rooms, coefficientSettings, currentRoomId, isSummaryView])
   
   // Общая сумма = просто сумма работ + материалы (без дополнительных коэффициентов)
   const grandTotal = totalWorksPrice + totalMaterialsPrice
@@ -1570,6 +1568,21 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     const setting = coefficientSettings[coefficientId]
     return setting?.target === 'global'
   }
+
+  const getBlockTitlesForCoefficient = useCallback((coefficientId: string) => {
+    const setting = coefficientSettings[coefficientId]
+    if (!Array.isArray(setting?.target) || setting.target.length === 0) {
+      return 'выбранным блокам'
+    }
+    
+    const currentWorksBlock = getCurrentWorksBlock()
+    const titles = setting.target.map(blockId => {
+      const block = currentWorksBlock?.blocks?.find(b => b.id === blockId)
+      return block?.title || blockId
+    })
+    
+    return `блокам: ${titles.join(', ')}`
+  }, [coefficientSettings, estimate, rooms, currentRoomId, isSummaryView])
 
   // Функции для работы с параметрами помещения
   const updateRoomParameterValue = (parameterId: string, value: number) => {
@@ -2852,13 +2865,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                         <span className="text-blue-600">всей смете</span>
                                       ) : (
                                         <span className="text-blue-600">
-                                          {Array.isArray(setting?.target) && setting.target.length > 0 
-                                            ? `блокам: ${setting.target.map(blockId => {
-                                                const block = getCurrentWorksBlock()?.blocks?.find(b => b.id === blockId)
-                                                return block?.title || blockId
-                                              }).join(', ')}`
-                                            : 'выбранным блокам'
-                                          }
+                                          {getBlockTitlesForCoefficient(coefficient.id)}
                                         </span>
                                       )}
                                     </div>
