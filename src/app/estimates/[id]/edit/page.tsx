@@ -1,11 +1,34 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings, Info } from 'lucide-react'
 import Link from 'next/link'
 import { generateEstimatePDF } from '@/lib/pdf-export'
 import { Estimate, Coefficient, WorkBlock, WorkItem, RoomParameter, RoomParameterValue, Room } from '@/types/estimate'
 import RoomNavigation from '@/components/RoomNavigation'
+
+// Константа для порядка категорий - выносим из компонента чтобы избежать пересоздания
+const CATEGORY_ORDER = [
+  'Демонтажные работы - Пол',
+  'Демонтажные работы - Стены', 
+  'Демонтажные работы - Потолок',
+  'Демонтажные работы - Двери, окна',
+  'Демонтажные работы - Электрика',
+  'Демонтажные работы - Сантехника',
+  'Демонтажные работы - Прочее',
+  'Стены - черновой этап',
+  'Стены - финишный этап',
+  'Пол - черновой этап',
+  'Пол - финишный этап',
+  'Потолок - черновой этап',
+  'Потолок - чистовой этап',
+  'Электрика - черновой этап',
+  'Электрика - чистовой этап',
+  'Сантнехника - черновой этап',
+  'Сантнехника - чистовой этап',
+  'Вентиляция',
+  'Прочее'
+]
 
 // Компонент для отображения названий работ с tooltip
 const WorkNameDisplay = ({ name, className = '' }: { name: string, className?: string }) => {
@@ -277,36 +300,13 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   }, [currentRoomId, estimate, rooms])
 
   // Функция для автоматического обновления сводной сметы
-  const updateSummaryEstimate = () => {
+  const updateSummaryEstimate = useCallback(() => {
     if (!estimate || estimate.type !== 'rooms') return
 
     // Агрегируем данные для сводной сметы
     const summaryWorksBlocks: any[] = []
     const summaryMaterialsItems: any[] = []
     
-    // Определяем правильный порядок категорий для сводной сметы
-    const categoryOrder = [
-      'Демонтажные работы - Пол',
-      'Демонтажные работы - Стены', 
-      'Демонтажные работы - Потолок',
-      'Демонтажные работы - Двери, окна',
-      'Демонтажные работы - Электрика',
-      'Демонтажные работы - Сантехника',
-      'Демонтажные работы - Прочее',
-      'Стены - черновой этап',
-      'Стены - финишный этап',
-      'Пол - черновой этап',
-      'Пол - финишный этап',
-      'Потолок - черновой этап',
-      'Потолок - чистовой этап',
-      'Электрика - черновой этап',
-      'Электрика - чистовой этап',
-      'Сантнехника - черновой этап',
-      'Сантнехника - чистовой этап',
-      'Вентиляция',
-      'Прочее'
-    ]
-
     // Собираем все блоки работ из всех помещений
     rooms.forEach(room => {
       room.worksBlock.blocks.forEach(block => {
@@ -324,7 +324,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           })
         } else {
           // Создаем новый блок с порядком согласно категории
-          const orderIndex = categoryOrder.indexOf(block.title)
+          const orderIndex = CATEGORY_ORDER.indexOf(block.title)
           summaryWorksBlocks.push({
             ...block,
             id: `summary_${block.id}`,
@@ -376,7 +376,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         totalPrice: totalSummaryMaterialsPrice
       }
     } : null)
-  }
+  }, [estimate, rooms])
 
   // Утилиты для работы с текущим блоком работ
   const getCurrentWorksBlock = () => {
@@ -438,7 +438,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     }
   }
 
-  const loadAvailableWorks = async () => {
+  const loadAvailableWorks = useCallback(async () => {
     try {
       const response = await fetch('/api/works')
       const data = await response.json()
@@ -451,45 +451,21 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         const categoriesSet = new Set<string>()
         activeWorks.forEach((w: WorkItem) => categoriesSet.add(w.category))
         
-        // Определяем правильный порядок категорий
-        const categoryOrder = [
-          'Демонтажные работы - Пол',
-          'Демонтажные работы - Стены', 
-          'Демонтажные работы - Потолок',
-          'Демонтажные работы - Двери, окна',
-          'Демонтажные работы - Электрика',
-          'Демонтажные работы - Сантехника',
-          'Демонтажные работы - Прочее',
-          'Стены - черновой этап',
-          'Стены - финишный этап',
-          'Пол - черновой этап',
-          'Пол - финишный этап',
-          'Потолок - черновой этап',
-          'Потолок - чистовой этап',
-          'Электрика - черновой этап',
-          'Электрика - чистовой этап',
-          'Сантнехника - черновой этап',
-          'Сантнехника - чистовой этап',
-          'Вентиляция',
-          'Прочее'
-        ]
-        
         // Сортируем категории по заданному порядку
         const availableCategories = Array.from(categoriesSet)
-        const sortedCategories = categoryOrder.filter(cat => availableCategories.includes(cat))
+        const sortedCategories = CATEGORY_ORDER.filter(cat => availableCategories.includes(cat))
         // Добавляем категории, которых нет в предопределенном списке
-        const otherCategories = availableCategories.filter(cat => !categoryOrder.includes(cat)).sort()
+        const otherCategories = availableCategories.filter(cat => !CATEGORY_ORDER.includes(cat)).sort()
         const categories = [...sortedCategories, ...otherCategories]
-        
         
         setWorkCategories(categories)
       }
     } catch (error) {
       console.error('Ошибка загрузки работ:', error)
     }
-  }
+  }, [])
 
-  const loadCoefficients = async () => {
+  const loadCoefficients = useCallback(async () => {
     try {
       const response = await fetch('/api/coefficients')
       const data = await response.json()
@@ -500,7 +476,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     } catch (error) {
       console.error('Ошибка загрузки коэффициентов:', error)
     }
-  }
+  }, [])
 
   const loadEstimate = async () => {
     try {
@@ -1068,52 +1044,32 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   }
 
   // Функция для получения отсортированных блоков
-  const getSortedBlocks = (blocks: any[]) => {
-    if (!blocks) return []
-    
-    // Для сводной сметы по помещениям используем предопределенный порядок
-    if (estimate?.type === 'rooms' && isSummaryView) {
-      const categoryOrder = [
-        'Демонтажные работы - Пол',
-        'Демонтажные работы - Стены', 
-        'Демонтажные работы - Потолок',
-        'Демонтажные работы - Двери, окна',
-        'Демонтажные работы - Электрика',
-        'Демонтажные работы - Сантехника',
-        'Демонтажные работы - Прочее',
-        'Стены - черновой этап',
-        'Стены - финишный этап',
-        'Пол - черновой этап',
-        'Пол - финишный этап',
-        'Потолок - черновой этап',
-        'Потолок - чистовой этап',
-        'Электрика - черновой этап',
-        'Электрика - чистовой этап',
-        'Сантнехника - черновой этап',
-        'Сантнехника - чистовой этап',
-        'Вентиляция',
-        'Прочее'
-      ]
+  const getSortedBlocks = useMemo(() => {
+    return (blocks: any[]) => {
+      if (!blocks) return []
       
-      return blocks.sort((a, b) => {
-        const aIndex = categoryOrder.indexOf(a.title)
-        const bIndex = categoryOrder.indexOf(b.title)
-        
-        // Если обе категории в списке, сортируем по индексу
-        if (aIndex !== -1 && bIndex !== -1) {
-          return aIndex - bIndex
-        }
-        // Если только одна в списке, она идет первой
-        if (aIndex !== -1) return -1
-        if (bIndex !== -1) return 1
-        // Если обе не в списке, сортируем по названию
-        return a.title.localeCompare(b.title)
-      })
+      // Для сводной сметы по помещениям используем предопределенный порядок
+      if (estimate?.type === 'rooms' && isSummaryView) {
+        return blocks.sort((a, b) => {
+          const aIndex = CATEGORY_ORDER.indexOf(a.title)
+          const bIndex = CATEGORY_ORDER.indexOf(b.title)
+          
+          // Если обе категории в списке, сортируем по индексу
+          if (aIndex !== -1 && bIndex !== -1) {
+            return aIndex - bIndex
+          }
+          // Если только одна в списке, она идет первой
+          if (aIndex !== -1) return -1
+          if (bIndex !== -1) return 1
+          // Если обе не в списке, сортируем по названию
+          return a.title.localeCompare(b.title)
+        })
+      }
+      
+      // Для остальных случаев сортируем по полю order
+      return blocks.sort((a, b) => (a.order || 0) - (b.order || 0))
     }
-    
-    // Для остальных случаев сортируем по полю order
-    return blocks.sort((a, b) => (a.order || 0) - (b.order || 0))
-  }
+  }, [estimate?.type, isSummaryView])
 
   const addWorkToBlock = (blockId: string, workId?: string) => {
     const currentWorksBlock = getCurrentWorksBlock()
