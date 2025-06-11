@@ -296,7 +296,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   }, [currentRoomId, estimate?.id]) // Используем только ID сметы чтобы избежать бесконечного цикла
 
   // Функция для автоматического обновления сводной сметы
-  const updateSummaryEstimate = useCallback(() => {
+  const updateSummaryEstimate = () => {
     if (!estimate || estimate.type !== 'rooms') return
 
     // Агрегируем данные для сводной сметы
@@ -372,7 +372,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         totalPrice: totalSummaryMaterialsPrice
       }
     } : null)
-  }, [rooms]) // Убираем estimate из зависимостей чтобы избежать бесконечного цикла
+  }
 
   // Утилиты для работы с текущим блоком работ
   const getCurrentWorksBlock = () => {
@@ -1508,7 +1508,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       
       return blockSum + blockTotal
     }, 0)
-  }, [estimate, rooms, coefficientSettings, manuallyEditedPrices, currentRoomId, isSummaryView])
+  }, [estimate?.id, rooms.length, coefficientSettings, manuallyEditedPrices, currentRoomId, isSummaryView])
   
   const totalMaterialsPrice = useMemo(() => {
     const currentMaterialsBlock = getCurrentMaterialsBlock()
@@ -1521,7 +1521,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       const displayedPrice = Math.round(item.unitPrice * globalCoeff * item.quantity)
       return sum + displayedPrice
     }, 0)
-  }, [estimate, rooms, coefficientSettings, currentRoomId, isSummaryView])
+  }, [estimate?.id, rooms.length, coefficientSettings, currentRoomId, isSummaryView])
   
   // Общая сумма = просто сумма работ + материалы (без дополнительных коэффициентов)
   const grandTotal = totalWorksPrice + totalMaterialsPrice
