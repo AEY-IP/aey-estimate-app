@@ -238,14 +238,10 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       
       setManuallyEditedPrices(manualPricesSet)
     }
-  }, [estimate, availableWorks])
+  }, [estimate?.id, availableWorks.length]) // Используем только ID и длину массива
 
-  // Автоматически обновляем сводную смету при изменении помещений
-  useEffect(() => {
-    if (estimate?.type === 'rooms' && rooms.length > 0) {
-      updateSummaryEstimate()
-    }
-  }, [rooms])
+  // Убираем автоматическое обновление сводной сметы чтобы избежать бесконечного цикла
+  // updateSummaryEstimate будет вызываться вручную при необходимости
 
   // Функция для обновления списка помещений
   const refreshRooms = () => {
@@ -297,7 +293,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     if (estimate) {
       loadCurrentRoomParameters(currentRoomId)
     }
-  }, [currentRoomId, estimate, rooms])
+  }, [currentRoomId, estimate?.id]) // Используем только ID сметы чтобы избежать бесконечного цикла
 
   // Функция для автоматического обновления сводной сметы
   const updateSummaryEstimate = useCallback(() => {
