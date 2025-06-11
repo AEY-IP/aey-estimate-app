@@ -8,7 +8,7 @@ import { AuthProvider } from '@/components/AuthProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AEY Estimates - Система управления сметами',
+  title: 'Идеальный подрядчик - Система управления сметами',
   description: 'Профессиональная система для составления смет ремонтных работ',
 }
 

@@ -6,15 +6,31 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
     
+    const whereClause: any = {
+      isActive: true
+    }
+    
+    if (category && category !== 'all') {
+      whereClause.category = category
+    }
+    
     const coefficients = await prisma.coefficient.findMany({
-      where: {
-        isActive: true
-      }
+      where: whereClause,
+      orderBy: [
+        { category: 'asc' },
+        { name: 'asc' }
+      ]
+    })
+    
+    // Получаем уникальные категории
+    const categories = await prisma.coefficient.groupBy({
+      by: ['category'],
+      where: { isActive: true }
     })
     
     return NextResponse.json({ 
       coefficients,
-      categories: [] // У нас нет отдельной таблицы категорий пока
+      categories: categories.map(c => ({ id: c.category, name: c.category }))
     })
   } catch (error) {
     console.error('Ошибка получения коэффициентов:', error)
@@ -28,7 +44,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, value, description } = body
+    const { name, value, description, category, type } = body
     
     if (!name || value === undefined) {
       return NextResponse.json(
@@ -42,6 +58,8 @@ export async function POST(request: NextRequest) {
         name,
         value: parseFloat(value),
         description: description || null,
+        category: category || 'custom',
+        type: type || 'normal',
         isActive: true
       }
     })

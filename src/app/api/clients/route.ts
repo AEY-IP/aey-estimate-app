@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { CreateClientRequest } from '@/types/client'
+import { checkAuth } from '@/lib/auth'
 
 // GET - получить клиентов (менеджеры видят только своих, админы - всех)
 export async function GET(request: NextRequest) {
   try {
     // Проверяем аутентификацию
-    const sessionCookie = request.cookies.get('auth-session')
-    if (!sessionCookie) {
+    const session = checkAuth(request)
+    if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
-
-    const session = JSON.parse(sessionCookie.value)
     
     const where: any = {
       isActive: true
@@ -43,12 +42,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Проверяем аутентификацию
-    const sessionCookie = request.cookies.get('auth-session')
-    if (!sessionCookie) {
+    const session = checkAuth(request)
+    if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const session = JSON.parse(sessionCookie.value)
     const body: CreateClientRequest = await request.json()
     const { name, phone, email, address, contractNumber, notes } = body
 

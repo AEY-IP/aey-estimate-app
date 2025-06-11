@@ -80,20 +80,36 @@ export default function ClientDetailPage() {
     fetchCoefficients()
   }, [clientId])
 
-  const formatStatus = (status: string) => {
-    const statusMap = {
-      draft: { text: 'Черновик', color: 'bg-gray-100 text-gray-700' },
-      in_progress: { text: 'В работе', color: 'bg-blue-100 text-blue-700' },
-      completed: { text: 'Завершена', color: 'bg-green-100 text-green-700' },
-      cancelled: { text: 'Отменена', color: 'bg-red-100 text-red-700' }
+  // Удаление сметы
+  const handleDeleteEstimate = async (estimateId: string, estimateTitle: string) => {
+    if (!confirm(`Вы уверены, что хотите удалить смету "${estimateTitle}"?`)) {
+      return
     }
-    return statusMap[status as keyof typeof statusMap] || statusMap.draft
+
+    try {
+      const response = await fetch(`/api/estimates/${estimateId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        showToast('success', 'Смета успешно удалена')
+        // Перезагружаем список смет
+        fetchEstimates()
+      } else {
+        const error = await response.json()
+        showToast('error', error.error || 'Ошибка удаления сметы')
+      }
+    } catch (error) {
+      showToast('error', 'Ошибка сети')
+    }
   }
+
+
 
   const formatCategory = (category: string) => {
     const categoryMap = {
       main: { text: 'Основная', color: 'bg-purple-100 text-purple-700', icon: Star },
-      additional: { text: 'Доп. работы', color: 'bg-orange-100 text-orange-700', icon: Plus }
+      additional: { text: 'Доп. работы', color: 'text-white', icon: Plus }
     }
     return categoryMap[category as keyof typeof categoryMap] || categoryMap.main
   }
@@ -279,7 +295,6 @@ export default function ClientDetailPage() {
             ) : (
               <div className="space-y-4">
                 {estimates.map((estimate) => {
-                  const status = formatStatus(estimate.status)
                   const category = formatCategory(estimate.category || 'main')
                   const CategoryIcon = category.icon
                   return (
@@ -291,7 +306,10 @@ export default function ClientDetailPage() {
                         <div className="flex-1">
                           <div className="flex items-center space-x-3">
                             <h3 className="font-semibold text-gray-900">{estimate.title}</h3>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${category.color}`}>
+                            <span 
+                              className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${category.color}`}
+                              style={estimate.category === 'additional' ? {background: '#FF006F'} : {}}
+                            >
                               <CategoryIcon className="h-3 w-3 mr-1" />
                               {category.text}
                             </span>
@@ -375,6 +393,16 @@ export default function ClientDetailPage() {
                           >
                             <Edit2 className="h-4 w-4" />
                           </Link>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteEstimate(estimate.id, estimate.title)
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Удалить смету"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
                     </div>

@@ -1,4 +1,5 @@
 import { AuthSession } from '@/types/auth'
+import { NextRequest } from 'next/server'
 
 // Получение текущего пользователя на сервере (из headers)
 export async function getCurrentUser(request: Request): Promise<AuthSession | null> {
@@ -46,6 +47,33 @@ export async function fetchCurrentUser(): Promise<AuthSession | null> {
     return null
   } catch (error) {
     console.error('Ошибка получения текущего пользователя:', error)
+    return null
+  }
+}
+
+export interface Session {
+  id: string
+  role: 'ADMIN' | 'MANAGER'
+  username: string
+}
+
+export function checkAuth(request: NextRequest): Session | null {
+  try {
+    const sessionCookie = request.cookies.get('auth-session')
+    if (!sessionCookie) {
+      return null
+    }
+
+    const decodedValue = Buffer.from(sessionCookie.value, 'base64').toString('utf-8')
+    const session = JSON.parse(decodedValue)
+    
+    if (!session.id || !session.role || !session.username) {
+      return null
+    }
+    
+    return session as Session
+  } catch (error) {
+    console.error('Failed to parse session cookie:', error)
     return null
   }
 } 

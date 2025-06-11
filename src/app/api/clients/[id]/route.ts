@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
+import { checkAuth } from '@/lib/auth'
 
 // GET - получить клиента по ID
 export async function GET(
@@ -12,15 +13,14 @@ export async function GET(
     console.log('Request URL:', request.url)
     
     // Проверяем аутентификацию
-    const sessionCookie = request.cookies.get('auth-session')
-    console.log('Session cookie exists:', !!sessionCookie)
+    const session = checkAuth(request)
+    console.log('Session exists:', !!session)
     
-    if (!sessionCookie) {
-      console.log('No session cookie found')
+    if (!session) {
+      console.log('No session found')
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const session = JSON.parse(sessionCookie.value)
     console.log('Session data:', { id: session.id, role: session.role, username: session.username })
     
     // Сначала найдём клиента по ID
@@ -65,12 +65,10 @@ export async function PUT(
 ) {
   try {
     // Проверяем аутентификацию
-    const sessionCookie = request.cookies.get('auth-session')
-    if (!sessionCookie) {
+    const session = checkAuth(request)
+    if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
-
-    const session = JSON.parse(sessionCookie.value)
     
     // Сначала найдём клиента по ID
     const existingClient = await prisma.client.findUnique({
@@ -138,6 +136,67 @@ export async function PUT(
     return NextResponse.json(updatedClient)
   } catch (error) {
     console.error('Error updating client:', error)
+    return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
+  }
+}
+
+// DELETE - удалить клиента
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Проверяем аутентификацию
+    const session = checkAuth(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Сначала найдём клиента по ID
+    const existingClient = await prisma.client.findUnique({
+      where: { 
+        id: params.id 
+      },
+      include: {
+        estimates: true // Убрали фильтр по status поскольку это поле удалено
+      }
+    })
+
+    if (!existingClient) {
+      return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 })
+    }
+    
+    if (!existingClient.isActive) {
+      return NextResponse.json({ error: 'Клиент уже удален' }, { status: 404 })
+    }
+    
+    // Проверяем права доступа для менеджеров
+    if (session.role === 'MANAGER' && existingClient.createdBy !== session.id) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+
+    // Проверяем, есть ли сметы (без фильтра по status)
+    if (existingClient.estimates.length > 0) {
+      return NextResponse.json({ 
+        error: 'Нельзя удалить клиента с активными сметами. Сначала удалите все сметы.' 
+      }, { status: 400 })
+    }
+
+    // Помечаем клиента как неактивного (мягкое удаление)
+    const deletedClient = await prisma.client.update({
+      where: { id: params.id },
+      data: {
+        isActive: false,
+        updatedAt: new Date()
+      }
+    })
+
+    return NextResponse.json({ 
+      message: 'Клиент успешно удален',
+      client: deletedClient 
+    })
+  } catch (error) {
+    console.error('Error deleting client:', error)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
   }
 } 

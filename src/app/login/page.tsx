@@ -49,11 +49,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Логотип/Заголовок */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{background: '#FF006F'}}>
             <LogIn className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            AEY Сметы
+            Идеальный подрядчик
           </h1>
           <p className="text-gray-600">
             Система управления строительными сметами
@@ -131,21 +131,13 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Подсказка для демо */}
-          <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">
-              Демо-доступы:
-            </h3>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p><span className="font-mono bg-gray-200 px-2 py-1 rounded">admin</span> / <span className="font-mono bg-gray-200 px-2 py-1 rounded">admin</span> - Администратор</p>
-            </div>
-          </div>
+
         </div>
 
         {/* Футер */}
         <div className="text-center mt-8">
           <p className="text-gray-500 text-sm">
-            © 2024 AEY Сметы. Все права защищены.
+            © 2024 Идеальный подрядчик. Все права защищены.
           </p>
         </div>
       </div>

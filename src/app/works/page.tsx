@@ -46,15 +46,22 @@ export default function WorksPage() {
       const response = await fetch('/api/works')
       const data = await response.json()
       
-      if (response.ok) {
+      if (response.ok && data.works) {
         setWorks(data.works)
         
-        // Получаем уникальные категории
-        const uniqueCategories = Array.from(new Set(data.works.map((work: WorkItem) => work.category))).sort() as string[]
+        // Получаем уникальные категории с проверкой на существование
+        const validWorks = data.works.filter((work: WorkItem) => work && work.category)
+        const uniqueCategories = Array.from(new Set(validWorks.map((work: WorkItem) => work.category))).sort() as string[]
         setCategories(uniqueCategories)
+      } else {
+        console.error('Ошибка в ответе API:', data)
+        setWorks([])
+        setCategories([])
       }
     } catch (error) {
       console.error('Ошибка загрузки работ:', error)
+      setWorks([])
+      setCategories([])
     } finally {
       setLoading(false)
     }
@@ -369,10 +376,10 @@ export default function WorksPage() {
   }
 
   const filteredWorks = works.filter(work => {
-    const matchesSearch = work.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         work.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (work.name && work.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (work.category && work.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
                          (work.description && work.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesCategory = selectedCategory === 'all' || work.category === selectedCategory
+    const matchesCategory = selectedCategory === 'all' || (work.category && work.category === selectedCategory)
     const matchesStatus = showInactive || work.isActive
     const matchesPrice = !showZeroPriceOnly || work.basePrice === 0
     
@@ -385,11 +392,16 @@ export default function WorksPage() {
 
   // Функция для получения цвета категории
   const getCategoryColor = (category: string) => {
+    // Проверяем, что category не undefined и не null
+    if (!category || typeof category !== 'string') {
+      return 'bg-gray-100 text-gray-700' // Цвет по умолчанию
+    }
+    
     const colors = [
       'bg-blue-100 text-blue-700',
       'bg-green-100 text-green-700',
       'bg-purple-100 text-purple-700',
-      'bg-orange-100 text-orange-700',
+      'pink-custom',
       'bg-pink-100 text-pink-700',
       'bg-indigo-100 text-indigo-700',
       'bg-red-100 text-red-700',
@@ -404,7 +416,8 @@ export default function WorksPage() {
       hash = category.charCodeAt(i) + ((hash << 5) - hash)
     }
     
-    return colors[Math.abs(hash) % colors.length]
+    const colorIndex = Math.abs(hash) % colors.length
+    return colors[colorIndex]
   }
 
   if (loading) {
@@ -539,7 +552,7 @@ export default function WorksPage() {
                   className="input-field w-full"
                 >
                   <option value="all">Все категории</option>
-                  {categories.map(category => (
+                  {categories && categories.map(category => (
                     <option key={category} value={category}>{category}</option>
                   ))}
                 </select>
@@ -574,7 +587,7 @@ export default function WorksPage() {
               </div>
               <div className="lg:col-span-2">
                 {zeroPriceWorksCount > 0 && (
-                  <div className="text-sm text-gray-600 p-3 bg-orange-50 rounded-xl border border-orange-200">
+                  <div className="text-sm text-gray-600 p-3 rounded-xl border" style={{background: 'rgba(255, 0, 111, 0.1)', borderColor: 'rgba(255, 0, 111, 0.3)'}}>
                     💡 Найдено {zeroPriceWorksCount} работ с нечисловой ценой (вручную, проценты и т.д.)
                   </div>
                 )}
@@ -609,7 +622,7 @@ export default function WorksPage() {
 
               <div className="card p-6">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mr-4" style={{background: '#FF006F'}}>
                     <span className="text-white font-bold text-lg">₽0</span>
                   </div>
                   <div>
@@ -692,7 +705,8 @@ export default function WorksPage() {
                             </td>
                             <td>
                               <div 
-                                className={`status-badge ${getCategoryColor(work.category)} max-w-32 truncate cursor-help`} 
+                                className={`status-badge ${getCategoryColor(work.category) === 'pink-custom' ? 'text-white' : getCategoryColor(work.category)} max-w-32 truncate cursor-help`} 
+                                style={getCategoryColor(work.category) === 'pink-custom' ? {background: '#FF006F'} : {}}
                                 title={work.category}
                               >
                                 {work.category}
@@ -704,7 +718,7 @@ export default function WorksPage() {
                             <td>
                               {work.basePrice === 0 ? (
                                 <div className="group relative">
-                                  <span className="font-semibold text-orange-600 cursor-help">
+                                  <span className="font-semibold cursor-help" style={{color: '#FF006F'}}>
                                     Цена не указана
                                   </span>
                                   {work.description && work.description.includes('Цена:') && (
@@ -807,7 +821,7 @@ export default function WorksPage() {
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="card p-6">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mr-4" style={{background: '#FF006F'}}>
                     <Settings className="h-6 w-6 text-white" />
                   </div>
                   <div>

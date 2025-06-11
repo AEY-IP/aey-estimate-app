@@ -14,7 +14,8 @@ async function checkAuth() {
   }
   
   try {
-    const sessionData = JSON.parse(sessionCookie.value)
+    const decodedValue = Buffer.from(sessionCookie.value, 'base64').toString('utf-8')
+    const sessionData = JSON.parse(decodedValue)
     return sessionData
   } catch (error) {
     return null

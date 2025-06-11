@@ -14,6 +14,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
   
   // Форма создания клиента
   const [formData, setFormData] = useState({
@@ -76,6 +77,33 @@ export default function ClientsPage() {
   const cancelCreate = () => {
     setIsCreating(false)
     setFormData({ name: '', phone: '', email: '', address: '', contractNumber: '', notes: '' })
+  }
+
+  // Удаление клиента
+  const handleDelete = async (clientId: string, clientName: string) => {
+    if (!confirm(`Вы уверены, что хотите удалить клиента "${clientName}"?\n\nЭто действие нельзя отменить.`)) {
+      return
+    }
+
+    setDeletingClientId(clientId)
+    
+    try {
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        showToast('success', 'Клиент успешно удален')
+        fetchClients() // Перезагружаем список
+      } else {
+        const error = await response.json()
+        showToast('error', error.error || 'Ошибка удаления клиента')
+      }
+    } catch (error) {
+      showToast('error', 'Ошибка сети')
+    } finally {
+      setDeletingClientId(null)
+    }
   }
 
   if (loading) {
@@ -240,21 +268,38 @@ export default function ClientsPage() {
               key={client.id}
               className="card hover:shadow-lg transition-all duration-200 group hover:border-blue-200 relative"
             >
-              {/* Кнопка редактирования */}
-              <Link
-                href={`/clients/${client.id}/edit`}
-                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                title="Редактировать клиента"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Edit2 className="h-4 w-4" />
-              </Link>
+              {/* Кнопки действий */}
+              <div className="absolute top-4 right-4 flex space-x-1 opacity-0 group-hover:opacity-100">
+                <Link
+                  href={`/clients/${client.id}/edit`}
+                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Редактировать клиента"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Link>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDelete(client.id, client.name)
+                  }}
+                  disabled={deletingClientId === client.id}
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Удалить клиента"
+                >
+                  {deletingClientId === client.id ? (
+                    <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
 
               <Link
                 href={`/clients/${client.id}`}
                 className="block cursor-pointer"
               >
-                <div className="flex items-start justify-between mb-4 pr-10">
+                <div className="flex items-start justify-between mb-4 pr-20">
                   <div className="flex items-center">
                     <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
                       <Building2 className="h-6 w-6 text-blue-600" />

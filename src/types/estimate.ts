@@ -58,6 +58,7 @@ export interface WorkBlock {
   items: EstimateWorkItem[]
   totalPrice: number
   isCollapsed?: boolean
+  order?: number // Порядок отображения блока
   coefficients?: string[] // ID коэффициентов для этого блока
   coefficientMode?: 'inherit' | 'custom' // наследовать от сметы или использовать свои
 }
@@ -142,7 +143,6 @@ export interface Estimate {
   totalWorksPrice: number
   totalMaterialsPrice: number
   totalPrice: number
-  status: 'draft' | 'in_progress' | 'completed' | 'cancelled'
   createdBy: string // ID менеджера
   createdAt: Date
   updatedAt: Date
@@ -173,7 +173,7 @@ export interface CSVMaterialRow {
   description?: string
 }
 
-export type EstimateStatus = 'draft' | 'in_progress' | 'completed' | 'cancelled'
+
 
 // Коэффициенты для смет
 export interface Coefficient {

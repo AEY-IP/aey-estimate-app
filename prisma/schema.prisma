@@ -24,6 +24,7 @@ model User {
   // Связи
   createdClients   Client[]
   createdEstimates Estimate[]
+  deletedEstimates DeletedEstimate[]
 
   @@map("users")
 }
@@ -49,42 +50,65 @@ model Client {
 }
 
 model WorkItem {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   unit        String
-  basePrice   Float
-  category    String
+  price       Float
   description String?
-  parameterId String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Связи
-  parameter      RoomParameter? @relation(fields: [parameterId], references: [id])
-  estimateWorks  EstimateWork[]
+  blockId     String
+  block       WorkBlock @relation(fields: [blockId], references: [id])
+  works       EstimateWork[]
+  parameterId String?
+  parameter   RoomParameter? @relation(fields: [parameterId], references: [id])
 
   @@map("work_items")
 }
 
-model RoomParameter {
-  id          String  @id @default(cuid())
-  name        String
+model WorkBlock {
+  id          String     @id @default(cuid())
+  title       String
   description String?
-  isActive    Boolean @default(true)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   // Связи
-  workItems WorkItem[]
+  items       WorkItem[]
+
+  @@map("work_blocks")
+}
+
+model RoomParameter {
+  id          String     @id @default(cuid())
+  name        String
+  unit        String
+  description String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Связи
+  workItems   WorkItem[]
+  parameterValues EstimateRoomParameterValue[]
 
   @@map("room_parameters")
 }
 
 model Coefficient {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   value       Float
   description String?
-  isActive    Boolean @default(true)
+  category    String   @default("custom") // region, complexity, urgency, season, custom
+  type        String   @default("normal") // normal, final
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("coefficients")
 }
@@ -97,8 +121,14 @@ model Estimate {
   totalWorksPrice      Float       @default(0)
   totalMaterialsPrice  Float       @default(0)
   totalPrice           Float       @default(0)
-  status               String      @default("draft") // "draft" | "active" | "completed"
   notes                String?
+  coefficientsData     String?     // JSON массив ID коэффициентов
+  coefficientSettings  String?     // JSON настройки применения коэффициентов
+  manualPrices         String?     // JSON массив ID позиций с ручной ценой
+  worksBlock           String?     // JSON данные блока работ для смет apartment
+  materialsBlock       String?     // JSON данные блока материалов для смет apartment
+  summaryWorksBlock    String?     // JSON данные сводного блока работ для смет rooms
+  summaryMaterialsBlock String?    // JSON данные сводного блока материалов для смет rooms
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
@@ -110,6 +140,7 @@ model Estimate {
 
   rooms EstimateRoom[]
   coefficients EstimateCoefficient[]
+  roomParameterValues EstimateRoomParameterValue[]
 
   @@map("estimates")
 }
@@ -120,6 +151,7 @@ model EstimateRoom {
   totalWorksPrice     Float   @default(0)
   totalMaterialsPrice Float   @default(0)
   totalPrice          Float   @default(0)
+  worksBlockStructure String? // JSON структура блоков работ с порядком
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -129,6 +161,7 @@ model EstimateRoom {
 
   works     EstimateWork[]
   materials EstimateMaterial[]
+  roomParameterValues EstimateRoomParameterValue[]
 
   @@map("estimate_rooms")
 }
@@ -139,6 +172,7 @@ model EstimateWork {
   price       Float
   totalPrice  Float
   description String?
+  blockTitle  String? // Пользовательское название блока/категории
 
   // Связи
   roomId     String
@@ -176,4 +210,50 @@ model EstimateCoefficient {
   estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
 
   @@map("estimate_coefficients")
+}
+
+model EstimateRoomParameterValue {
+  id          String @id @default(cuid())
+  parameterId String
+  parameter   RoomParameter @relation(fields: [parameterId], references: [id])
+  value       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Связи
+  estimateId String?
+  estimate   Estimate? @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  roomId     String?
+  room       EstimateRoom? @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("estimate_room_parameter_values")
+}
+
+model DeletedEstimate {
+  id                   String   @id @default(cuid())
+  originalId           String   // ID оригинальной сметы
+  title                String
+  type                 String
+  category             String
+  totalWorksPrice      Float
+  totalMaterialsPrice  Float
+  totalPrice           Float
+  notes                String?
+  coefficientsData     String?
+  coefficientSettings  String?
+  manualPrices         String?
+  estimateData         String   // JSON с полными данными сметы
+  
+  // Информация об удалении
+  deletedAt            DateTime @default(now())
+  deletedBy            String
+  deletedUser          User     @relation(fields: [deletedBy], references: [id])
+  
+  // Оригинальные связи (сохраняем ID)
+  clientId             String
+  originalCreatedBy    String
+  originalCreatedAt    DateTime
+  originalUpdatedAt    DateTime
+
+  @@map("deleted_estimates")
 } 

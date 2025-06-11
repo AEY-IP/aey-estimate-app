@@ -10,7 +10,7 @@ export default function HomePage() {
           <div className="max-w-3xl mx-auto">
             <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
               Создавайте сметы
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600"> быстро и точно</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-black"> быстро и точно</span>
             </h2>
             <p className="text-xl text-gray-600 mb-10 leading-relaxed">
               Профессиональная система для составления смет ремонтных работ с гибкими коэффициентами и автоматическими расчетами
@@ -42,14 +42,14 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature 1 */}
             <div className="card group hover:scale-105 transition-all duration-300 fade-in">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200" style={{background: '#FF006F'}}>
                 <Users className="h-6 w-6 text-white" />
               </div>
               <h4 className="text-xl font-semibold text-gray-900 mb-3">Управление клиентами</h4>
               <p className="text-gray-600 leading-relaxed">
                 Ведите базу клиентов и создавайте сметы для каждого клиента с удобным интерфейсом
               </p>
-              <Link href="/clients" className="inline-flex items-center text-blue-500 hover:text-blue-600 mt-4 font-medium">
+              <Link href="/clients" className="inline-flex items-center mt-4 font-medium hover:opacity-80" style={{color: '#FF006F'}}>
                 Перейти к клиентам
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -93,14 +93,14 @@ export default function HomePage() {
 
             {/* Feature 4 */}
             <div className="card group hover:scale-105 transition-all duration-300 fade-in" style={{animationDelay: '0.3s'}}>
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200" style={{background: '#FF006F'}}>
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <h4 className="text-xl font-semibold text-gray-900 mb-3">Управление менеджерами</h4>
               <p className="text-gray-600 leading-relaxed">
                 Создание и управление аккаунтами менеджеров, настройка прав доступа и контроль активности
               </p>
-              <Link href="/admin/users" className="inline-flex items-center text-orange-500 hover:text-orange-600 mt-4 font-medium">
+              <Link href="/admin/users" className="inline-flex items-center mt-4 font-medium hover:opacity-80" style={{color: '#FF006F'}}>
                 Управлять пользователями
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -114,12 +114,12 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-20 px-6">
         <div className="container mx-auto">
-          <div className="card bg-gradient-to-r from-blue-500 to-purple-600 text-white text-center">
+          <div className="card text-white text-center" style={{background: 'linear-gradient(135deg, #FF006F 0%, #000000 100%)'}}>
             <h3 className="text-3xl font-bold mb-4">Готовы начать работу?</h3>
-            <p className="text-xl mb-8 text-blue-100">
+                          <p className="text-xl mb-8 text-gray-200">
               Создайте клиента и составьте для него смету прямо сейчас
             </p>
-            <Link href="/clients" className="bg-white text-blue-600 hover:bg-gray-100 font-semibold py-3 px-8 rounded-xl transition-all duration-200 inline-flex items-center">
+                          <Link href="/clients" className="bg-white hover:bg-gray-100 font-semibold py-3 px-8 rounded-xl transition-all duration-200 inline-flex items-center" style={{color: '#FF006F'}}>
               <Users className="h-5 w-5 mr-2" />
               Начать с клиентов
             </Link>
@@ -131,13 +131,13 @@ export default function HomePage() {
       <footer className="bg-white border-t border-gray-100 py-12 px-6">
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background: '#FF006F'}}>
               <Calculator className="h-4 w-4 text-white" />
             </div>
-            <span className="text-lg font-semibold text-gray-900">AEY Estimates</span>
+            <span className="text-lg font-semibold text-gray-900">Идеальный подрядчик</span>
           </div>
           <p className="text-gray-600">
-            © 2024 AEY Estimates. Система управления сметами ремонтных работ.
+            © 2024 Идеальный подрядчик. Система управления сметами ремонтных работ.
           </p>
         </div>
       </footer>

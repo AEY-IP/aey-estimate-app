@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/database'
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +20,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, description } = await request.json()
+    const { name, unit, description } = await request.json()
     
     if (!name?.trim()) {
       return NextResponse.json(
@@ -31,9 +29,17 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    if (!unit?.trim()) {
+      return NextResponse.json(
+        { error: 'Единица измерения обязательна' },
+        { status: 400 }
+      )
+    }
+    
     const parameter = await prisma.roomParameter.create({
       data: {
         name: name.trim(),
+        unit: unit.trim(),
         description: description?.trim() || '',
         isActive: true
       }

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/database'
 
 export async function GET(
   request: NextRequest,
@@ -34,12 +32,13 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { name, description, isActive } = await request.json()
+    const { name, unit, description, isActive } = await request.json()
     
     const updatedParameter = await prisma.roomParameter.update({
       where: { id: params.id },
       data: {
         ...(name && { name: name.trim() }),
+        ...(unit && { unit: unit.trim() }),
         ...(description !== undefined && { description: description?.trim() || '' }),
         ...(isActive !== undefined && { isActive })
       }

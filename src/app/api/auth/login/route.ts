@@ -68,7 +68,11 @@ export async function POST(request: NextRequest) {
     })
     
     // Устанавливаем cookie с сессией (на 7 дней)
-    response.cookies.set('auth-session', JSON.stringify(userSession), {
+    // Кодируем в base64 для совместимости с checkAuth
+    const sessionJson = JSON.stringify(userSession)
+    const sessionBase64 = Buffer.from(sessionJson, 'utf-8').toString('base64')
+    
+    response.cookies.set('auth-session', sessionBase64, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

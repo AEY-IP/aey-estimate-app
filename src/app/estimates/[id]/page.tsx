@@ -127,19 +127,7 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
     generateEstimatePDF(estimateForExport)
   }
 
-  const statusLabels = {
-    draft: 'Черновик',
-    in_progress: 'В работе',
-    completed: 'Завершено',
-    cancelled: 'Отменено',
-  }
 
-  const statusColors = {
-    draft: 'text-gray-700 bg-gray-100',
-    in_progress: 'text-yellow-700 bg-yellow-100',
-    completed: 'text-green-700 bg-green-100',
-    cancelled: 'text-red-700 bg-red-100',
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -151,9 +139,6 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-gray-900">{estimate.title}</h1>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[estimate.status]}`}>
-                {statusLabels[estimate.status]}
-              </span>
             </div>
             <p className="text-gray-600">ID клиента: {estimate.clientId}</p>
           </div>

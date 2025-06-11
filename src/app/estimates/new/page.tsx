@@ -215,11 +215,14 @@ export default function NewEstimatePage() {
                   )}
                 </label>
 
-                <label className={`relative cursor-pointer rounded-xl border-2 p-6 transition-all duration-200 ${
-                  estimateCategory === 'additional' 
-                    ? 'border-orange-500 bg-orange-50' 
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}>
+                                  <label 
+                    className={`relative cursor-pointer rounded-xl border-2 p-6 transition-all duration-200 ${
+                      estimateCategory === 'additional' 
+                        ? 'text-white' 
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                    style={estimateCategory === 'additional' ? {borderColor: '#FF006F', background: 'rgba(255, 0, 111, 0.1)'} : {}}
+                  >
                   <input
                     type="radio"
                     name="estimateCategory"
@@ -229,25 +232,28 @@ export default function NewEstimatePage() {
                     className="sr-only"
                   />
                   <div className="flex items-center">
-                    <Plus className={`h-6 w-6 mr-3 ${
-                      estimateCategory === 'additional' ? 'text-orange-600' : 'text-gray-400'
-                    }`} />
+                                          <Plus 
+                        className={`h-6 w-6 mr-3 ${estimateCategory === 'additional' ? '' : 'text-gray-400'}`}
+                        style={estimateCategory === 'additional' ? {color: '#FF006F'} : {}}
+                      />
                     <div>
-                      <h3 className={`font-semibold ${
-                        estimateCategory === 'additional' ? 'text-orange-900' : 'text-gray-900'
-                      }`}>
+                                              <h3 
+                          className={`font-semibold ${estimateCategory === 'additional' ? '' : 'text-gray-900'}`}
+                          style={estimateCategory === 'additional' ? {color: '#FF006F'} : {}}
+                        >
                         Дополнительные работы
                       </h3>
-                      <p className={`text-sm mt-1 ${
-                        estimateCategory === 'additional' ? 'text-orange-700' : 'text-gray-600'
-                      }`}>
+                                              <p 
+                          className={`text-sm mt-1 ${estimateCategory === 'additional' ? '' : 'text-gray-600'}`}
+                          style={estimateCategory === 'additional' ? {color: '#FF006F'} : {}}
+                        >
                         Доп. работы, не входящие в основную смету
                       </p>
                     </div>
                   </div>
                   {estimateCategory === 'additional' && (
                     <div className="absolute top-2 right-2">
-                      <div className="w-4 h-4 bg-orange-600 rounded-full flex items-center justify-center">
+                      <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{background: '#FF006F'}}>
                         <div className="w-2 h-2 bg-white rounded-full"></div>
                       </div>
                     </div>

@@ -8,11 +8,7 @@ export function generateEstimatePDF(estimate: Estimate, coefficients: any[] = []
   if (printWindow) {
     printWindow.document.write(htmlContent)
     printWindow.document.close()
-    
-    // Ждем загрузки и запускаем печать
-    printWindow.onload = () => {
-      printWindow.print()
-    }
+    // Печать запускается автоматически через JavaScript в HTML
   }
 }
 
@@ -33,7 +29,13 @@ export function downloadEstimateHTML(estimate: Estimate, coefficients: any[] = [
 }
 
 function calculateEstimatePrices(estimate: Estimate, coefficients: any[]) {
-  if (estimate.type === 'rooms' && estimate.summaryWorksBlock && estimate.summaryMaterialsBlock && coefficients.length > 0) {
+  // Для смет по помещениям используем summaryWorksBlock, для квартир - worksBlock
+  const hasWorksBlock = (estimate.type === 'rooms' && estimate.summaryWorksBlock) || 
+                       (estimate.type === 'apartment' && estimate.worksBlock)
+  const hasMaterialsBlock = (estimate.type === 'rooms' && estimate.summaryMaterialsBlock) || 
+                           (estimate.type === 'apartment' && estimate.materialsBlock)
+  
+  if (hasWorksBlock && hasMaterialsBlock && coefficients.length > 0) {
     const estimateCoefficients = estimate.coefficients || []
     const manualPrices = new Set(estimate.manualPrices || [])
     
@@ -55,7 +57,8 @@ function calculateEstimatePrices(estimate: Estimate, coefficients: any[]) {
     }, 1)
     
     // Пересчитываем работы с коэффициентами
-    const adjustedWorksData = estimate.summaryWorksBlock.blocks.map(block => ({
+    const worksBlock = estimate.type === 'rooms' ? estimate.summaryWorksBlock : estimate.worksBlock
+    const adjustedWorksData = worksBlock!.blocks.map(block => ({
       ...block,
       items: block.items.map(item => {
         let adjustedUnitPrice: number
@@ -86,7 +89,8 @@ function calculateEstimatePrices(estimate: Estimate, coefficients: any[]) {
     
     // Материалы с глобальным коэффициентом
     const globalCoeff = normalCoeff * finalCoeff
-    const adjustedMaterialsData = estimate.summaryMaterialsBlock.items.map(item => ({
+    const materialsBlock = estimate.type === 'rooms' ? estimate.summaryMaterialsBlock : estimate.materialsBlock
+    const adjustedMaterialsData = materialsBlock!.items.map(item => ({
       ...item,
       displayUnitPrice: Math.round(item.unitPrice * globalCoeff),
       displayTotalPrice: Math.round(item.unitPrice * globalCoeff * item.quantity),
@@ -144,6 +148,7 @@ function generateEstimateHTML(estimate: Estimate, coefficients: any[] = [], clie
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="robots" content="noindex">
   <title>Смета - ${estimate.title}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
@@ -427,6 +432,10 @@ function generateEstimateHTML(estimate: Estimate, coefficients: any[] = [], clie
         border-radius: 0;
       }
     }
+    
+    @page {
+      margin: 15mm;
+    }
   </style>
 </head>
 <body>
@@ -536,6 +545,20 @@ function generateEstimateHTML(estimate: Estimate, coefficients: any[] = [], clie
       <p>Документ сгенерирован ${new Date().toLocaleDateString('ru-RU')} в ${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</p>
     </div>
   </div>
+  
+  <script>
+    // Скрываем URL в заголовке при печати
+    window.addEventListener('beforeprint', function() {
+      document.title = 'Смета - ${estimate.title}';
+    });
+    
+    // Автоматически запускаем печать при загрузке
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        window.print();
+      }, 100);
+    });
+  </script>
 </body>
 </html>`
 } 

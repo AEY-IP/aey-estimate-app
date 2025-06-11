@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings, Info } from 'lucide-react'
 import Link from 'next/link'
 import { generateEstimatePDF } from '@/lib/pdf-export'
 import { Estimate, Coefficient, WorkBlock, WorkItem, RoomParameter, RoomParameterValue, Room } from '@/types/estimate'
@@ -175,6 +175,48 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     loadRoomParameters()
   }, [params.id])
 
+  // Пересчитываем ручные цены после загрузки справочника работ
+  useEffect(() => {
+    if (estimate && availableWorks.length > 0) {
+      const manualPricesSet = new Set<string>(estimate.manualPrices || [])
+      
+      // Проверяем какие цены отличаются от справочника
+      if (estimate.type === 'apartment' && estimate.worksBlock) {
+        estimate.worksBlock.blocks.forEach((block: any) => {
+          block.items.forEach((item: any) => {
+            if (item.workId) {
+              const workInCatalog = availableWorks.find(w => w.id === item.workId)
+              if (workInCatalog && item.unitPrice !== workInCatalog.basePrice) {
+                manualPricesSet.add(item.id)
+              }
+            } else if (!item.workId && item.unitPrice > 0) {
+              manualPricesSet.add(item.id)
+            }
+          })
+        })
+      }
+      
+      if (estimate.type === 'rooms' && estimate.rooms) {
+        estimate.rooms.forEach((room: any) => {
+          room.worksBlock.blocks.forEach((block: any) => {
+            block.items.forEach((item: any) => {
+              if (item.workId) {
+                const workInCatalog = availableWorks.find(w => w.id === item.workId)
+                if (workInCatalog && item.unitPrice !== workInCatalog.basePrice) {
+                  manualPricesSet.add(item.id)
+                }
+              } else if (!item.workId && item.unitPrice > 0) {
+                manualPricesSet.add(item.id)
+              }
+            })
+          })
+        })
+      }
+      
+      setManuallyEditedPrices(manualPricesSet)
+    }
+  }, [estimate, availableWorks])
+
   // Автоматически обновляем сводную смету при изменении помещений
   useEffect(() => {
     if (estimate?.type === 'rooms' && rooms.length > 0) {
@@ -242,6 +284,29 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     const summaryWorksBlocks: any[] = []
     const summaryMaterialsItems: any[] = []
     
+    // Определяем правильный порядок категорий для сводной сметы
+    const categoryOrder = [
+      'Демонтажные работы - Пол',
+      'Демонтажные работы - Стены', 
+      'Демонтажные работы - Потолок',
+      'Демонтажные работы - Двери, окна',
+      'Демонтажные работы - Электрика',
+      'Демонтажные работы - Сантехника',
+      'Демонтажные работы - Прочее',
+      'Стены - черновой этап',
+      'Стены - финишный этап',
+      'Пол - черновой этап',
+      'Пол - финишный этап',
+      'Потолок - черновой этап',
+      'Потолок - чистовой этап',
+      'Электрика - черновой этап',
+      'Электрика - чистовой этап',
+      'Сантнехника - черновой этап',
+      'Сантнехника - чистовой этап',
+      'Вентиляция',
+      'Прочее'
+    ]
+
     // Собираем все блоки работ из всех помещений
     rooms.forEach(room => {
       room.worksBlock.blocks.forEach(block => {
@@ -258,15 +323,20 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             }
           })
         } else {
-          // Создаем новый блок
+          // Создаем новый блок с порядком согласно категории
+          const orderIndex = categoryOrder.indexOf(block.title)
           summaryWorksBlocks.push({
             ...block,
             id: `summary_${block.id}`,
-            items: block.items.map(item => ({ ...item }))
+            items: block.items.map(item => ({ ...item })),
+            order: orderIndex !== -1 ? orderIndex + 1 : 999 // Неизвестные категории в конец
           })
         }
       })
     })
+
+    // Сортируем блоки по порядку
+    summaryWorksBlocks.sort((a, b) => (a.order || 999) - (b.order || 999))
     
     // Собираем все материалы
     rooms.forEach(room => {
@@ -380,7 +450,38 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         // Получаем уникальные категории из активных работ
         const categoriesSet = new Set<string>()
         activeWorks.forEach((w: WorkItem) => categoriesSet.add(w.category))
-        const categories = Array.from(categoriesSet).sort()
+        
+        // Определяем правильный порядок категорий
+        const categoryOrder = [
+          'Демонтажные работы - Пол',
+          'Демонтажные работы - Стены', 
+          'Демонтажные работы - Потолок',
+          'Демонтажные работы - Двери, окна',
+          'Демонтажные работы - Электрика',
+          'Демонтажные работы - Сантехника',
+          'Демонтажные работы - Прочее',
+          'Стены - черновой этап',
+          'Стены - финишный этап',
+          'Пол - черновой этап',
+          'Пол - финишный этап',
+          'Потолок - черновой этап',
+          'Потолок - чистовой этап',
+          'Электрика - черновой этап',
+          'Электрика - чистовой этап',
+          'Сантнехника - черновой этап',
+          'Сантнехника - чистовой этап',
+          'Вентиляция',
+          'Прочее'
+        ]
+        
+        // Сортируем категории по заданному порядку
+        const availableCategories = Array.from(categoriesSet)
+        const sortedCategories = categoryOrder.filter(cat => availableCategories.includes(cat))
+        // Добавляем категории, которых нет в предопределенном списке
+        const otherCategories = availableCategories.filter(cat => !categoryOrder.includes(cat)).sort()
+        const categories = [...sortedCategories, ...otherCategories]
+        
+        
         setWorkCategories(categories)
       }
     } catch (error) {
@@ -436,10 +537,83 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           setCoefficientSettings(estimateWithDates.coefficientSettings)
         }
         
-        // Восстанавливаем состояние ручных цен
-        if (estimateWithDates.manualPrices) {
-          setManuallyEditedPrices(new Set(estimateWithDates.manualPrices))
+        // Инициализируем порядок блоков если его нет - делаем последовательную нумерацию
+        if (estimateWithDates.type === 'apartment' && estimateWithDates.worksBlock) {
+          // Сортируем блоки по существующему порядку или по порядку в массиве
+          const sortedBlocks = estimateWithDates.worksBlock.blocks.sort((a: any, b: any) => {
+            const aOrder = a.order || 999
+            const bOrder = b.order || 999
+            return aOrder - bOrder
+          })
+          
+          // Присваиваем последовательные номера
+          sortedBlocks.forEach((block: any, index: number) => {
+            block.order = index + 1
+          })
+          
+          estimateWithDates.worksBlock.blocks = sortedBlocks
         }
+        
+        if (estimateWithDates.type === 'rooms' && estimateWithDates.rooms) {
+          estimateWithDates.rooms.forEach((room: any) => {
+            if (room.worksBlock?.blocks) {
+              // Сортируем блоки по существующему порядку или по порядку в массиве
+              const sortedBlocks = room.worksBlock.blocks.sort((a: any, b: any) => {
+                const aOrder = a.order || 999
+                const bOrder = b.order || 999
+                return aOrder - bOrder
+              })
+              
+              // Присваиваем последовательные номера
+              sortedBlocks.forEach((block: any, index: number) => {
+                block.order = index + 1
+              })
+              
+              room.worksBlock.blocks = sortedBlocks
+            }
+          })
+        }
+
+        // Восстанавливаем состояние ручных цен
+        const manualPricesSet = new Set<string>(estimateWithDates.manualPrices || [])
+        
+        // Дополнительно проверяем какие цены отличаются от справочника
+        // Это нужно для корректной подсветки при загрузке
+        if (estimateWithDates.type === 'apartment' && estimateWithDates.worksBlock) {
+          estimateWithDates.worksBlock.blocks.forEach((block: any) => {
+            block.items.forEach((item: any) => {
+              // Проверяем отличается ли цена от справочника
+              if (item.workId && availableWorks.length > 0) {
+                const workInCatalog = availableWorks.find(w => w.id === item.workId)
+                if (workInCatalog && item.unitPrice !== workInCatalog.basePrice) {
+                  manualPricesSet.add(item.id)
+                }
+              } else if (!item.workId && item.unitPrice > 0) {
+                // Работы без workId считаем ручными
+                manualPricesSet.add(item.id)
+              }
+            })
+          })
+        }
+        
+        if (estimateWithDates.type === 'rooms' && estimateWithDates.rooms) {
+          estimateWithDates.rooms.forEach((room: any) => {
+            room.worksBlock.blocks.forEach((block: any) => {
+              block.items.forEach((item: any) => {
+                if (item.workId && availableWorks.length > 0) {
+                  const workInCatalog = availableWorks.find(w => w.id === item.workId)
+                  if (workInCatalog && item.unitPrice !== workInCatalog.basePrice) {
+                    manualPricesSet.add(item.id)
+                  }
+                } else if (!item.workId && item.unitPrice > 0) {
+                  manualPricesSet.add(item.id)
+                }
+              })
+            })
+          })
+        }
+        
+        setManuallyEditedPrices(manualPricesSet)
         
         // Восстанавливаем состояние завершенных ручных работ
         const manualWorksIds = new Set<string>()
@@ -510,11 +684,19 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       if (estimate.type === 'apartment' && estimate.worksBlock) {
         // Логика для смет по квартире - обновляем с новой логикой коэффициентов
         const updatedBlocks = estimate.worksBlock.blocks.map(block => {
-          const blockCoeff = calculateBlockCoefficientNew(block.id)
+          const normalCoeff = calculateNormalCoefficients(block.id)
+          const finalCoeff = calculateFinalCoefficients(block.id)
           
           const updatedItems = block.items.map(item => {
-            // Для ручных цен коэффициент не применяется
-            const priceWithCoeff = manuallyEditedPrices.has(item.id) ? item.unitPrice : (item.unitPrice * blockCoeff)
+            // Применяем коэффициенты в зависимости от типа цены
+            let priceWithCoeff: number
+            if (manuallyEditedPrices.has(item.id)) {
+              // Для ручных цен применяем только конечные коэффициенты
+              priceWithCoeff = item.unitPrice * finalCoeff
+            } else {
+              // Для автоматических цен применяем сначала обычные, потом конечные
+              priceWithCoeff = item.unitPrice * normalCoeff * finalCoeff
+            }
             const itemTotalPrice = Math.round(priceWithCoeff) * item.quantity
             
             return {
@@ -579,11 +761,19 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         const updatedRooms = rooms.map(room => {
           // Для каждого помещения рассчитываем totalPrice с учетом коэффициентов
           const roomWorksPrice = room.worksBlock.blocks.reduce((blockSum, block) => {
-            const blockCoeff = calculateBlockCoefficientNew(block.id)
+            const normalCoeff = calculateNormalCoefficients(block.id)
+            const finalCoeff = calculateFinalCoefficients(block.id)
             
             const blockTotal = block.items.reduce((itemSum, item) => {
-              // Для ручных цен коэффициент не применяется
-              const priceWithCoeff = manuallyEditedPrices.has(item.id) ? item.unitPrice : (item.unitPrice * blockCoeff)
+              // Применяем коэффициенты в зависимости от типа цены
+              let priceWithCoeff: number
+              if (manuallyEditedPrices.has(item.id)) {
+                // Для ручных цен применяем только конечные коэффициенты
+                priceWithCoeff = item.unitPrice * finalCoeff
+              } else {
+                // Для автоматических цен применяем сначала обычные, потом конечные
+                priceWithCoeff = item.unitPrice * normalCoeff * finalCoeff
+              }
               const itemTotal = Math.round(priceWithCoeff) * item.quantity
               return itemSum + itemTotal
             }, 0)
@@ -609,13 +799,22 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         updatedRooms.forEach(room => {
           room.worksBlock.blocks.forEach(block => {
             const existingBlock = summaryWorksBlocks.find(sb => sb.title === block.title)
-            const blockCoeff = calculateBlockCoefficientNew(block.id)
+            const normalCoeff = calculateNormalCoefficients(block.id)
+            const finalCoeff = calculateFinalCoefficients(block.id)
             
             if (existingBlock) {
               // Объединяем работы в существующий блок
               block.items.forEach(item => {
                 const existingItem = existingBlock.items.find((ei: any) => ei.name === item.name && ei.unit === item.unit)
-                const priceWithCoeff = manuallyEditedPrices.has(item.id) ? item.unitPrice : (item.unitPrice * blockCoeff)
+                // Применяем коэффициенты в зависимости от типа цены
+                let priceWithCoeff: number
+                if (manuallyEditedPrices.has(item.id)) {
+                  // Для ручных цен применяем только конечные коэффициенты
+                  priceWithCoeff = item.unitPrice * finalCoeff
+                } else {
+                  // Для автоматических цен применяем сначала обычные, потом конечные
+                  priceWithCoeff = item.unitPrice * normalCoeff * finalCoeff
+                }
                 const itemTotalPrice = Math.round(priceWithCoeff) * item.quantity
                 
                 if (existingItem) {
@@ -634,7 +833,15 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 ...block,
                 id: `summary_${block.id}`,
                 items: block.items.map(item => {
-                  const priceWithCoeff = manuallyEditedPrices.has(item.id) ? item.unitPrice : (item.unitPrice * blockCoeff)
+                  // Применяем коэффициенты в зависимости от типа цены
+                  let priceWithCoeff: number
+                  if (manuallyEditedPrices.has(item.id)) {
+                    // Для ручных цен применяем только конечные коэффициенты
+                    priceWithCoeff = item.unitPrice * finalCoeff
+                  } else {
+                    // Для автоматических цен применяем сначала обычные, потом конечные
+                    priceWithCoeff = item.unitPrice * normalCoeff * finalCoeff
+                  }
                   const itemTotalPrice = Math.round(priceWithCoeff) * item.quantity
                   return { 
                     ...item, 
@@ -764,13 +971,17 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       return
     }
     
+    // Определяем номер для нового блока
+    const nextOrder = Math.max(0, ...currentWorksBlock.blocks.map(b => b.order || 0)) + 1
+    
     const newBlock: WorkBlock = {
       id: `block_${Date.now()}`,
       title: categoryName,
       description: `Работы категории: ${categoryName}`,
       items: [],
       totalPrice: 0,
-      isCollapsed: false
+      isCollapsed: false,
+      order: nextOrder
     }
     
     updateCurrentWorksBlock(prev => ({
@@ -799,6 +1010,109 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           : block
       )
     }))
+  }
+
+  // Функция для изменения порядка блока с автоматическим перестроением
+  const updateBlockOrder = (blockId: string, newOrder: number) => {
+    const currentWorksBlock = getCurrentWorksBlock()
+    if (!currentWorksBlock) return
+    
+    const blocks = [...currentWorksBlock.blocks]
+    const targetBlock = blocks.find(b => b.id === blockId)
+    if (!targetBlock) return
+    
+    const oldOrder = targetBlock.order || 1
+    
+    // Если порядок не изменился, ничего не делаем
+    if (oldOrder === newOrder) return
+    
+    // Перестраиваем порядок всех блоков
+    const updatedBlocks = blocks.map(block => {
+      if (block.id === blockId) {
+        // Целевой блок получает новый порядок
+        return { ...block, order: newOrder }
+      } else {
+        const currentOrder = block.order || 1
+        
+        if (oldOrder < newOrder) {
+          // Блок перемещается вниз: сдвигаем вверх блоки между старой и новой позицией
+          if (currentOrder > oldOrder && currentOrder <= newOrder) {
+            return { ...block, order: currentOrder - 1 }
+          }
+        } else {
+          // Блок перемещается вверх: сдвигаем вниз блоки между новой и старой позицией
+          if (currentOrder >= newOrder && currentOrder < oldOrder) {
+            return { ...block, order: currentOrder + 1 }
+          }
+        }
+        
+        return block
+      }
+    })
+    
+    // Обновляем состояние
+    if (estimate?.type === 'apartment' && estimate.worksBlock) {
+      setEstimate(prev => prev ? {
+        ...prev,
+        worksBlock: {
+          ...prev.worksBlock!,
+          blocks: updatedBlocks
+        }
+      } : null)
+    } else if (estimate?.type === 'rooms') {
+      updateCurrentWorksBlock(prev => ({
+        ...prev,
+        blocks: updatedBlocks
+      }))
+    }
+  }
+
+  // Функция для получения отсортированных блоков
+  const getSortedBlocks = (blocks: any[]) => {
+    if (!blocks) return []
+    
+    // Для сводной сметы по помещениям используем предопределенный порядок
+    if (estimate?.type === 'rooms' && isSummaryView) {
+      const categoryOrder = [
+        'Демонтажные работы - Пол',
+        'Демонтажные работы - Стены', 
+        'Демонтажные работы - Потолок',
+        'Демонтажные работы - Двери, окна',
+        'Демонтажные работы - Электрика',
+        'Демонтажные работы - Сантехника',
+        'Демонтажные работы - Прочее',
+        'Стены - черновой этап',
+        'Стены - финишный этап',
+        'Пол - черновой этап',
+        'Пол - финишный этап',
+        'Потолок - черновой этап',
+        'Потолок - чистовой этап',
+        'Электрика - черновой этап',
+        'Электрика - чистовой этап',
+        'Сантнехника - черновой этап',
+        'Сантнехника - чистовой этап',
+        'Вентиляция',
+        'Прочее'
+      ]
+      
+      return blocks.sort((a, b) => {
+        const aIndex = categoryOrder.indexOf(a.title)
+        const bIndex = categoryOrder.indexOf(b.title)
+        
+        // Если обе категории в списке, сортируем по индексу
+        if (aIndex !== -1 && bIndex !== -1) {
+          return aIndex - bIndex
+        }
+        // Если только одна в списке, она идет первой
+        if (aIndex !== -1) return -1
+        if (bIndex !== -1) return 1
+        // Если обе не в списке, сортируем по названию
+        return a.title.localeCompare(b.title)
+      })
+    }
+    
+    // Для остальных случаев сортируем по полю order
+    return blocks.sort((a, b) => (a.order || 0) - (b.order || 0))
   }
 
   const addWorkToBlock = (blockId: string, workId?: string) => {
@@ -1152,6 +1466,29 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     return globalCoeffs.reduce((total, coef) => total * coef.value, 1)
   }
 
+  // Функция для расчета корректной стоимости блока с учетом типов коэффициентов
+  const calculateCorrectBlockTotal = (block: any) => {
+    // Суммируем скорректированные цены отдельных позиций (точно как отображается в колонке "Стоимость")
+    const normalCoeff = calculateNormalCoefficients(block.id)
+    const finalCoeff = calculateFinalCoefficients(block.id)
+    
+    return block.items.reduce((sum: number, item: any) => {
+      let adjustedTotalPrice: number
+      
+      if (manuallyEditedPrices.has(item.id)) {
+        // Для ручных цен применяем только конечные коэффициенты
+        const adjustedUnitPrice = item.unitPrice * finalCoeff
+        adjustedTotalPrice = adjustedUnitPrice * item.quantity
+      } else {
+        // Для автоматических цен применяем сначала обычные, потом конечные
+        const adjustedUnitPrice = item.unitPrice * normalCoeff * finalCoeff
+        adjustedTotalPrice = adjustedUnitPrice * item.quantity
+      }
+      
+      return sum + Math.round(adjustedTotalPrice)
+    }, 0)
+  }
+
   const getCategoryLabel = (category: string) => {
     const labels: { [key: string]: string } = {
       region: 'Региональные',
@@ -1481,7 +1818,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             <div className="card fade-in">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mr-3" style={{background: '#FF006F'}}>
                     <Settings className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -1531,7 +1868,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
                 {loadingParameters ? (
                   <div className="text-center py-8">
-                    <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{borderColor: '#FF006F', borderTopColor: 'transparent'}}></div>
                     <p className="text-gray-500">Загрузка параметров...</p>
                   </div>
                 ) : roomParameters.length === 0 ? (
@@ -1547,15 +1884,15 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                       const linkedWorksCount = availableWorks.filter(w => w.parameterId === parameter.id).length
                       
                       return (
-                        <div key={parameter.id} className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                        <div key={parameter.id} className="p-4 rounded-xl border" style={{background: 'rgba(255, 0, 111, 0.1)', borderColor: 'rgba(255, 0, 111, 0.3)'}}>
                           <div className="mb-3">
-                            <label className="block text-sm font-semibold text-orange-900 mb-1">
+                                                          <label className="block text-sm font-semibold mb-1" style={{color: '#FF006F'}}>
                               {parameter.name}
                             </label>
-                            <div className="text-xs text-orange-700 mb-2">
+                                                          <div className="text-xs mb-2" style={{color: '#FF006F'}}>
                               Единица: {parameter.unit}
                               {linkedWorksCount > 0 && (
-                                <span className="ml-2 px-2 py-1 bg-orange-200 text-orange-800 rounded-full text-xs">
+                                                                  <span className="ml-2 px-2 py-1 text-white rounded-full text-xs" style={{background: '#FF006F'}}>
                                   {linkedWorksCount} работ
                                 </span>
                               )}
@@ -1582,7 +1919,8 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                   updateWorkQuantitiesForParameter(parameter.id, currentValue)
                                 }
                               }}
-                              className="mt-2 w-full text-xs bg-orange-200 hover:bg-orange-300 text-orange-800 px-2 py-1 rounded transition-colors"
+                                                              className="mt-2 w-full text-xs text-white px-2 py-1 rounded transition-colors hover:opacity-80"
+                                style={{background: '#FF006F'}}
                               title="Принудительно обновить количество в работах"
                             >
                               🔄 Обновить количество в работах
@@ -1590,7 +1928,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                           )}
                           
                           {parameter.description && (
-                            <p className="text-xs text-orange-600 mt-2">{parameter.description}</p>
+                                                          <p className="text-xs mt-2" style={{color: '#FF006F'}}>{parameter.description}</p>
                           )}
                           
                           {linkedWorksCount > 0 && currentValue > 0 && (
@@ -1669,7 +2007,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   </div>
                 )}
 
-                {getCurrentWorksBlock()?.blocks.map((block) => (
+                {getSortedBlocks(getCurrentWorksBlock()?.blocks || []).map((block) => (
                   <div key={block.id} className="work-block mb-6">
                     {/* Заголовок блока */}
                     <div className="work-block-header flex items-center justify-between">
@@ -1681,68 +2019,87 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                         >
                           {block.isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </button>
-                        <div className="flex-1">
-                          {isSummaryView ? (
-                            <div>
-                              <h3 className="font-semibold text-gray-900 text-lg">{block.title}</h3>
-                              {block.description && (
-                                <p className="text-sm text-gray-600 mt-1">{block.description}</p>
-                              )}
+                        <div className="flex-1 flex items-center gap-3">
+                          {/* Номер блока */}
+                          {!isSummaryView && !(estimate?.type === 'rooms' && isSummaryView) && (
+                            <div className="flex items-center">
+                              <input
+                                type="number"
+                                min="1"
+                                value={block.order || 1}
+                                onChange={(e) => {
+                                  const newOrder = parseInt(e.target.value) || 1
+                                  updateBlockOrder(block.id, newOrder)
+                                }}
+                                className="w-16 px-2 py-1 text-sm border border-gray-300 rounded text-center"
+                                title="Номер блока"
+                              />
+                              <span className="text-gray-500 ml-1">.</span>
                             </div>
-                          ) : (
-                            <input
-                              type="text"
-                              value={block.title}
-                              onChange={(e) => {
-                                if (estimate?.type === 'apartment' && estimate.worksBlock) {
-                                  setEstimate(prev => prev ? {
-                                    ...prev,
-                                    worksBlock: {
-                                      ...prev.worksBlock!,
-                                      blocks: prev.worksBlock!.blocks.map(b => 
-                                        b.id === block.id ? { ...b, title: e.target.value } : b
-                                      )
-                                    }
-                                  } : null)
-                                }
-                              }}
-                              className="font-semibold text-gray-900 bg-transparent border-none outline-none text-lg"
-                              placeholder="Название блока"
-                            />
                           )}
+                          
+                          {/* Название блока */}
+                          <div className="flex-1">
+                            {isSummaryView ? (
+                              <div>
+                                <h3 className="font-semibold text-gray-900 text-lg">
+                                  {block.title}
+                                </h3>
+                                {block.description && (
+                                  <p className="text-sm text-gray-600 mt-1">{block.description}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="flex items-center">
+                                <span className="font-semibold text-gray-900 text-lg mr-2">
+                                  {block.order || 1}.
+                                </span>
+                                <input
+                                  type="text"
+                                  value={block.title}
+                                  onChange={(e) => {
+                                    if (estimate?.type === 'apartment' && estimate.worksBlock) {
+                                      setEstimate(prev => prev ? {
+                                        ...prev,
+                                        worksBlock: {
+                                          ...prev.worksBlock!,
+                                          blocks: prev.worksBlock!.blocks.map(b => 
+                                            b.id === block.id ? { ...b, title: e.target.value } : b
+                                          )
+                                        }
+                                      } : null)
+                                    } else if (estimate?.type === 'rooms') {
+                                      updateCurrentWorksBlock(prev => ({
+                                        ...prev,
+                                        blocks: prev.blocks.map((b: any) => 
+                                          b.id === block.id ? { ...b, title: e.target.value } : b
+                                        )
+                                      }))
+                                    }
+                                  }}
+                                  className="font-semibold text-gray-900 bg-transparent border-none outline-none text-lg flex-1"
+                                  placeholder="Название блока"
+                                />
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="text-sm text-gray-600 mr-4 text-right">
                           <div className="text-lg font-semibold text-gray-900">
-                            {(() => {
-                              // Вычисляем обычные и конечные коэффициенты отдельно
-                              const normalCoeff = calculateNormalCoefficients(block.id)
-                              const finalCoeff = calculateFinalCoefficients(block.id)
-                              
-                              // Раздельный расчет для ручных и автоматических цен
-                              const manualPriceTotal = block.items
-                                .filter(item => manuallyEditedPrices.has(item.id))
-                                .reduce((sum, item) => sum + item.totalPrice, 0)
-                              
-                              const autoPriceTotal = block.items
-                                .filter(item => !manuallyEditedPrices.has(item.id))
-                                .reduce((sum, item) => sum + item.totalPrice, 0)
-                              
-                              const blockCoeff = calculateBlockCoefficientNew(block.id)
-                              const totalWithCoeff = manualPriceTotal + (autoPriceTotal * blockCoeff)
-                              
-                              return totalWithCoeff.toLocaleString('ru-RU') + ' ₽'
-                            })()}
+                            {calculateCorrectBlockTotal(block).toLocaleString('ru-RU')} ₽
                           </div>
                           {(() => {
-                            const blockCoeff = calculateBlockCoefficientNew(block.id)
+                            const normalCoeff2 = calculateNormalCoefficients(block.id)
+                            const finalCoeff2 = calculateFinalCoefficients(block.id)
+                            const overallCoeff = normalCoeff2 * finalCoeff2
                             const hasManualPrices = block.items.some(item => manuallyEditedPrices.has(item.id))
                             
-                            if (blockCoeff !== 1 || hasManualPrices) {
+                            if (overallCoeff !== 1 || hasManualPrices) {
                               return (
                                 <div className="text-blue-600 text-sm">
-                                  {blockCoeff !== 1 && `коэффициент ×${blockCoeff.toFixed(2)}`}
+                                  {overallCoeff !== 1 && `коэффициент ×${overallCoeff.toFixed(2)}`}
                                   {hasManualPrices && (
-                                    <div className="text-orange-600">
+                                    <div style={{color: '#FF006F'}}>
                                       {block.items.filter(item => manuallyEditedPrices.has(item.id)).length} ручн. цена
                                     </div>
                                   )}
@@ -1880,6 +2237,10 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                             onBlur={(e) => {
                                               if (e.target.value.trim()) {
                                                 setManualInputCompleted(prev => new Set(Array.from(prev).concat(item.id)))
+                                                // Если это ручная работа, добавляем её в manualPrices для подсветки
+                                                if (!item.workId && item.unitPrice > 0) {
+                                                  setManuallyEditedPrices(prev => new Set([...Array.from(prev), item.id]))
+                                                }
                                               }
                                             }}
                                             className="input-field text-sm work-name-input"
@@ -1962,9 +2323,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                               item.workId && (() => {
                                                 const workInCatalog = availableWorks.find(w => w.id === item.workId)
                                                 const isManuallyEdited = manuallyEditedQuantities.has(item.id)
-                                                return workInCatalog?.parameterId && !isManuallyEdited ? 'bg-orange-50 border-orange-200 pr-8' : ''
+                                                return workInCatalog?.parameterId && !isManuallyEdited ? 'pr-8' : ''
                                               })()
                                             }`}
+                                            style={item.workId && (() => {
+                                              const workInCatalog = availableWorks.find(w => w.id === item.workId)
+                                              const isManuallyEdited = manuallyEditedQuantities.has(item.id)
+                                              return workInCatalog?.parameterId && !isManuallyEdited ? {background: 'rgba(255, 0, 111, 0.1)', borderColor: 'rgba(255, 0, 111, 0.3)'} : {}
+                                            })()}
                                             min="0"
                                             step="1"
                                           />
@@ -1979,7 +2345,8 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                             
                                             return (
                                               <div 
-                                                className="absolute top-1 right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer group hover:bg-orange-600 transition-colors"
+                                                className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center cursor-pointer group hover:opacity-80 transition-colors"
+                                                style={{background: '#FF006F'}}
                                                 onClick={(e) => {
                                                   e.preventDefault()
                                                   e.stopPropagation()
@@ -2033,19 +2400,19 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                   })
                                                 }
                                               } else {
-                                                // Для работ без workId всегда считаем ручными
+                                                // Для работ без workId или ручных работ всегда считаем ручными
                                                 setManuallyEditedPrices(prev => new Set([...Array.from(prev), item.id]))
                                               }
                                             }}
-                                            className={`input-field w-24 no-number-arrows ${
-                                              manuallyEditedPrices.has(item.id) ? 'bg-orange-50 border-orange-300' : ''
-                                            }`}
+                                            className={`input-field w-24 no-number-arrows`}
+                                            style={manuallyEditedPrices.has(item.id) ? {background: 'rgba(255, 0, 111, 0.1)', borderColor: 'rgba(255, 0, 111, 0.3)'} : {}}
                                             min="0"
                                             step="1"
                                             title="Базовая цена за единицу"
                                           />
                                           {manuallyEditedPrices.has(item.id) && (
-                                            <div className="absolute top-1 right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer group hover:bg-orange-600 transition-colors"
+                                            <div className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center cursor-pointer group hover:opacity-80 transition-colors"
+                                              style={{background: '#FF006F'}}
                                               onClick={(e) => {
                                                 e.preventDefault()
                                                 e.stopPropagation()
@@ -2359,7 +2726,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           </div>
 
           {/* Правая колонка - коэффициенты */}
-          {(estimate?.type === 'apartment' || (estimate?.type === 'rooms' && isSummaryView)) && (
+          {(estimate?.type === 'apartment' || estimate?.type === 'rooms') && (
             <div className="lg:col-span-1">
               <div className="card sticky top-24 fade-in">
                 <div className="flex items-center justify-between mb-4">
@@ -2378,6 +2745,16 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   </div>
                 </div>
                 
+                {/* Показываем уведомление когда пользователь в отдельном помещении */}
+                {estimate?.type === 'rooms' && !isSummaryView && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center text-blue-800 text-sm">
+                      <Info className="h-4 w-4 mr-2" />
+                      <span>Коэффициенты настраиваются в сводной смете и применяются ко всем помещениям</span>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Кнопка сворачивания в стиле Apple */}
                 <div className="mb-6">
                   <button
@@ -2393,7 +2770,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 <div className={`collapsible-content ${isCoefficientsCollapsed ? 'collapsed' : 'expanded'} max-h-[calc(100vh-200px)] overflow-y-auto`}>
                   <p className="text-sm text-gray-600 mb-6">
                     {estimate?.type === 'rooms' 
-                      ? 'Коэффициенты применяются ко всем помещениям'
+                      ? (isSummaryView 
+                          ? 'Коэффициенты применяются ко всем помещениям' 
+                          : 'Коэффициенты из сводной сметы (только просмотр)')
                       : 'Выберите коэффициенты и настройте их применение'
                     }
                   </p>
@@ -2413,14 +2792,16 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                             {categoryCoefficients.map((coefficient) => {
                               const isSelected = estimate?.coefficients?.includes(coefficient.id) || false
                               const setting = coefficientSettings[coefficient.id]
+                              const isReadOnly = estimate?.type === 'rooms' && !isSummaryView
                               
                               return (
-                                <div key={coefficient.id} className="coefficient-card">
-                                  <label className="flex items-center cursor-pointer mb-3">
+                                <div key={coefficient.id} className={`coefficient-card ${isReadOnly ? 'opacity-75' : ''}`}>
+                                  <label className={`flex items-center mb-3 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
                                     <input
                                       type="checkbox"
                                       checked={isSelected}
-                                      onChange={() => handleCoefficientToggle(coefficient.id)}
+                                      onChange={() => !isReadOnly && handleCoefficientToggle(coefficient.id)}
+                                      disabled={isReadOnly}
                                       className="mr-3"
                                     />
                                     <div className="flex-1">
@@ -2453,7 +2834,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                     </div>
                                   </label>
                                   
-                                  {isSelected && (
+                                  {isSelected && !isReadOnly && (
                                     <div className="mt-3 pl-6 space-y-3">
                                       <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wider">
                                         Применить к:
@@ -2507,6 +2888,26 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                             </label>
                                           )) || []}
                                         </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Показываем текущие настройки в режиме просмотра */}
+                                  {isSelected && isReadOnly && (
+                                    <div className="mt-3 pl-6 text-sm text-gray-600">
+                                      <span className="font-medium">Применяется к: </span>
+                                      {isGlobalCoefficient(coefficient.id) ? (
+                                        <span className="text-blue-600">всей смете</span>
+                                      ) : (
+                                        <span className="text-blue-600">
+                                          {Array.isArray(setting?.target) && setting.target.length > 0 
+                                            ? `блокам: ${setting.target.map(blockId => {
+                                                const block = getCurrentWorksBlock()?.blocks?.find(b => b.id === blockId)
+                                                return block?.title || blockId
+                                              }).join(', ')}`
+                                            : 'выбранным блокам'
+                                          }
+                                        </span>
                                       )}
                                     </div>
                                   )}
@@ -2590,7 +2991,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                               <hr className="my-2 border-green-300" />
                               <div className="flex justify-between font-bold">
                                 <span>Итого:</span>
-                                <span>×{calculateBlockCoefficientNew(block.id).toFixed(2)}</span>
+                                <span>×{(calculateNormalCoefficients(block.id) * calculateFinalCoefficients(block.id)).toFixed(2)}</span>
                               </div>
                             </div>
                           </div>

@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
+import { checkAuth } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
     // Проверяем аутентификацию
-    const sessionCookie = request.cookies.get('auth-session')
-    if (!sessionCookie) {
+    const session = checkAuth(request)
+    if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const session = JSON.parse(sessionCookie.value)
     const { searchParams } = new URL(request.url)
     const clientId = searchParams.get('clientId')
     
@@ -92,12 +92,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Проверяем аутентификацию
-    const sessionCookie = request.cookies.get('auth-session')
-    if (!sessionCookie) {
+    const session = checkAuth(request)
+    if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const session = JSON.parse(sessionCookie.value)
     const body = await request.json()
     const { title, type = 'rooms', category = 'main', clientId } = body
     
@@ -131,8 +130,7 @@ export async function POST(request: NextRequest) {
         createdBy: session.id,
         totalWorksPrice: 0,
         totalMaterialsPrice: 0,
-        totalPrice: 0,
-        status: 'draft'
+        totalPrice: 0
       },
       include: {
         client: {

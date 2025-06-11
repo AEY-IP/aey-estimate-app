@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAuth } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const authSession = request.cookies.get('auth-session')
+    const session = checkAuth(request)
     
-    if (!authSession || !authSession.value) {
+    if (!session) {
       return NextResponse.json(
         { error: 'Пользователь не авторизован' },
         { status: 401 }
       )
     }
     
-    const user = JSON.parse(authSession.value)
-    
     return NextResponse.json({
-      user,
+      user: session,
       isAuthenticated: true
     })
     
