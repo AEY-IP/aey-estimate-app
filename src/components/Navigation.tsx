@@ -89,7 +89,7 @@ const Navigation = () => {
         {/* Основная панель навигации */}
         <div className="flex items-center justify-between py-3">
           <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background: '#FF006F'}}>
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
               <Calculator className="h-4 w-4 text-white" />
             </div>
             <div className="hidden sm:block">
@@ -145,10 +145,9 @@ const Navigation = () => {
                     href="/admin/users" 
                     className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive('/admin') 
-                        ? 'text-white shadow-sm' 
+                        ? 'bg-orange-100 text-orange-700 shadow-sm' 
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
-                    style={isActive('/admin') ? {background: '#FF006F'} : {}}
                   >
                     <Shield className="h-4 w-4 inline mr-2" />
                     Админ
@@ -242,10 +241,9 @@ const Navigation = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive('/admin') 
-                        ? 'text-white shadow-sm' 
+                        ? 'bg-orange-100 text-orange-700 shadow-sm' 
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
-                    style={isActive('/admin') ? {background: '#FF006F'} : {}}
                   >
                     <Shield className="h-4 w-4 mr-3" />
                     Администрирование

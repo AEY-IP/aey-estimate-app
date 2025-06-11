@@ -151,7 +151,6 @@ model EstimateRoom {
   totalWorksPrice     Float   @default(0)
   totalMaterialsPrice Float   @default(0)
   totalPrice          Float   @default(0)
-  worksBlockStructure String? // JSON структура блоков работ с порядком
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

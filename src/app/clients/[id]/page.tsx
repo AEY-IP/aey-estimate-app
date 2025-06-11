@@ -109,7 +109,7 @@ export default function ClientDetailPage() {
   const formatCategory = (category: string) => {
     const categoryMap = {
       main: { text: 'Основная', color: 'bg-purple-100 text-purple-700', icon: Star },
-      additional: { text: 'Доп. работы', color: 'text-white', icon: Plus }
+      additional: { text: 'Доп. работы', color: 'bg-orange-100 text-orange-700', icon: Plus }
     }
     return categoryMap[category as keyof typeof categoryMap] || categoryMap.main
   }
@@ -306,10 +306,7 @@ export default function ClientDetailPage() {
                         <div className="flex-1">
                           <div className="flex items-center space-x-3">
                             <h3 className="font-semibold text-gray-900">{estimate.title}</h3>
-                            <span 
-                              className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${category.color}`}
-                              style={estimate.category === 'additional' ? {background: '#FF006F'} : {}}
-                            >
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${category.color}`}>
                               <CategoryIcon className="h-3 w-3 mr-1" />
                               {category.text}
                             </span>

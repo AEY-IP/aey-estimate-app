@@ -58,7 +58,6 @@ export interface WorkBlock {
   items: EstimateWorkItem[]
   totalPrice: number
   isCollapsed?: boolean
-  order?: number // Порядок отображения блока
   coefficients?: string[] // ID коэффициентов для этого блока
   coefficientMode?: 'inherit' | 'custom' // наследовать от сметы или использовать свои
 }

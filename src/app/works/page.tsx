@@ -401,7 +401,7 @@ export default function WorksPage() {
       'bg-blue-100 text-blue-700',
       'bg-green-100 text-green-700',
       'bg-purple-100 text-purple-700',
-      'pink-custom',
+      'bg-orange-100 text-orange-700',
       'bg-pink-100 text-pink-700',
       'bg-indigo-100 text-indigo-700',
       'bg-red-100 text-red-700',
@@ -416,8 +416,7 @@ export default function WorksPage() {
       hash = category.charCodeAt(i) + ((hash << 5) - hash)
     }
     
-    const colorIndex = Math.abs(hash) % colors.length
-    return colors[colorIndex]
+    return colors[Math.abs(hash) % colors.length]
   }
 
   if (loading) {
@@ -587,7 +586,7 @@ export default function WorksPage() {
               </div>
               <div className="lg:col-span-2">
                 {zeroPriceWorksCount > 0 && (
-                  <div className="text-sm text-gray-600 p-3 rounded-xl border" style={{background: 'rgba(255, 0, 111, 0.1)', borderColor: 'rgba(255, 0, 111, 0.3)'}}>
+                  <div className="text-sm text-gray-600 p-3 bg-orange-50 rounded-xl border border-orange-200">
                     💡 Найдено {zeroPriceWorksCount} работ с нечисловой ценой (вручную, проценты и т.д.)
                   </div>
                 )}
@@ -622,7 +621,7 @@ export default function WorksPage() {
 
               <div className="card p-6">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mr-4" style={{background: '#FF006F'}}>
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
                     <span className="text-white font-bold text-lg">₽0</span>
                   </div>
                   <div>
@@ -705,8 +704,7 @@ export default function WorksPage() {
                             </td>
                             <td>
                               <div 
-                                className={`status-badge ${getCategoryColor(work.category) === 'pink-custom' ? 'text-white' : getCategoryColor(work.category)} max-w-32 truncate cursor-help`} 
-                                style={getCategoryColor(work.category) === 'pink-custom' ? {background: '#FF006F'} : {}}
+                                className={`status-badge ${getCategoryColor(work.category)} max-w-32 truncate cursor-help`} 
                                 title={work.category}
                               >
                                 {work.category}
@@ -718,7 +716,7 @@ export default function WorksPage() {
                             <td>
                               {work.basePrice === 0 ? (
                                 <div className="group relative">
-                                  <span className="font-semibold cursor-help" style={{color: '#FF006F'}}>
+                                  <span className="font-semibold text-orange-600 cursor-help">
                                     Цена не указана
                                   </span>
                                   {work.description && work.description.includes('Цена:') && (
@@ -821,7 +819,7 @@ export default function WorksPage() {
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="card p-6">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mr-4" style={{background: '#FF006F'}}>
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
                     <Settings className="h-6 w-6 text-white" />
                   </div>
                   <div>

@@ -22,78 +22,35 @@ async function checkAuthLocal() {
 
 // Формирует полную структуру помещения как ожидает фронтенд
 function formatRoomForFrontend(room: any) {
-  let worksBlock
-  
-  // Если есть сохраненная структура блоков, используем её
-  if (room.worksBlockStructure) {
-    try {
-      worksBlock = JSON.parse(room.worksBlockStructure)
-      
-      // Обновляем данные работ из базы данных
-      worksBlock.blocks.forEach((block: any) => {
-        block.items.forEach((item: any) => {
-          const workFromDB = room.works.find((w: any) => w.id === item.id)
-          if (workFromDB) {
-            item.quantity = workFromDB.quantity
-            item.unitPrice = workFromDB.price
-            item.totalPrice = workFromDB.totalPrice
-            item.description = workFromDB.description
-          }
-        })
-        
-        // Пересчитываем totalPrice блока
-        block.totalPrice = block.items.reduce((sum: number, item: any) => sum + item.totalPrice, 0)
-      })
-      
-      // Пересчитываем общий totalPrice
-      worksBlock.totalPrice = worksBlock.blocks.reduce((sum: number, block: any) => sum + block.totalPrice, 0)
-      
-    } catch (error) {
-      console.error('Error parsing worksBlockStructure:', error)
-      worksBlock = null
-    }
-  }
-  
-  // Если нет сохраненной структуры, создаем заново (для обратной совместимости)
-  if (!worksBlock) {
-    // Группируем работы по блокам
-    const worksByBlock: { [key: string]: any } = {}
-    room.works.forEach((work: any) => {
-      // Используем сохраненное пользователем название блока, если есть, иначе исходную категорию
-      const blockTitle = work.blockTitle || work.workItem.block?.title || work.workItem.blockTitle || 'Без категории'
-      if (!worksByBlock[blockTitle]) {
-        worksByBlock[blockTitle] = {
-          id: `block_${blockTitle.replace(/\s+/g, '_')}`,
-          title: blockTitle,
-          items: [],
-          totalPrice: 0,
-          order: Object.keys(worksByBlock).length + 1 // Присваиваем порядковый номер
-        }
+  // Группируем работы по блокам
+  const worksByBlock: { [key: string]: any } = {}
+  room.works.forEach((work: any) => {
+    // Используем сохраненное пользователем название блока, если есть, иначе исходную категорию
+    const blockTitle = work.blockTitle || work.workItem.block?.title || work.workItem.blockTitle || 'Без категории'
+    if (!worksByBlock[blockTitle]) {
+      worksByBlock[blockTitle] = {
+        id: `block_${blockTitle.replace(/\s+/g, '_')}`,
+        title: blockTitle,
+        items: [],
+        totalPrice: 0
       }
-      worksByBlock[blockTitle].items.push({
-        id: work.id,
-        workId: work.workItemId,
-        name: work.workItem.name,
-        unit: work.workItem.unit,
-        quantity: work.quantity,
-        unitPrice: work.price,
-        totalPrice: work.totalPrice,
-        description: work.description
-      })
-    })
-
-    // Считаем totalPrice для каждого блока
-    Object.values(worksByBlock).forEach((block: any) => {
-      block.totalPrice = block.items.reduce((sum: number, item: any) => sum + item.totalPrice, 0)
-    })
-    
-    worksBlock = {
-      id: `works_${room.id}`,
-      title: `Работы - ${room.name}`,
-      blocks: Object.values(worksByBlock),
-      totalPrice: room.totalWorksPrice
     }
-  }
+    worksByBlock[blockTitle].items.push({
+      id: work.id,
+      workId: work.workItemId,
+      name: work.workItem.name,
+      unit: work.workItem.unit,
+      quantity: work.quantity,
+      unitPrice: work.price,
+      totalPrice: work.totalPrice,
+      description: work.description
+    })
+  })
+
+  // Считаем totalPrice для каждого блока
+  Object.values(worksByBlock).forEach((block: any) => {
+    block.totalPrice = block.items.reduce((sum: number, item: any) => sum + item.totalPrice, 0)
+  })
 
   // Форматируем параметры помещения
   const roomParameters = room.roomParameterValues ? {
@@ -114,7 +71,12 @@ function formatRoomForFrontend(room: any) {
     totalMaterialsPrice: room.totalMaterialsPrice,
     totalPrice: room.totalPrice,
     roomParameters,
-    worksBlock,
+    worksBlock: {
+      id: `works_${room.id}`,
+      title: `Работы - ${room.name}`,
+      blocks: Object.values(worksByBlock),
+      totalPrice: room.totalWorksPrice
+    },
     materialsBlock: {
       id: `materials_${room.id}`,
       title: `Материалы - ${room.name}`,
@@ -365,8 +327,7 @@ export async function PUT(
           name: room.name,
           totalWorksPrice: room.totalWorksPrice || 0,
           totalMaterialsPrice: room.totalMaterialsPrice || 0,
-          totalPrice: room.totalPrice || 0,
-          worksBlockStructure: room.worksBlock ? JSON.stringify(room.worksBlock) : null
+          totalPrice: room.totalPrice || 0
         }
 
         let savedRoom
