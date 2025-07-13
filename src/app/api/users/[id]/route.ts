@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
+import bcrypt from 'bcryptjs'
 
 // GET - получить пользователя по ID
 export async function GET(
@@ -44,7 +45,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { username, role, name, phone, isActive } = await request.json()
+    const { username, password, role, name, phone, isActive } = await request.json()
     
     // Проверяем существование пользователя
     const existingUser = await prisma.user.findUnique({
@@ -69,10 +70,17 @@ export async function PUT(
       }
     }
     
+    // Хешируем новый пароль если он предоставлен
+    let hashedPassword;
+    if (password && password.trim()) {
+      hashedPassword = await bcrypt.hash(password, 12);
+    }
+    
     const updatedUser = await prisma.user.update({
       where: { id: params.id },
       data: {
         ...(username && { username }),
+        ...(hashedPassword && { passwordHash: hashedPassword }),
         ...(role && { role }),
         ...(name && { name }),
         ...(phone !== undefined && { phone }),

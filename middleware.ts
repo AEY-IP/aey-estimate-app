@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Публичные страницы, доступные без авторизации
-const publicPaths = ['/login']
+const publicPaths = ['/login', '/client-login', '/']
 
 // Админские страницы, доступные только админам
 const adminPaths = ['/admin', '/works', '/coefficients', '/room-parameters']
@@ -15,16 +15,32 @@ export function middleware(request: NextRequest) {
   }
   
   // Разрешаем доступ к API публичной аутентификации
-  if (pathname.startsWith('/api/auth/login')) {
+  if (pathname.startsWith('/api/auth/login') || 
+      pathname.startsWith('/api/auth/client-login') ||
+      pathname.startsWith('/api/auth/client-logout') ||
+      pathname.startsWith('/api/auth/client-me') ||
+      pathname.startsWith('/api/auth/me') ||
+      pathname.startsWith('/api/auth/logout')) {
     return NextResponse.next()
   }
   
-  // Проверяем наличие сессии
+  // Обрабатываем клиентские страницы отдельно
+  if (pathname.startsWith('/client-dashboard') || pathname.startsWith('/api/client')) {
+    const clientToken = request.cookies.get('client-token')
+    
+    if (!clientToken || !clientToken.value) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+    
+    return NextResponse.next()
+  }
+  
+  // Проверяем наличие сессии для обычных страниц
   const authSession = request.cookies.get('auth-session')
   
   if (!authSession || !authSession.value) {
-    // Нет сессии - перенаправляем на вход
-    return NextResponse.redirect(new URL('/login', request.url))
+    // Нет сессии - перенаправляем на главную страницу
+    return NextResponse.redirect(new URL('/', request.url))
   }
   
   try {
@@ -35,7 +51,7 @@ export function middleware(request: NextRequest) {
     if (adminPaths.some(path => pathname.startsWith(path))) {
       if (userRole !== 'ADMIN') {
         // Менеджер пытается зайти в админку - перенаправляем на главную
-        return NextResponse.redirect(new URL('/', request.url))
+        return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
     
@@ -65,8 +81,8 @@ export function middleware(request: NextRequest) {
     
   } catch (error) {
     console.error('Ошибка парсинга сессии:', error)
-    // Неверная сессия - удаляем cookie и перенаправляем на вход
-    const response = NextResponse.redirect(new URL('/login', request.url))
+    // Неверная сессия - удаляем cookie и перенаправляем на главную страницу
+    const response = NextResponse.redirect(new URL('/', request.url))
     response.cookies.delete('auth-session')
     return response
   }
@@ -80,7 +96,8 @@ export const config = {
      * - /_next/static (статические файлы)
      * - /_next/image (оптимизация изображений)
      * - /favicon.ico (фавикон)
+     * - /_next/webpack-hmr (горячая перезагрузка)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico).*)',
   ],
 } 

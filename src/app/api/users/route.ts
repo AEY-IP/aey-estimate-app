@@ -56,10 +56,13 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Хешируем пароль перед сохранением
+    const hashedPassword = await bcrypt.hash(password, 12)
+    
     const newUser = await prisma.user.create({
       data: {
         username,
-        passwordHash: password, // В реальном приложении нужно хешировать пароль
+        passwordHash: hashedPassword,
         role,
         name,
         phone: phone || null,

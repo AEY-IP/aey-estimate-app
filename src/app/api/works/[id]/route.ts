@@ -61,12 +61,19 @@ export async function PUT(
     // Определяем blockId если передана category
     let finalBlockId = blockId
     if (!finalBlockId && category) {
-      const block = await prisma.workBlock.findFirst({
+      // Пытаемся найти существующий блок
+      let block = await prisma.workBlock.findFirst({
         where: { title: category }
       })
-      if (block) {
-        finalBlockId = block.id
+      
+      // Если блок не найден, создаем новый
+      if (!block) {
+        block = await prisma.workBlock.create({
+          data: { title: category }
+        })
       }
+      
+      finalBlockId = block.id
     }
 
     const updateData: any = {}
@@ -74,7 +81,7 @@ export async function PUT(
     if (name !== undefined) updateData.name = name.trim()
     if (unit !== undefined) updateData.unit = unit?.trim() || 'шт'
     if (basePrice !== undefined) updateData.price = basePrice ? parseFloat(basePrice) : 0
-    if (finalBlockId) updateData.blockId = finalBlockId
+    if (finalBlockId !== undefined) updateData.blockId = finalBlockId
     if (description !== undefined) updateData.description = description?.trim() || ''
     if (parameterId !== undefined) updateData.parameterId = parameterId || null
     if (isActive !== undefined) updateData.isActive = isActive

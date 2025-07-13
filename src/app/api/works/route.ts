@@ -12,49 +12,53 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    const where: any = {}
-
+    // Строим запрос для WorkItem с блоками
+    const whereWorkItem: any = {}
+    
     if (category && category !== 'all') {
-      where.category = category
+      whereWorkItem.block = {
+        title: category
+      }
     }
 
     if (search) {
-      where.OR = [
+      whereWorkItem.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } }
       ]
     }
 
-    const [works, total] = await Promise.all([
+    const [workItems, total] = await Promise.all([
       prisma.workItem.findMany({
-        where,
+        where: whereWorkItem,
         include: {
-          parameter: true,
-          block: true
+          block: true,
+          parameter: true
         },
         orderBy: { name: 'asc' },
         skip,
         take: limit
       }),
-      prisma.workItem.count({ where })
+      prisma.workItem.count({ where: whereWorkItem })
     ])
 
-    const transformedWorks = works.map(work => ({
-      id: work.id,
-      name: work.name,
-      unit: work.unit,
-      basePrice: work.price,
-      category: work.block.title,
-      description: work.description,
-      parameterId: work.parameterId,
-      isActive: work.isActive,
-      createdAt: work.createdAt,
-      updatedAt: work.updatedAt,
-      parameter: work.parameter
+    // Преобразуем WorkItem в формат совместимый с фронтендом
+    const works = workItems.map(workItem => ({
+      id: workItem.id,
+      name: workItem.name,
+      unit: workItem.unit,
+      basePrice: workItem.price,
+      category: workItem.block.title,
+      description: workItem.description,
+      parameterId: workItem.parameterId,
+      isActive: workItem.isActive,
+      createdAt: workItem.createdAt,
+      updatedAt: workItem.updatedAt,
+      parameter: workItem.parameter
     }))
 
     return NextResponse.json({
-      works: transformedWorks,
+      works: works,
       pagination: {
         total,
         page,
@@ -72,74 +76,62 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, unit, basePrice, category, blockId, description, parameterId } = body
+    const { name, unit, basePrice, category, description, parameterId } = body
 
     // Только название обязательно
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Название работы обязательно' }, { status: 400 })
     }
 
-    // Определяем blockId - либо передан напрямую, либо ищем по category
-    let finalBlockId = blockId
-    if (!finalBlockId && category) {
-      const block = await prisma.workBlock.findFirst({
-        where: { title: category }
+    // Определяем blockId для категории
+    let blockId: string
+    const categoryName = category?.trim() || 'Разное'
+    
+    // Пытаемся найти существующий блок
+    let block = await prisma.workBlock.findFirst({
+      where: { title: categoryName }
+    })
+    
+    // Если блок не найден, создаем новый
+    if (!block) {
+      block = await prisma.workBlock.create({
+        data: { title: categoryName }
       })
-      if (block) {
-        finalBlockId = block.id
-      }
     }
+    
+    blockId = block.id
 
-    // Если блока нет, создаем "Разное"
-    if (!finalBlockId) {
-      const miscBlock = await prisma.workBlock.findFirst({
-        where: { title: 'Разное' }
-      })
-      
-      if (miscBlock) {
-        finalBlockId = miscBlock.id
-      } else {
-        const newBlock = await prisma.workBlock.create({
-          data: {
-            title: 'Разное',
-            description: 'Прочие работы'
-          }
-        })
-        finalBlockId = newBlock.id
-      }
-    }
-
-    const work = await prisma.workItem.create({
+    const workItem = await prisma.workItem.create({
       data: {
         name: name.trim(),
         unit: unit?.trim() || 'шт',
         price: basePrice ? parseFloat(basePrice) : 0,
-        blockId: finalBlockId,
         description: description?.trim() || '',
-        parameterId: parameterId || null
+        parameterId: parameterId || null,
+        blockId: blockId
       },
       include: {
-        parameter: true,
-        block: true
+        block: true,
+        parameter: true
       }
     })
 
-    // Преобразуем для фронтенда
-    const transformedWork = {
-      id: work.id,
-      name: work.name,
-      unit: work.unit,
-      basePrice: work.price,
-      category: work.block.title,
-      description: work.description,
-      parameterId: work.parameterId,
-      isActive: work.isActive,
-      createdAt: work.createdAt,
-      updatedAt: work.updatedAt,
-      parameter: work.parameter
+    // Преобразуем в формат совместимый с фронтендом
+    const work = {
+      id: workItem.id,
+      name: workItem.name,
+      unit: workItem.unit,
+      basePrice: workItem.price,
+      category: workItem.block.title,
+      description: workItem.description,
+      parameterId: workItem.parameterId,
+      isActive: workItem.isActive,
+      createdAt: workItem.createdAt,
+      updatedAt: workItem.updatedAt,
+      parameter: workItem.parameter
     }
 
-    return NextResponse.json(transformedWork, { status: 201 })
+    return NextResponse.json(work, { status: 201 })
   } catch (error) {
     console.error('Ошибка создания работы:', error)
     return NextResponse.json({ error: 'Ошибка создания работы' }, { status: 500 })

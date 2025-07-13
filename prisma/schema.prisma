@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,59 +8,202 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  username     String    @unique
-  passwordHash String
-  role         String    // "ADMIN" | "MANAGER"
-  name         String
-  phone        String?
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  // Связи
+  id               String            @id @default(cuid())
+  username         String            @unique
+  passwordHash     String
+  role             String
+  name             String
+  phone            String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  createdActs      Act[]
   createdClients   Client[]
-  createdEstimates Estimate[]
   deletedEstimates DeletedEstimate[]
+  createdEstimates Estimate[]
+  scheduleProjects ScheduleProject[]
 
   @@map("users")
 }
 
 model Client {
-  id             String    @id @default(cuid())
-  name           String
-  phone          String?
-  email          String?
-  address        String?
-  contractNumber String?
-  notes          String?
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  // Связи
-  createdBy String
-  creator   User        @relation(fields: [createdBy], references: [id])
-  estimates Estimate[]
+  id               String                @id @default(cuid())
+  name             String
+  phone            String?
+  email            String?
+  address          String?
+  contractNumber   String?
+  contractDate     String?
+  notes            String?
+  isActive         Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  createdBy        String
+  acts             Act[]
+  clientUser       ClientUser?
+  creator          User                  @relation(fields: [createdBy], references: [id])
+  documents        Document[]
+  estimates        Estimate[]
+  photoBlocks      PhotoBlock[]
+  projectNews      ProjectNews[]
+  scheduleItems    ProjectScheduleItem[]
+  receiptBlocks    ReceiptBlock[]
+  scheduleProjects ScheduleProject[]
 
   @@map("clients")
 }
 
-model WorkItem {
+model ClientUser {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  passwordHash  String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  clientId      String   @unique
+  plainPassword String?
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_users")
+}
+
+model Document {
   id          String   @id @default(cuid())
+  name        String
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  clientId    String
+  isVisible   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  tags        String?
+  uploadedBy  String?
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model ProjectNews {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clientId  String
+  type      String   @default("other")
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("project_news")
+}
+
+model ProjectScheduleItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  progress    Int      @default(0)
+  status      String   @default("not_started")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("project_schedule_items")
+}
+
+model PhotoBlock {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  clientId    String
+  createdBy   String?
+  eventDate   DateTime?
+  isVisible   Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  tags        String[]  @default([])
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  photos      Photo[]
+
+  @@map("photo_blocks")
+}
+
+model Photo {
+  id          String     @id @default(cuid())
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  description String?
+  createdAt   DateTime   @default(now())
+  blockId     String
+  isVisible   Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  tags        String[]   @default([])
+  uploadedBy  String?
+  block       PhotoBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@map("photos")
+}
+
+model ReceiptBlock {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  clientId    String
+  createdBy   String?
+  eventDate   DateTime?
+  isVisible   Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  tags        String[]  @default([])
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  receipts    Receipt[]
+
+  @@map("receipt_blocks")
+}
+
+model Receipt {
+  id          String       @id @default(cuid())
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  description String?
+  createdAt   DateTime     @default(now())
+  blockId     String
+  isVisible   Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  tags        String[]     @default([])
+  uploadedBy  String?
+  block       ReceiptBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@map("receipts")
+}
+
+model WorkItem {
+  id          String         @id @default(cuid())
   name        String
   unit        String
   price       Float
   description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Связи
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   blockId     String
-  block       WorkBlock @relation(fields: [blockId], references: [id])
-  works       EstimateWork[]
   parameterId String?
+  actWorks    ActWork[]
+  works       EstimateWork[]
+  block       WorkBlock      @relation(fields: [blockId], references: [id])
   parameter   RoomParameter? @relation(fields: [parameterId], references: [id])
 
   @@map("work_items")
@@ -76,25 +216,37 @@ model WorkBlock {
   isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-
-  // Связи
   items       WorkItem[]
 
   @@map("work_blocks")
 }
 
-model RoomParameter {
-  id          String     @id @default(cuid())
+model Work {
+  id          String   @id @default(cuid())
   name        String
   unit        String
+  basePrice   Float
+  category    String
   description String?
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  parameterId String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // Связи
-  workItems   WorkItem[]
-  parameterValues EstimateRoomParameterValue[]
+  @@map("works")
+}
+
+model RoomParameter {
+  id                 String                       @id @default(cuid())
+  name               String
+  unit               String
+  description        String?
+  isActive           Boolean                      @default(true)
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  actParameterValues ActRoomParameterValue[]
+  parameterValues    EstimateRoomParameterValue[]
+  workItems          WorkItem[]
 
   @@map("room_parameters")
 }
@@ -104,85 +256,271 @@ model Coefficient {
   name        String
   value       Float
   description String?
-  category    String   @default("custom") // region, complexity, urgency, season, custom
-  type        String   @default("normal") // normal, final
   isActive    Boolean  @default(true)
+  category    String   @default("custom")
   createdAt   DateTime @default(now())
+  type        String   @default("normal")
   updatedAt   DateTime @updatedAt
 
   @@map("coefficients")
 }
 
 model Estimate {
-  id                   String      @id @default(cuid())
-  title                String
-  type                 String      // "rooms" | "blocks"
-  category             String      // "main" | "additional"
-  totalWorksPrice      Float       @default(0)
-  totalMaterialsPrice  Float       @default(0)
-  totalPrice           Float       @default(0)
-  notes                String?
-  coefficientsData     String?     // JSON массив ID коэффициентов
-  coefficientSettings  String?     // JSON настройки применения коэффициентов
-  manualPrices         String?     // JSON массив ID позиций с ручной ценой
-  worksBlock           String?     // JSON данные блока работ для смет apartment
-  materialsBlock       String?     // JSON данные блока материалов для смет apartment
-  summaryWorksBlock    String?     // JSON данные сводного блока работ для смет rooms
-  summaryMaterialsBlock String?    // JSON данные сводного блока материалов для смет rooms
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
-
-  // Связи
-  clientId  String
-  client    Client @relation(fields: [clientId], references: [id])
-  createdBy String
-  creator   User   @relation(fields: [createdBy], references: [id])
-
-  rooms EstimateRoom[]
-  coefficients EstimateCoefficient[]
-  roomParameterValues EstimateRoomParameterValue[]
+  id                    String                       @id @default(cuid())
+  title                 String
+  type                  String
+  category              String
+  totalWorksPrice       Float                        @default(0)
+  totalMaterialsPrice   Float                        @default(0)
+  totalPrice            Float                        @default(0)
+  notes                 String?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+  clientId              String
+  createdBy             String
+  coefficientSettings   String?
+  coefficientsData      String?
+  manualPrices          String?
+  materialsBlock        String?
+  showToClient          Boolean                      @default(false)
+  summaryMaterialsBlock String?
+  summaryWorksBlock     String?
+  worksBlock            String?
+  isAct                 Boolean                      @default(false)
+  coefficients          EstimateCoefficient[]
+  exportCache           EstimateExport?
+  roomParameterValues   EstimateRoomParameterValue[]
+  rooms                 EstimateRoom[]
+  client                Client                       @relation(fields: [clientId], references: [id])
+  creator               User                         @relation(fields: [createdBy], references: [id])
 
   @@map("estimates")
 }
 
 model EstimateRoom {
-  id                  String  @id @default(cuid())
+  id                  String                       @id @default(cuid())
   name                String
-  totalWorksPrice     Float   @default(0)
-  totalMaterialsPrice Float   @default(0)
-  totalPrice          Float   @default(0)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  // Связи
-  estimateId String
-  estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
-
-  works     EstimateWork[]
-  materials EstimateMaterial[]
+  sortOrder           Int                          @default(0)
+  totalWorksPrice     Float                        @default(0)
+  totalMaterialsPrice Float                        @default(0)
+  totalPrice          Float                        @default(0)
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+  estimateId          String
+  materials           EstimateMaterial[]
   roomParameterValues EstimateRoomParameterValue[]
+  estimate            Estimate                     @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  works               EstimateWork[]
 
   @@map("estimate_rooms")
 }
 
 model EstimateWork {
-  id          String  @id @default(cuid())
-  quantity    Float
-  price       Float
-  totalPrice  Float
-  description String?
-  blockTitle  String? // Пользовательское название блока/категории
-
-  // Связи
-  roomId     String
-  room       EstimateRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  workItemId String
-  workItem   WorkItem     @relation(fields: [workItemId], references: [id])
+  id             String       @id @default(cuid())
+  quantity       Float
+  price          Float
+  totalPrice     Float
+  description    String?
+  roomId         String
+  workItemId     String?
+  blockTitle     String?
+  manualWorkName String?
+  manualWorkUnit String?
+  room           EstimateRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  workItem       WorkItem?    @relation(fields: [workItemId], references: [id])
 
   @@map("estimate_works")
 }
 
 model EstimateMaterial {
+  id          String       @id @default(cuid())
+  name        String
+  unit        String
+  quantity    Float
+  price       Float
+  totalPrice  Float
+  description String?
+  roomId      String
+  room        EstimateRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("estimate_materials")
+}
+
+model EstimateCoefficient {
+  id          String   @id @default(cuid())
+  name        String
+  value       Float
+  description String?
+  estimateId  String
+  estimate    Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+
+  @@map("estimate_coefficients")
+}
+
+model EstimateRoomParameterValue {
+  id          String        @id @default(cuid())
+  parameterId String
+  value       Float
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  estimateId  String?
+  roomId      String?
+  estimate    Estimate?     @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  parameter   RoomParameter @relation(fields: [parameterId], references: [id])
+  room        EstimateRoom? @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("estimate_room_parameter_values")
+}
+
+model DeletedEstimate {
+  id                  String   @id @default(cuid())
+  originalId          String
+  title               String
+  type                String
+  category            String
+  totalWorksPrice     Float
+  totalMaterialsPrice Float
+  totalPrice          Float
+  notes               String?
+  coefficientsData    String?
+  coefficientSettings String?
+  manualPrices        String?
+  estimateData        String
+  deletedAt           DateTime @default(now())
+  deletedBy           String
+  clientId            String
+  originalCreatedBy   String
+  originalCreatedAt   DateTime
+  originalUpdatedAt   DateTime
+  deletedUser         User     @relation(fields: [deletedBy], references: [id])
+
+  @@map("deleted_estimates")
+}
+
+model EstimateExport {
+  id                  String   @id @default(cuid())
+  estimateId          String   @unique
+  worksData           String
+  materialsData       String
+  totalWorksPrice     Float
+  totalMaterialsPrice Float
+  grandTotal          Float
+  coefficientsInfo    String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  estimate            Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+
+  @@map("estimate_exports")
+}
+
+model ScheduleProject {
+  id           String         @id @default(cuid())
+  clientId     String
+  title        String
+  description  String?
+  startDate    DateTime
+  endDate      DateTime
+  status       String         @default("active")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  createdBy    String
+  showToClient Boolean        @default(false)
+  client       Client         @relation(fields: [clientId], references: [id])
+  creator      User           @relation(fields: [createdBy], references: [id])
+  tasks        ScheduleTask[]
+
+  @@map("schedule_projects")
+}
+
+model ScheduleTask {
+  id           String          @id @default(cuid())
+  projectId    String
+  parentId     String?
+  title        String
+  description  String?
+  level        Int             @default(0)
+  orderIndex   Int             @default(0)
+  plannedStart DateTime
+  plannedEnd   DateTime
+  actualStart  DateTime?
+  actualEnd    DateTime?
+  progress     Float           @default(0)
+  status       String          @default("waiting")
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  parent       ScheduleTask?   @relation("TaskHierarchy", fields: [parentId], references: [id])
+  children     ScheduleTask[]  @relation("TaskHierarchy")
+  project      ScheduleProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("schedule_tasks")
+}
+
+model Act {
+  id                    String                  @id @default(cuid())
+  title                 String
+  type                  String
+  category              String
+  totalWorksPrice       Float                   @default(0)
+  totalMaterialsPrice   Float                   @default(0)
+  totalPrice            Float                   @default(0)
+  notes                 String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  clientId              String
+  createdBy             String
+  coefficientSettings   String?
+  coefficientsData      String?
+  manualPrices          String?
+  materialsBlock        String?
+  summaryMaterialsBlock String?
+  summaryWorksBlock     String?
+  worksBlock            String?
+  showToClient          Boolean                 @default(false)
+  coefficients          ActCoefficient[]
+  exportCache           ActExport?
+  roomParameterValues   ActRoomParameterValue[]
+  rooms                 ActRoom[]
+  client                Client                  @relation(fields: [clientId], references: [id])
+  creator               User                    @relation(fields: [createdBy], references: [id])
+
+  @@map("acts")
+}
+
+model ActRoom {
+  id                  String                  @id @default(cuid())
+  name                String
+  totalWorksPrice     Float                   @default(0)
+  totalMaterialsPrice Float                   @default(0)
+  totalPrice          Float                   @default(0)
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  actId               String
+  materials           ActMaterial[]
+  roomParameterValues ActRoomParameterValue[]
+  act                 Act                     @relation(fields: [actId], references: [id], onDelete: Cascade)
+  works               ActWork[]
+
+  @@map("act_rooms")
+}
+
+model ActWork {
+  id             String    @id @default(cuid())
+  quantity       Float
+  price          Float
+  totalPrice     Float
+  description    String?
+  roomId         String
+  workItemId     String?
+  blockTitle     String?
+  manualWorkName String?
+  manualWorkUnit String?
+  room           ActRoom   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  workItem       WorkItem? @relation(fields: [workItemId], references: [id])
+
+  @@map("act_works")
+}
+
+model ActMaterial {
   id          String  @id @default(cuid())
   name        String
   unit        String
@@ -190,69 +528,50 @@ model EstimateMaterial {
   price       Float
   totalPrice  Float
   description String?
+  roomId      String
+  room        ActRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  // Связи
-  roomId String
-  room   EstimateRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-
-  @@map("estimate_materials")
+  @@map("act_materials")
 }
 
-model EstimateCoefficient {
-  id          String @id @default(cuid())
+model ActCoefficient {
+  id          String  @id @default(cuid())
   name        String
   value       Float
   description String?
+  actId       String
+  act         Act     @relation(fields: [actId], references: [id], onDelete: Cascade)
 
-  // Связи
-  estimateId String
-  estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
-
-  @@map("estimate_coefficients")
+  @@map("act_coefficients")
 }
 
-model EstimateRoomParameterValue {
-  id          String @id @default(cuid())
+model ActRoomParameterValue {
+  id          String        @id @default(cuid())
   parameterId String
-  parameter   RoomParameter @relation(fields: [parameterId], references: [id])
   value       Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  actId       String?
+  roomId      String?
+  act         Act?          @relation(fields: [actId], references: [id], onDelete: Cascade)
+  parameter   RoomParameter @relation(fields: [parameterId], references: [id])
+  room        ActRoom?      @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  // Связи
-  estimateId String?
-  estimate   Estimate? @relation(fields: [estimateId], references: [id], onDelete: Cascade)
-  roomId     String?
-  room       EstimateRoom? @relation(fields: [roomId], references: [id], onDelete: Cascade)
-
-  @@map("estimate_room_parameter_values")
+  @@map("act_room_parameter_values")
 }
 
-model DeletedEstimate {
-  id                   String   @id @default(cuid())
-  originalId           String   // ID оригинальной сметы
-  title                String
-  type                 String
-  category             String
-  totalWorksPrice      Float
-  totalMaterialsPrice  Float
-  totalPrice           Float
-  notes                String?
-  coefficientsData     String?
-  coefficientSettings  String?
-  manualPrices         String?
-  estimateData         String   // JSON с полными данными сметы
-  
-  // Информация об удалении
-  deletedAt            DateTime @default(now())
-  deletedBy            String
-  deletedUser          User     @relation(fields: [deletedBy], references: [id])
-  
-  // Оригинальные связи (сохраняем ID)
-  clientId             String
-  originalCreatedBy    String
-  originalCreatedAt    DateTime
-  originalUpdatedAt    DateTime
+model ActExport {
+  id                  String   @id @default(cuid())
+  actId               String   @unique
+  worksData           String
+  materialsData       String
+  totalWorksPrice     Float
+  totalMaterialsPrice Float
+  grandTotal          Float
+  coefficientsInfo    String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  act                 Act      @relation(fields: [actId], references: [id], onDelete: Cascade)
 
-  @@map("deleted_estimates")
-} 
+  @@map("act_exports")
+}

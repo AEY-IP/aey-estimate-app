@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест статичной загрузки</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        input[type="file"] {
+            padding: 5px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .info {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .info h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>🧪 Тест статичной загрузки фото</h1>
+        
+        <form action="/api/upload/photos" method="POST" enctype="multipart/form-data">
+            <!-- Скрытые поля - ЗАМЕНИ CLIENT_ID на реальный ID клиента -->
+            <input type="hidden" name="clientId" value="CLIENT_ID_HERE" />
+            <input type="hidden" name="blockId" value="default-block" />
+            
+            <div class="form-group">
+                <label for="description">Описание фотографии (опционально):</label>
+                <input 
+                    type="text" 
+                    id="description" 
+                    name="description" 
+                    placeholder="Краткое описание фотографии"
+                />
+            </div>
+            
+            <div class="form-group">
+                <label for="file">Выберите фотографию *:</label>
+                <input 
+                    type="file" 
+                    id="file" 
+                    name="file" 
+                    accept="image/jpeg,image/png,image/jpg,image/webp" 
+                    required
+                />
+                <small style="color: #666; font-size: 12px;">
+                    Поддерживаются: JPG, PNG, WebP (до 10 МБ)
+                </small>
+            </div>
+            
+            <button type="submit">📤 Загрузить фотографию</button>
+        </form>
+        
+        <div class="info">
+            <h3>ℹ️ Инструкция:</h3>
+            <ol>
+                <li>Замени <code>CLIENT_ID_HERE</code> на реальный ID клиента в скрытом поле</li>
+                <li>Выбери фотографию</li>
+                <li>Нажми кнопку "Загрузить"</li>
+                <li>Форма отправится напрямую на сервер без JavaScript</li>
+                <li>После загрузки произойдет редирект на страницу фотографий</li>
+            </ol>
+            
+            <p><strong>Особенности:</strong></p>
+            <ul>
+                <li>Полностью без JavaScript</li>
+                <li>Обычная HTML форма с POST запросом</li>
+                <li>Multipart/form-data для загрузки файлов</li>
+                <li>Автоматический редирект после загрузки</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html> 

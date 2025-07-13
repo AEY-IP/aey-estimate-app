@@ -1,0 +1,76 @@
+{
+  "title": "Смета1", 
+  "type": "rooms", 
+  "totalWorksPrice": 1000, 
+  "totalMaterialsPrice": 500, 
+  "totalPrice": 1500,
+  "coefficientSettings": {},
+  "manualPrices": [],
+  "roomParameters": {
+    "id": "room_params_global",
+    "title": "Параметры помещения",
+    "parameters": [
+      {
+        "parameterId": "param_1",
+        "value": 50
+      }
+    ]
+  },
+  "rooms": [
+    {
+      "id": "room_1748985617743",
+      "name": "Комната1",
+      "totalWorksPrice": 1000,
+      "totalMaterialsPrice": 500,
+      "totalPrice": 1500,
+      "roomParameters": {
+        "id": "room_params_room_1748985617743",
+        "title": "Параметры помещения - Комната1",
+        "parameters": [
+          {
+            "parameterId": "param_2",
+            "value": 25.5
+          }
+        ]
+      },
+      "worksBlock": {
+        "id": "works_room_1748985617743",
+        "title": "Работы - Комната1",
+        "blocks": [
+          {
+            "id": "block_1",
+            "title": "Демонтажные работы",
+            "items": [
+              {
+                "id": "work_1",
+                "workId": "work_123",
+                "name": "Демонтаж обоев",
+                "unit": "м²",
+                "quantity": 50,
+                "unitPrice": 10,
+                "totalPrice": 500
+              }
+            ],
+            "totalPrice": 500
+          }
+        ],
+        "totalPrice": 1000
+      },
+      "materialsBlock": {
+        "id": "materials_room_1748985617743",
+        "title": "Материалы - Комната1",
+        "items": [
+          {
+            "id": "material_1",
+            "name": "Краска",
+            "unit": "л",
+            "quantity": 5,
+            "unitPrice": 100,
+            "totalPrice": 500
+          }
+        ],
+        "totalPrice": 500
+      }
+    }
+  ]
+}

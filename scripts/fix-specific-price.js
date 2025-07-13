@@ -1,4 +1,4 @@
-const fs = require('fs');
+,соиояяшшлconst fs = require('fs');
 const path = require('path');
 
 async function fixSpecificWork() {

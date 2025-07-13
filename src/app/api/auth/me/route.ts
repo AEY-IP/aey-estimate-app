@@ -13,7 +13,12 @@ export async function GET(request: NextRequest) {
     }
     
     return NextResponse.json({
-      user: session,
+      user: {
+        id: session.id,
+        name: session.name || session.username, // Используем name если есть, иначе username
+        username: session.username,
+        role: session.role
+      },
       isAuthenticated: true
     })
     

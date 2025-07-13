@@ -76,7 +76,7 @@ export default function NewEstimatePage() {
           type: estimateType,
           category: estimateCategory,
           clientId,
-          coefficients: []
+          coefficients: [],
         }),
       })
 
@@ -382,22 +382,24 @@ export default function NewEstimatePage() {
               <h2 className="text-xl font-semibold">Название сметы</h2>
             </div>
             
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Название сметы *
-              </label>
-              <input
-                type="text"
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="input"
-                placeholder={`Например: Ремонт ${estimateType === 'apartment' ? 'квартиры' : 'по помещениям'} - ${client.name}`}
-                required
-              />
-              <p className="text-sm text-gray-500 mt-2">
-                Введите описательное название для этой сметы
-              </p>
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                  Название сметы *
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="input"
+                  placeholder={`Например: Ремонт ${estimateType === 'apartment' ? 'квартиры' : 'по помещениям'} - ${client.name}`}
+                  required
+                />
+                <p className="text-sm text-gray-500 mt-2">
+                  Введите описательное название для этой сметы
+                </p>
+              </div>
             </div>
           </div>
 

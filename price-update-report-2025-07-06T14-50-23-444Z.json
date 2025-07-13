@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-07-06T14-50-23-444Z",
+  "operation": "update-base-prices",
+  "multiplier": 2.5,
+  "results": {
+    "workUpdated": 952,
+    "workItemUpdated": 952,
+    "backupPath": "/Users/nikolaybazhan/Desktop/AEY_APP3/backups/price-update-backup-2025-07-06T14-50-23-444Z.json",
+    "beforeStats": {
+      "work": {
+        "_count": {
+          "id": 952
+        },
+        "_min": {
+          "basePrice": 26
+        },
+        "_max": {
+          "basePrice": 66154
+        },
+        "_avg": {
+          "basePrice": 1702.428571428571
+        },
+        "_sum": {
+          "basePrice": 1620712
+        }
+      },
+      "workItem": {
+        "_count": {
+          "id": 952
+        },
+        "_min": {
+          "price": 26
+        },
+        "_max": {
+          "price": 66154
+        },
+        "_avg": {
+          "price": 1702.428571428571
+        },
+        "_sum": {
+          "price": 1620712
+        }
+      }
+    },
+    "afterStats": {
+      "work": {
+        "_min": {
+          "basePrice": 65
+        },
+        "_max": {
+          "basePrice": 165385
+        },
+        "_avg": {
+          "basePrice": 4256.071428571428
+        },
+        "_sum": {
+          "basePrice": 4051780
+        }
+      },
+      "workItem": {
+        "_min": {
+          "price": 65
+        },
+        "_max": {
+          "price": 165385
+        },
+        "_avg": {
+          "price": 4256.071428571428
+        },
+        "_sum": {
+          "price": 4051780
+        }
+      }
+    },
+    "verification": {
+      "workCorrect": true,
+      "workItemCorrect": true
+    }
+  }
+}

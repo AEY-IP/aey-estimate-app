@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogIn, Eye, EyeOff } from 'lucide-react'
+import { LogIn, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -13,6 +13,34 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
+
+  useEffect(() => {
+    checkAuthStatus()
+  }, [])
+
+  const checkAuthStatus = async () => {
+    try {
+      // Проверяем, не авторизован ли пользователь уже
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        // Пользователь уже авторизован, перенаправляем в дашборд
+        console.log('👤 User already authenticated, redirecting to dashboard...')
+        router.push('/dashboard')
+        return
+      }
+
+      // Пользователь не авторизован, показываем форму входа
+      setIsChecking(false)
+
+    } catch (error) {
+      console.error('Error checking auth status:', error)
+      setIsChecking(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,8 +59,8 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        // Успешный вход - перенаправляем на главную
-        router.push('/')
+        // Успешный вход - перенаправляем в профессиональную среду
+        router.push('/dashboard')
       } else {
         setError(data.error || 'Ошибка входа')
       }
@@ -44,9 +72,32 @@ export default function LoginPage() {
     }
   }
 
+  // Показываем загрузку пока проверяем авторизацию
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-pink-50 flex items-center justify-center p-6">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-600">Проверка авторизации...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-pink-50 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
+        {/* Кнопка назад */}
+        <div className="mb-4">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Назад к выбору входа
+          </button>
+        </div>
+        
         {/* Логотип/Заголовок */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">

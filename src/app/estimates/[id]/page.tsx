@@ -1,19 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Edit, Download, Wrench, Package, ChevronDown, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
-import { generateEstimatePDF } from '@/lib/pdf-export'
+import { generateEstimatePDFWithCache, generateEstimatePDF } from '@/lib/pdf-export'
 import { Estimate } from '@/types/estimate'
 
 export default function ViewEstimatePage({ params }: { params: { id: string } }) {
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('returnTo') || '/clients'
+  
   const [estimate, setEstimate] = useState<Estimate | null>(null)
+  const [coefficients, setCoefficients] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [collapsedBlocks, setCollapsedBlocks] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     loadEstimate()
+    loadCoefficients()
   }, [params.id])
 
   const loadEstimate = async () => {
@@ -38,6 +44,18 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
       setError('Ошибка загрузки сметы')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadCoefficients = async () => {
+    try {
+      const response = await fetch('/api/coefficients')
+      if (response.ok) {
+        const data = await response.json()
+        setCoefficients(data.coefficients || [])
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки коэффициентов:', error)
     }
   }
 
@@ -68,8 +86,8 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
           <p className="text-red-500">{error || 'Смета не найдена'}</p>
-          <Link href="/estimates" className="btn-primary mt-4 inline-block">
-            Вернуться к списку смет
+          <Link href={returnTo} className="btn-primary mt-4 inline-block">
+            Вернуться к клиентам
           </Link>
         </div>
       </div>
@@ -82,8 +100,8 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <p className="text-red-500">Ошибка: неполная структура сметы по квартире</p>
-          <Link href="/estimates" className="btn-primary mt-4">
-            Вернуться к списку смет
+          <Link href={returnTo} className="btn-primary mt-4">
+            Вернуться к клиентам
           </Link>
         </div>
       </div>
@@ -95,8 +113,8 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <p className="text-red-500">Ошибка: неполная структура сметы по помещениям</p>
-          <Link href="/estimates" className="btn-primary mt-4">
-            Вернуться к списку смет
+          <Link href={returnTo} className="btn-primary mt-4">
+            Вернуться к клиентам
           </Link>
         </div>
       </div>
@@ -116,15 +134,20 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
   const totalMaterialsPrice = materialsBlock.items.reduce((sum, item) => sum + item.totalPrice, 0)
   const grandTotal = totalWorksPrice + totalMaterialsPrice
 
-  const handleExportPDF = () => {
-    const estimateForExport = {
-      ...estimate,
-      totalWorksPrice,
-      totalMaterialsPrice,
-      totalPrice: grandTotal,
+  const handleExportPDF = async () => {
+    // Загружаем информацию о клиенте
+    let clientData = null
+    try {
+      const response = await fetch(`/api/clients/${estimate.clientId}`)
+      if (response.ok) {
+        clientData = await response.json()
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки клиента:', error)
     }
-    
-    generateEstimatePDF(estimateForExport)
+
+    // Используем новую функцию с кешированными данными для единообразия
+    generateEstimatePDFWithCache(estimate, clientData)
   }
 
 
@@ -133,7 +156,7 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center">
-          <Link href="/estimates" className="mr-4 p-2 hover:bg-gray-100 rounded-lg">
+          <Link href={returnTo} className="mr-4 p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
@@ -149,7 +172,7 @@ export default function ViewEstimatePage({ params }: { params: { id: string } })
             <Download className="h-5 w-5 mr-2" />
             Экспорт PDF
           </button>
-          <Link href={`/estimates/${params.id}/edit`} className="btn-primary flex items-center">
+          <Link href={`/estimates/${params.id}/edit?returnTo=${encodeURIComponent(returnTo)}`} className="btn-primary flex items-center">
             <Edit className="h-5 w-5 mr-2" />
             Редактировать
           </Link>

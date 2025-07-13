@@ -1,20 +1,31 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Eye, Edit2, Trash2, Building2, User, Phone, Mail, MapPin, FileText, Check, X } from 'lucide-react'
+import { Plus, Eye, Edit2, Trash2, Building2, User, Phone, Mail, MapPin, FileText, Check, X, ArrowLeft, Users, ChevronRight, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import { useToast } from '@/components/Toast'
 import { Client, CreateClientRequest } from '@/types/client'
+import DateInput from '@/components/DateInput'
+
+interface ManagerGroup {
+  managerId: string
+  managerName: string
+  managerUsername: string
+  clientsCount: number
+  clients: Client[]
+}
 
 export default function ClientsPage() {
   const { session } = useAuth()
   const { showToast } = useToast()
   
   const [clients, setClients] = useState<Client[]>([])
+  const [managerGroups, setManagerGroups] = useState<ManagerGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'grouped' | 'list'>('list')
   
   // Форма создания клиента
   const [formData, setFormData] = useState({
@@ -23,7 +34,8 @@ export default function ClientsPage() {
     email: '',
     address: '',
     contractNumber: '',
-    notes: ''
+    notes: '',
+    contractDate: ''
   })
 
   // Загрузка клиентов
@@ -33,6 +45,7 @@ export default function ClientsPage() {
       if (response.ok) {
         const data = await response.json()
         setClients(data)
+        groupClientsByManager(data)
       } else {
         const error = await response.json()
         showToast('error', error.error || 'Ошибка загрузки клиентов')
@@ -44,9 +57,40 @@ export default function ClientsPage() {
     }
   }
 
+  // Группировка клиентов по менеджерам
+  const groupClientsByManager = (clientsList: Client[]) => {
+    const groups: { [key: string]: ManagerGroup } = {}
+    
+    clientsList.forEach(client => {
+      const managerId = client.createdBy
+      if (!groups[managerId]) {
+        groups[managerId] = {
+          managerId,
+          managerName: client.createdByUser?.name || 'Неизвестный пользователь',
+          managerUsername: client.createdByUser?.username || 'unknown',
+          clientsCount: 0,
+          clients: []
+        }
+      }
+      groups[managerId].clients.push(client)
+      groups[managerId].clientsCount++
+    })
+    
+    setManagerGroups(Object.values(groups))
+  }
+
   useEffect(() => {
     fetchClients()
   }, [])
+
+  // Устанавливаем режим по умолчанию в зависимости от роли
+  useEffect(() => {
+    if (session?.user?.role === 'ADMIN') {
+      setViewMode('grouped')
+    } else {
+      setViewMode('list')
+    }
+  }, [session])
 
   // Создание клиента
   const handleCreate = async (e: React.FormEvent) => {
@@ -62,7 +106,7 @@ export default function ClientsPage() {
       if (response.ok) {
         showToast('success', 'Клиент создан')
         setIsCreating(false)
-        setFormData({ name: '', phone: '', email: '', address: '', contractNumber: '', notes: '' })
+        setFormData({ name: '', phone: '', email: '', address: '', contractNumber: '', notes: '', contractDate: '' })
         fetchClients()
       } else {
         const error = await response.json()
@@ -76,7 +120,7 @@ export default function ClientsPage() {
   // Отмена создания
   const cancelCreate = () => {
     setIsCreating(false)
-    setFormData({ name: '', phone: '', email: '', address: '', contractNumber: '', notes: '' })
+    setFormData({ name: '', phone: '', email: '', address: '', contractNumber: '', notes: '', contractDate: '' })
   }
 
   // Удаление клиента
@@ -123,18 +167,54 @@ export default function ClientsPage() {
     <div className="container mx-auto px-6 py-12">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Клиенты</h1>
-          <p className="text-gray-600 mt-2">Управление клиентами и их сметами</p>
+        <div className="flex items-center space-x-4">
+          <Link 
+            href="/dashboard"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Назад в Экран профи"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Клиенты</h1>
+            <p className="text-gray-600 mt-2">Управление клиентами и их сметами</p>
+          </div>
         </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="btn-primary flex items-center"
-          disabled={isCreating}
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Добавить клиента
-        </button>
+        <div className="flex items-center space-x-3">
+          {/* Переключатель режимов только для администраторов */}
+          {session?.user?.role === 'ADMIN' && (
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('grouped')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'grouped' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                По менеджерам
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'list' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Список
+              </button>
+            </div>
+          )}
+          <button
+            onClick={() => setIsCreating(true)}
+            className="btn-primary flex items-center"
+            disabled={isCreating}
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Добавить клиента
+          </button>
+        </div>
       </div>
 
       {/* Форма создания клиента */}
@@ -170,6 +250,16 @@ export default function ClientsPage() {
                   onChange={(e) => setFormData({ ...formData, contractNumber: e.target.value })}
                   className="input"
                   placeholder="№ 123/2024"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Дата договора
+                </label>
+                <DateInput
+                  value={formData.contractDate}
+                  onChange={(value) => setFormData({ ...formData, contractDate: value })}
                 />
               </div>
 
@@ -247,7 +337,7 @@ export default function ClientsPage() {
         </div>
       )}
 
-      {/* Список клиентов */}
+      {/* Отображение клиентов */}
       {clients.length === 0 ? (
         <div className="card text-center py-12">
           <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -261,7 +351,96 @@ export default function ClientsPage() {
             Добавить клиента
           </button>
         </div>
+      ) : viewMode === 'grouped' && session?.user?.role === 'ADMIN' ? (
+        /* Группированный вид по менеджерам */
+        <div className="space-y-6">
+          {managerGroups.map((group) => (
+            <div key={group.managerId} className="card">
+              <div className="border-b border-gray-200 pb-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+                      <Users className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        {group.managerName}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        @{group.managerUsername} • {group.clientsCount} {group.clientsCount === 1 ? 'клиент' : 'клиентов'}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/clients/manager/${group.managerId}`}
+                    className="flex items-center text-blue-600 hover:text-blue-700 font-medium text-sm"
+                  >
+                    Все клиенты
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Превью клиентов менеджера */}
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {group.clients.slice(0, 6).map((client) => (
+                  <Link
+                    key={client.id}
+                    href={`/clients/${client.id}`}
+                    className="block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all duration-200 group"
+                  >
+                    <div className="flex items-center mb-3">
+                      <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center mr-3">
+                        <Building2 className="h-4 w-4 text-pink-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                          {client.name}
+                        </h4>
+                        {client.contractNumber && (
+                          <p className="text-xs text-gray-500">№ {client.contractNumber}</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      {client.phone && (
+                        <div className="flex items-center text-xs text-gray-600">
+                          <Phone className="h-3 w-3 mr-2" />
+                          <span className="truncate">{client.phone}</span>
+                        </div>
+                      )}
+                      {client.email && (
+                        <div className="flex items-center text-xs text-gray-600">
+                          <Mail className="h-3 w-3 mr-2" />
+                          <span className="truncate">{client.email}</span>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+                
+                {group.clients.length > 6 && (
+                  <Link
+                    href={`/clients/manager/${group.managerId}`}
+                    className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
+                  >
+                    <div className="text-center">
+                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-blue-100">
+                        <Plus className="h-4 w-4 text-gray-400 group-hover:text-blue-600" />
+                      </div>
+                      <p className="text-sm text-gray-600 group-hover:text-blue-600">
+                        Еще {group.clients.length - 6}
+                      </p>
+                    </div>
+                  </Link>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
+        /* Обычный список */
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {clients.map((client) => (
             <div

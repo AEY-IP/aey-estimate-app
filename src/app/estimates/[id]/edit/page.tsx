@@ -3,9 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings, Info } from 'lucide-react'
 import Link from 'next/link'
-import { generateEstimatePDF } from '@/lib/pdf-export'
+import { generateEstimatePDFWithCache, generateEstimatePDF, generateActPDF, generateActWithSettings } from '@/lib/pdf-export'
 import { Estimate, Coefficient, WorkBlock, WorkItem, RoomParameter, RoomParameterValue, Room } from '@/types/estimate'
 import RoomNavigation from '@/components/RoomNavigation'
+import { useAuth } from '@/components/AuthProvider'
+import { useToast } from '@/components/Toast'
 
 // Компонент для отображения названий работ с tooltip
 const WorkNameDisplay = ({ name, className = '' }: { name: string, className?: string }) => {
@@ -163,6 +165,31 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null) // null = сводная смета
   const [rooms, setRooms] = useState<Room[]>([])
 
+  const [editingBlockTitle, setEditingBlockTitle] = useState<{ blockId: string, currentTitle: string } | null>(null)
+  const [showAdditionalAgreementModal, setShowAdditionalAgreementModal] = useState(false)
+  const [additionalAgreementSettings, setAdditionalAgreementSettings] = useState({
+    dsDate: '',
+    clientName: '',
+    isManualClientName: false,
+    contractNumber: '',
+    isManualContractNumber: false,
+    contractDate: '',
+    isManualContractDate: false,
+    workPeriod: '',
+    contractor: 'Индивидуальный предприниматель Алексеев Сергей Алексеевич'
+  })
+
+  const [showActExportModal, setShowActExportModal] = useState(false)
+  const [actExportSettings, setActExportSettings] = useState({
+    actNumber: '',
+    actDate: '',
+    contractNumber: '',
+    isManualContractNumber: false,
+    contractDate: '',
+    isManualContractDate: false,
+    actType: 'simple' as 'simple' | 'additional'
+  })
+
   // Вспомогательные функции для определения текущего режима
   const isRoomsEstimate = estimate?.type === 'rooms'
   const isSummaryView = isRoomsEstimate && currentRoomId === null
@@ -295,15 +322,22 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             if (existingItem) {
               existingItem.quantity += item.quantity
               existingItem.totalPrice += item.totalPrice
+              // Обновляем unitPrice для существующего элемента (берем среднее)
+              existingItem.unitPrice = Math.round(existingItem.totalPrice / existingItem.quantity)
             } else {
-              existingBlock.items.push({ ...item })
+              existingBlock.items.push({ 
+                ...item, 
+                unitPrice: Math.round(priceWithCoeff),
+                totalPrice: itemTotalPrice 
+              })
             }
           })
         } else {
-          // Создаем новый блок
+          // Создаем новый блок с уникальным ID на основе названия
+          const summaryBlockId = `summary_${block.title.replace(/[^a-zA-Zа-яА-Я0-9]/g, '_')}_${Math.random().toString(36).substring(2, 15)}`
           summaryWorksBlocks.push({
             ...block,
-            id: `summary_${block.id}`,
+            id: summaryBlockId,
             items: block.items.map(item => ({ ...item }))
           })
         }
@@ -311,14 +345,24 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     })
     
     // Собираем все материалы
+    const globalCoeff = calculateNormalCoefficients() * calculateFinalCoefficients()
     rooms.forEach(room => {
       room.materialsBlock.items.forEach(item => {
         const existingItem = summaryMaterialsItems.find(si => si.name === item.name && si.unit === item.unit)
+        const adjustedUnitPrice = Math.round(item.unitPrice * globalCoeff)
+        const adjustedTotalPrice = adjustedUnitPrice * item.quantity
+        
         if (existingItem) {
           existingItem.quantity += item.quantity
-          existingItem.totalPrice += item.totalPrice
+          existingItem.totalPrice += adjustedTotalPrice
+          // Пересчитываем unitPrice как среднее
+          existingItem.unitPrice = Math.round(existingItem.totalPrice / existingItem.quantity)
         } else {
-          summaryMaterialsItems.push({ ...item })
+          summaryMaterialsItems.push({ 
+            ...item, 
+            unitPrice: adjustedUnitPrice,
+            totalPrice: adjustedTotalPrice
+          })
         }
       })
     })
@@ -579,6 +623,36 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     }
   }
 
+  const toggleClientVisibility = async () => {
+    if (!estimate) return
+    
+    try {
+      const response = await fetch(`/api/estimates/${estimate.id}/toggle-visibility`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle visibility')
+      }
+
+      const result = await response.json()
+      
+      setEstimate(prev => prev ? {
+        ...prev,
+        showToClient: result.showToClient
+      } : null)
+
+      // Показываем уведомление через alert (можно заменить на toast если нужно)
+      alert(result.showToClient ? 'Смета теперь видна клиенту' : 'Смета скрыта от клиента')
+    } catch (error) {
+      console.error('Ошибка переключения видимости:', error)
+      alert('Ошибка изменения видимости сметы')
+    }
+  }
+
   const saveEstimate = async () => {
     if (!estimate) return
     
@@ -605,6 +679,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             
             return {
               ...item,
+              unitPrice: Math.round(priceWithCoeff),
               totalPrice: itemTotalPrice
             }
           })
@@ -654,6 +729,43 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             updatedAt: new Date(result.updatedAt)
           }
           setEstimate(estimateWithDates)
+          
+          // Создаем кеш экспорта если смета видна клиенту
+          if (estimateWithDates.showToClient) {
+            try {
+              // Рассчитываем данные для кеша экспорта
+              const worksData = updatedBlocks
+              const globalCoeff = calculateNormalCoefficients() * calculateFinalCoefficients()
+              const materialsData = (estimate.materialsBlock?.items || []).map(item => ({
+                ...item,
+                unitPrice: Math.round(item.unitPrice * globalCoeff),
+                totalPrice: Math.round(item.unitPrice * globalCoeff * item.quantity)
+              }))
+              const coefficientsInfo = {
+                normal: calculateNormalCoefficients(),
+                final: calculateFinalCoefficients(),
+                global: globalCoeff,
+                applied: getSelectedCoefficients()
+              }
+              
+              await fetch(`/api/estimates/${params.id}/export-cache`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  worksData,
+                  materialsData,
+                  totalWorksPrice,
+                  totalMaterialsPrice,
+                  grandTotal,
+                  coefficientsInfo
+                })
+              })
+            } catch (cacheError) {
+              console.error('Ошибка создания кеша экспорта:', cacheError)
+              // Не показываем ошибку пользователю, просто логируем
+            }
+          }
+          
           alert('Смета успешно сохранена!')
         } else {
           alert(`Ошибка сохранения: ${result.error}`)
@@ -724,18 +836,22 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 if (existingItem) {
                   existingItem.quantity += item.quantity
                   existingItem.totalPrice += itemTotalPrice
+                  // Обновляем unitPrice для существующего элемента (берем среднее)
+                  existingItem.unitPrice = Math.round(existingItem.totalPrice / existingItem.quantity)
                 } else {
                   existingBlock.items.push({ 
                     ...item, 
+                    unitPrice: Math.round(priceWithCoeff),
                     totalPrice: itemTotalPrice 
                   })
                 }
               })
             } else {
-              // Создаем новый блок
+              // Создаем новый блок с уникальным ID на основе названия
+              const summaryBlockId = `summary_${block.title.replace(/[^a-zA-Zа-яА-Я0-9]/g, '_')}_${Date.now()}`
               summaryWorksBlocks.push({
                 ...block,
-                id: `summary_${block.id}`,
+                id: summaryBlockId,
                 items: block.items.map(item => {
                   // Применяем коэффициенты в зависимости от типа цены
                   let priceWithCoeff: number
@@ -749,6 +865,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   const itemTotalPrice = Math.round(priceWithCoeff) * item.quantity
                   return { 
                     ...item, 
+                    unitPrice: Math.round(priceWithCoeff),
                     totalPrice: itemTotalPrice 
                   }
                 })
@@ -827,6 +944,37 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             setRooms(roomsWithDates)
           }
           
+          // Создаем кеш экспорта если смета видна клиенту
+          if (estimateWithDates.showToClient) {
+            try {
+              // Рассчитываем данные для кеша экспорта (для rooms используем сводные данные)
+              const worksData = summaryWorksBlocks
+              const materialsData = summaryMaterialsItems
+              const coefficientsInfo = {
+                normal: calculateNormalCoefficients(),
+                final: calculateFinalCoefficients(),
+                global: calculateNormalCoefficients() * calculateFinalCoefficients(),
+                applied: getSelectedCoefficients()
+              }
+              
+              await fetch(`/api/estimates/${params.id}/export-cache`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  worksData,
+                  materialsData,
+                  totalWorksPrice: totalSummaryWorksPrice,
+                  totalMaterialsPrice: totalSummaryMaterialsPrice,
+                  grandTotal: totalSummaryWorksPrice + totalSummaryMaterialsPrice,
+                  coefficientsInfo
+                })
+              })
+            } catch (cacheError) {
+              console.error('Ошибка создания кеша экспорта:', cacheError)
+              // Не показываем ошибку пользователю, просто логируем
+            }
+          }
+          
           alert('Смета по помещениям успешно сохранена!')
         } else {
           alert(`Ошибка сохранения: ${result.error}`)
@@ -856,8 +1004,8 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center py-12">
           <p className="text-red-500 mb-4">{error || 'Смета не найдена'}</p>
-          <Link href="/estimates" className="btn-primary">
-            Вернуться к списку смет
+          <Link href="/dashboard" className="btn-primary">
+            Вернуться к дашборду
           </Link>
         </div>
       </div>
@@ -1112,29 +1260,125 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
   const handleExportPDF = async () => {
     if (!estimate) return
-    
+
     // Загружаем информацию о клиенте
     let clientData = null
     try {
-      const response = await fetch(`/api/clients/${estimate.clientId}`)
-      if (response.ok) {
-        clientData = await response.json()
+      const clientResponse = await fetch(`/api/clients/${estimate.clientId}`)
+      if (clientResponse.ok) {
+        clientData = await clientResponse.json()
       }
     } catch (error) {
       console.error('Ошибка загрузки клиента:', error)
     }
     
-    const estimateForExport = {
-      ...estimate,
-      totalWorksPrice,
-      totalMaterialsPrice,
-      totalPrice: grandTotal,
+    // Проверяем isAct - если это акт, показываем модальное окно настроек
+    if (estimate.isAct) {
+      // Предзаполняем настройки акта
+      setActExportSettings({
+        actNumber: '',
+        actDate: new Date().toLocaleDateString('ru-RU'),
+        contractNumber: clientData?.contractNumber || '',
+        isManualContractNumber: false,
+        contractDate: clientData?.contractDate || '',
+        isManualContractDate: false,
+        actType: 'simple'
+      })
+      
+      setShowActExportModal(true)
+      return
     }
+
+    // Если не акт, но категория дополнительные работы - показываем модальное окно
+    if (estimate.category === 'additional') {
+      // Предзаполняем данные для дополнительного соглашения
+      const today = new Date()
+      const todayString = today.toLocaleDateString('ru-RU')
+      
+      setAdditionalAgreementSettings({
+        dsDate: todayString,
+        clientName: clientData?.name || '',
+        isManualClientName: false,
+        contractNumber: clientData?.contractNumber || '',
+        isManualContractNumber: false,
+        contractDate: clientData?.contractDate || '',
+        isManualContractDate: false,
+        workPeriod: '10',
+        contractor: 'Индивидуальный предприниматель Алексеев Сергей Алексеевич'
+      })
+      
+      setShowAdditionalAgreementModal(true)
+      return
+    }
+
+    // Для основных смет - используем новую функцию с кешированными данными
+    generateEstimatePDFWithCache(estimate, clientData)
+  }
+
+  const handleAdditionalAgreementExport = () => {
+    if (!estimate) return
     
-    generateEstimatePDF(estimateForExport, coefficients, clientData)
+    // Получаем данные клиента для экспорта
+    fetch(`/api/clients/${estimate.clientId}`)
+      .then(response => response.ok ? response.json() : null)
+      .then(clientData => {
+        // Используем обычную функцию для экспорта сметы
+        generateEstimatePDFWithCache(estimate, clientData)
+      })
+      .catch(error => console.error('Ошибка загрузки клиента:', error))
+    
+    setShowAdditionalAgreementModal(false)
   }
 
 
+
+  const handleActExport = async () => {
+    if (!estimate) return
+    
+    // Валидация обязательных полей
+    if (!actExportSettings.actNumber.trim()) {
+      alert('Заполните номер акта')
+      return
+    }
+    
+    if (!actExportSettings.actDate.trim()) {
+      alert('Заполните дату акта')
+      return
+    }
+    
+    const contractNumber = actExportSettings.isManualContractNumber 
+      ? actExportSettings.contractNumber 
+      : actExportSettings.contractNumber
+    
+    const contractDate = actExportSettings.isManualContractDate 
+      ? actExportSettings.contractDate 
+      : actExportSettings.contractDate
+    
+    if (!contractNumber.trim()) {
+      alert('Заполните номер договора')
+      return
+    }
+    
+    if (!contractDate.trim()) {
+      alert('Заполните дату договора')
+      return
+    }
+    
+    try {
+      // Получаем данные клиента для экспорта
+      const clientResponse = await fetch(`/api/clients/${estimate.clientId}`)
+      const clientData = clientResponse.ok ? await clientResponse.json() : null
+      
+      // Вызываем новую функцию экспорта акта с настройками
+      await generateActWithSettings(estimate, actExportSettings, clientData)
+      
+    } catch (error) {
+      console.error('Ошибка экспорта акта:', error)
+      alert('Ошибка при экспорте акта')
+    }
+    
+    setShowActExportModal(false)
+  }
 
   const handleCoefficientToggle = (coefficientId: string) => {
     // Игнорируем ручные коэффициенты
@@ -1547,7 +1791,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Link href="/estimates" className="mr-4 p-2 hover:bg-gray-100 rounded-xl transition-colors">
+              <Link href={estimate?.clientId ? `/clients/${estimate.clientId}/estimates` : '/dashboard'} className="mr-4 p-2 hover:bg-gray-100 rounded-xl transition-colors">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
@@ -1574,6 +1818,21 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 <Download className="h-5 w-5 mr-2" />
                 Экспорт PDF
               </button>
+              
+              {/* Энейблер видимости клиенту */}
+              <button
+                onClick={toggleClientVisibility}
+                className={`flex items-center px-4 py-2 rounded-xl font-medium transition-colors ${
+                  estimate?.showToClient 
+                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title={estimate?.showToClient ? 'Скрыть от клиента' : 'Показать клиенту'}
+              >
+                <CheckCircle className={`h-5 w-5 mr-2 ${estimate?.showToClient ? 'text-green-600' : 'text-gray-400'}`} />
+                {estimate?.showToClient ? 'Видна клиенту' : 'Скрыта от клиента'}
+              </button>
+              
               <button 
                 onClick={saveEstimate}
                 disabled={saving}
@@ -1587,7 +1846,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         </div>
       </div>
 
-      {/* Навигация по помещениям для смет типа rooms */}
+      {/* Навигация по помещениям для смет типа rooms */}      
       {isRoomsEstimate && (
         <RoomNavigation
           estimateId={params.id}
@@ -1601,13 +1860,13 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
       <div className="container mx-auto px-6 py-8">
         <div className={`grid gap-8 ${
-          (estimate?.type === 'apartment' || (estimate?.type === 'rooms' && isSummaryView)) 
+          (estimate?.type === 'rooms' && isSummaryView) 
             ? 'lg:grid-cols-3' 
             : 'lg:grid-cols-1'
         }`}>
           {/* Левая колонка - основной контент */}
           <div className={`space-y-8 ${
-            (estimate?.type === 'apartment' || (estimate?.type === 'rooms' && isSummaryView)) 
+            (estimate?.type === 'rooms' && isSummaryView) 
               ? 'lg:col-span-2' 
               : 'lg:col-span-1'
           }`}>
@@ -1619,7 +1878,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                     <Settings className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">
+                    <h2 className="text-lg font-semibold text-gray-900">
                       Параметры помещения
                       {estimate?.type === 'rooms' && (
                         <span className="ml-2 text-sm font-normal text-gray-600">
@@ -1752,13 +2011,13 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             </div>
 
             {/* Работы */}
-            <div className="card fade-in">
+            <div className="card fade-in estimate-edit-container">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-3">
                     <Wrench className="h-5 w-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900">Работы</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 section-title">Работы</h2>
                 </div>
               </div>
               
@@ -1782,7 +2041,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   {!isSummaryView && (
                     <button 
                       onClick={() => setShowAddBlockModal(true)}
-                      className="btn-primary flex items-center text-sm"
+                      className="btn-primary flex items-center text-sm add-btn"
                     >
                       <FolderPlus className="h-4 w-4 mr-2" />
                       Добавить блок работ
@@ -1818,7 +2077,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                         <div className="flex-1">
                           {isSummaryView ? (
                             <div>
-                              <h3 className="font-semibold text-gray-900 text-lg">{block.title}</h3>
+                              <h3 className="font-semibold text-gray-900 text-lg block-title">{block.title}</h3>
                               {block.description && (
                                 <p className="text-sm text-gray-600 mt-1">{block.description}</p>
                               )}
@@ -1838,15 +2097,39 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                       )
                                     }
                                   } : null)
+                                } else if (estimate?.type === 'rooms') {
+                                  if (isSummaryView && estimate.summaryWorksBlock) {
+                                    setEstimate(prev => prev ? {
+                                      ...prev,
+                                      summaryWorksBlock: {
+                                        ...prev.summaryWorksBlock!,
+                                        blocks: prev.summaryWorksBlock!.blocks.map(b => 
+                                          b.id === block.id ? { ...b, title: e.target.value } : b
+                                        )
+                                      }
+                                    } : null)
+                                  } else if (currentRoom) {
+                                    setRooms(prev => prev.map(room => 
+                                      room.id === currentRoomId ? {
+                                        ...room,
+                                        worksBlock: {
+                                          ...room.worksBlock,
+                                          blocks: room.worksBlock.blocks.map(b => 
+                                            b.id === block.id ? { ...b, title: e.target.value } : b
+                                          )
+                                        }
+                                      } : room
+                                    ))
+                                  }
                                 }
                               }}
-                              className="font-semibold text-gray-900 bg-transparent border-none outline-none text-lg"
+                              className="w-full min-w-0 font-semibold text-gray-900 bg-transparent border-none outline-none text-lg block-title"
                               placeholder="Название блока"
                             />
                           )}
                         </div>
                         <div className="text-sm text-gray-600 mr-4 text-right">
-                          <div className="text-lg font-semibold text-gray-900">
+                          <div className="text-lg font-semibold text-gray-900 price-text">
                             {calculateCorrectBlockTotal(block).toLocaleString('ru-RU')} ₽
                           </div>
                           {(() => {
@@ -1875,14 +2158,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => addWorkToBlock(block.id)}
-                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors table-btn"
                             title="Добавить работу в блок"
                           >
                             <Plus className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => removeWorkBlock(block.id)}
-                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors table-btn"
                             title="Удалить блок"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -1899,12 +2182,12 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                             <table className="w-full">
                               <thead>
                                 <tr>
-                                  <th className="w-2/5">Наименование</th>
+                                  <th className="w-1/2">Наименование</th>
                                   <th className="w-20">Ед. изм.</th>
                                   <th className="w-16">Кол-во</th>
                                   <th className="w-24">Цена за ед.</th>
-                                  <th className="w-18">Цена с коэфф.</th>
-                                  <th className="w-28">Стоимость</th>
+                                  <th className="w-16">Цена с коэфф.</th>
+                                  <th className="w-24">Стоимость</th>
                                   <th className="w-10"></th>
                                 </tr>
                               </thead>
@@ -2101,7 +2384,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                             
                                             return (
                                               <div 
-                                                className="absolute top-1 right-1 w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center cursor-pointer group hover:bg-pink-600 transition-colors"
+                                                className="absolute top-1 right-1 w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center cursor-pointer group hover:bg-pink-600 transition-colors auto-quantity-icon"
                                                 onClick={(e) => {
                                                   e.preventDefault()
                                                   e.stopPropagation()
@@ -2215,7 +2498,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                       {!isSummaryView && (
                                         <button
                                           onClick={() => removeWorkFromBlock(block.id, item.id)}
-                                          className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                          className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors table-btn"
                                           title="Удалить работу"
                                         >
                                           <Trash2 className="h-4 w-4" />
@@ -2263,7 +2546,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
                 <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                   <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900">
+                    <span className="text-xl font-bold text-gray-900 total-text">
                       Итого по работам: {totalWorksPrice.toLocaleString('ru-RU')} ₽
                     </span>
                   </div>
@@ -2278,7 +2561,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
                     <Package className="h-5 w-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900">Материалы</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Материалы</h2>
                 </div>
               </div>
               
@@ -2420,7 +2703,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                             {!isSummaryView && (
                               <button
                                 onClick={() => removeMaterialItem(item.id)}
-                                className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors table-btn"
                                 title="Удалить"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -2490,7 +2773,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                       <Percent className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex items-center">
-                      <h2 className="text-xl font-semibold text-gray-900">Коэффициенты</h2>
+                      <h2 className="text-lg font-semibold text-gray-900">Коэффициенты</h2>
                       {getSelectedCoefficients().length > 0 && (
                         <span className="ml-3 bg-blue-100 text-blue-700 text-sm font-medium px-2 py-1 rounded-full">
                           {getSelectedCoefficients().length}
@@ -2837,6 +3120,301 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   className="btn-secondary"
                 >
                   Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно дополнительного соглашения */}
+      {showAdditionalAgreementModal && (
+        <div className="modal-overlay">
+          <div className="modal-content max-w-2xl">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Настройки дополнительного соглашения</h2>
+              
+              <div className="space-y-6">
+                {/* Дата дополнительного соглашения */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Дата дополнительного соглашения *
+                  </label>
+                  <input
+                    type="text"
+                    value={additionalAgreementSettings.dsDate}
+                    onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                      ...prev,
+                      dsDate: e.target.value
+                    }))}
+                    placeholder="например: 15.01.2024"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Имя клиента */}
+                <div>
+                  <label className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      checked={additionalAgreementSettings.isManualClientName}
+                      onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                        ...prev,
+                        isManualClientName: e.target.checked
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Ручной ввод имени клиента</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={additionalAgreementSettings.clientName}
+                    onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                      ...prev,
+                      clientName: e.target.value
+                    }))}
+                    disabled={!additionalAgreementSettings.isManualClientName}
+                    placeholder="Имя клиента"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  />
+                </div>
+
+                {/* Номер договора */}
+                <div>
+                  <label className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      checked={additionalAgreementSettings.isManualContractNumber}
+                      onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                        ...prev,
+                        isManualContractNumber: e.target.checked
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Ручной ввод номера договора</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={additionalAgreementSettings.contractNumber}
+                    onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                      ...prev,
+                      contractNumber: e.target.value
+                    }))}
+                    disabled={!additionalAgreementSettings.isManualContractNumber}
+                    placeholder="Номер договора"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  />
+                </div>
+
+                {/* Дата договора */}
+                <div>
+                  <label className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      checked={additionalAgreementSettings.isManualContractDate}
+                      onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                        ...prev,
+                        isManualContractDate: e.target.checked
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Ручной ввод даты договора</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={additionalAgreementSettings.contractDate}
+                    onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                      ...prev,
+                      contractDate: e.target.value
+                    }))}
+                    disabled={!additionalAgreementSettings.isManualContractDate}
+                    placeholder="например: 01.12.2023"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  />
+                </div>
+
+                {/* Срок выполнения работ */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Срок выполнения работ (рабочих дней) *
+                  </label>
+                  <input
+                    type="number"
+                    value={additionalAgreementSettings.workPeriod}
+                    onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                      ...prev,
+                      workPeriod: e.target.value
+                    }))}
+                    min="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Подрядчик */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Подрядчик *
+                  </label>
+                  <input
+                    type="text"
+                    value={additionalAgreementSettings.contractor}
+                    onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                      ...prev,
+                      contractor: e.target.value
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowAdditionalAgreementModal(false)}
+                  className="btn-secondary"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={handleAdditionalAgreementExport}
+                  disabled={!additionalAgreementSettings.dsDate || !additionalAgreementSettings.workPeriod}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Экспорт дополнительного соглашения
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно настроек акта */}
+      {showActExportModal && (
+        <div className="modal-overlay">
+          <div className="modal-content max-w-2xl">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Настройки экспорта акта</h2>
+              
+              <div className="space-y-6">
+                {/* Номер акта */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Номер акта *
+                  </label>
+                  <input
+                    type="text"
+                    value={actExportSettings.actNumber}
+                    onChange={(e) => setActExportSettings(prev => ({
+                      ...prev,
+                      actNumber: e.target.value
+                    }))}
+                    placeholder="например: 1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Дата акта */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Дата акта *
+                  </label>
+                  <input
+                    type="text"
+                    value={actExportSettings.actDate}
+                    onChange={(e) => setActExportSettings(prev => ({
+                      ...prev,
+                      actDate: e.target.value
+                    }))}
+                    placeholder="например: 15.01.2024"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Номер договора */}
+                <div>
+                  <label className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      checked={actExportSettings.isManualContractNumber}
+                      onChange={(e) => setActExportSettings(prev => ({
+                        ...prev,
+                        isManualContractNumber: e.target.checked
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Ручной ввод номера договора</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={actExportSettings.contractNumber}
+                    onChange={(e) => setActExportSettings(prev => ({
+                      ...prev,
+                      contractNumber: e.target.value
+                    }))}
+                    disabled={!actExportSettings.isManualContractNumber}
+                    placeholder="Номер договора"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  />
+                </div>
+
+                {/* Дата договора */}
+                <div>
+                  <label className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      checked={actExportSettings.isManualContractDate}
+                      onChange={(e) => setActExportSettings(prev => ({
+                        ...prev,
+                        isManualContractDate: e.target.checked
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Ручной ввод даты договора</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={actExportSettings.contractDate}
+                    onChange={(e) => setActExportSettings(prev => ({
+                      ...prev,
+                      contractDate: e.target.value
+                    }))}
+                    disabled={!actExportSettings.isManualContractDate}
+                    placeholder="например: 01.12.2023"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  />
+                </div>
+
+                {/* Тип акта */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Тип акта *
+                  </label>
+                  <select
+                    value={actExportSettings.actType}
+                    onChange={(e) => setActExportSettings(prev => ({
+                      ...prev,
+                      actType: e.target.value as 'simple' | 'additional'
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="simple">Простой акт</option>
+                    <option value="additional">Акт дополнительных работ</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowActExportModal(false)}
+                  className="btn-secondary"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={handleActExport}
+                  disabled={!actExportSettings.actNumber || !actExportSettings.actDate}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Экспорт акта
                 </button>
               </div>
             </div>

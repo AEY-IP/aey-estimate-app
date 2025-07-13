@@ -11,7 +11,7 @@ export async function GET(
     console.log('=== CLIENT API GET START ===')
     console.log('Requested client ID:', params.id)
     console.log('Request URL:', request.url)
-    
+
     // Проверяем аутентификацию
     const session = checkAuth(request)
     console.log('Session exists:', !!session)
@@ -37,7 +37,7 @@ export async function GET(
       console.log('Client not found in database')
       return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 })
     }
-    
+
     if (!client.isActive) {
       console.log('Client is inactive')
       return NextResponse.json({ error: 'Клиент деактивирован' }, { status: 404 })
@@ -91,7 +91,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, phone, email, address, contractNumber, notes } = body
+    const { name, phone, email, address, contractNumber, contractDate, notes } = body
 
     // Валидация
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -128,6 +128,7 @@ export async function PUT(
         email: email?.trim() || null,
         address: address?.trim() || null,
         contractNumber: contractNumber?.trim() || null,
+        contractDate: contractDate?.trim() || null,
         notes: notes?.trim() || null,
         updatedAt: new Date()
       }

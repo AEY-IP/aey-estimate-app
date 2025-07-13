@@ -1,0 +1,363 @@
+'use client'
+
+import { useState, useRef } from 'react'
+import { Plus, Home, Edit2, Trash2, Check, X, PlusCircle, GripVertical } from 'lucide-react'
+import { Room } from '@/types/estimate'
+import { useToast } from './Toast'
+
+interface RoomNavigationProps {
+  estimateId: string
+  rooms: Room[]
+  activeRoomId: string | null
+  onRoomSelect: (roomId: string | null) => void
+  onRoomsUpdate: () => void
+  isSummaryView: boolean
+}
+
+export default function RoomNavigation({
+  estimateId,
+  rooms,
+  activeRoomId,
+  onRoomSelect,
+  onRoomsUpdate,
+  isSummaryView
+}: RoomNavigationProps) {
+  const [isAddingRoom, setIsAddingRoom] = useState(false)
+  const [newRoomName, setNewRoomName] = useState('')
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null)
+  const [editingRoomName, setEditingRoomName] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [draggedRoom, setDraggedRoom] = useState<string | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const dragStartIndex = useRef<number | null>(null)
+  const { showToast } = useToast()
+
+  const handleAddRoom = async () => {
+    if (!newRoomName.trim()) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/estimates/${estimateId}/rooms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newRoomName.trim()
+        })
+      })
+
+      if (response.ok) {
+        setNewRoomName('')
+        setIsAddingRoom(false)
+        onRoomsUpdate()
+        showToast('success', 'Помещение добавлено')
+      } else {
+        const error = await response.json()
+        showToast('error', error.error || 'Ошибка добавления помещения')
+      }
+    } catch (error) {
+      showToast('error', 'Ошибка добавления помещения')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDeleteRoom = async (roomId: string) => {
+    if (!confirm('Вы уверены, что хотите удалить это помещение?')) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/estimates/${estimateId}/rooms`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ roomId })
+      })
+
+      if (response.ok) {
+        onRoomsUpdate()
+        showToast('success', 'Помещение удалено')
+        
+        // Если удаляем активное помещение, переключаемся на первое
+        if (activeRoomId === roomId) {
+          const remainingRooms = rooms.filter(r => r.id !== roomId)
+          if (remainingRooms.length > 0) {
+            onRoomSelect(remainingRooms[0].id)
+          } else {
+            onRoomSelect(null)
+          }
+        }
+      } else {
+        const error = await response.json()
+        showToast('error', error.error || 'Ошибка удаления помещения')
+      }
+    } catch (error) {
+      showToast('error', 'Ошибка удаления помещения')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleEditRoom = async (roomId: string) => {
+    if (!editingRoomName.trim()) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/estimates/${estimateId}/rooms`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          roomId,
+          name: editingRoomName.trim()
+        })
+      })
+
+      if (response.ok) {
+        setEditingRoomId(null)
+        setEditingRoomName('')
+        onRoomsUpdate()
+        showToast('success', 'Помещение переименовано')
+      } else {
+        const error = await response.json()
+        showToast('error', error.error || 'Ошибка переименования помещения')
+      }
+    } catch (error) {
+      showToast('error', 'Ошибка переименования помещения')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDragStart = (e: React.DragEvent, roomId: string, index: number) => {
+    setDraggedRoom(roomId)
+    dragStartIndex.current = index
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', roomId)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIndex(index)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null)
+  }
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    
+    if (draggedRoom && dragStartIndex.current !== null && dragStartIndex.current !== dropIndex) {
+      const newRoomsOrder = [...rooms]
+      const startIndex = dragStartIndex.current
+      const [draggedRoomObj] = newRoomsOrder.splice(startIndex, 1)
+      newRoomsOrder.splice(dropIndex, 0, draggedRoomObj)
+      
+      // Создаем массив ID в новом порядке
+      const roomsOrder = newRoomsOrder.map(room => room.id)
+      
+      try {
+        const response = await fetch(`/api/estimates/${estimateId}/rooms`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            roomsOrder
+          })
+        })
+
+        if (response.ok) {
+          onRoomsUpdate()
+          showToast('success', 'Порядок помещений обновлен')
+        } else {
+          const error = await response.json()
+          showToast('error', error.error || 'Ошибка изменения порядка')
+        }
+      } catch (error) {
+        showToast('error', 'Ошибка изменения порядка')
+      }
+    }
+    
+    setDraggedRoom(null)
+    setDragOverIndex(null)
+    dragStartIndex.current = null
+  }
+
+  const handleDragEnd = () => {
+    setDraggedRoom(null)
+    setDragOverIndex(null)
+    dragStartIndex.current = null
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <Home className="h-5 w-5" />
+          Помещения
+        </h3>
+        <button
+          onClick={() => setIsAddingRoom(true)}
+          className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-sm"
+        >
+          <Plus className="h-4 w-4" />
+          Добавить
+        </button>
+      </div>
+
+      {/* Список помещений */}
+      <div className="space-y-2">
+        {rooms.map((room, index) => (
+          <div
+            key={room.id}
+            className={`
+              relative flex items-center gap-2 p-2 rounded-md border transition-all duration-200
+              ${draggedRoom === room.id ? 'opacity-50' : ''}
+              ${dragOverIndex === index ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}
+              ${activeRoomId === room.id && !isSummaryView ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'}
+            `}
+            draggable
+            onDragStart={(e) => handleDragStart(e, room.id, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+          >
+            {/* Drag handle */}
+            <div className="cursor-move text-gray-400 hover:text-gray-600 p-1" title="Перетащить для изменения порядка">
+              <GripVertical className="h-4 w-4" />
+            </div>
+
+            {/* Содержимое помещения */}
+            <div className="flex-1 flex items-center gap-2">
+              <Home className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              
+              {editingRoomId === room.id ? (
+                <input
+                  type="text"
+                  value={editingRoomName}
+                  onChange={(e) => setEditingRoomName(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleEditRoom(room.id)
+                    }
+                  }}
+                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-40"
+                  placeholder="Название помещения"
+                  autoFocus
+                />
+              ) : (
+                <span 
+                  className="flex-1 text-sm cursor-pointer"
+                  onClick={() => !isSummaryView && onRoomSelect(room.id)}
+                >
+                  {room.name}
+                </span>
+              )}
+            </div>
+
+            {/* Кнопки действий */}
+            <div className="flex items-center gap-1">
+              {editingRoomId === room.id ? (
+                <>
+                  <button
+                    onClick={() => handleEditRoom(room.id)}
+                    className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                    title="Сохранить"
+                    disabled={isLoading}
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingRoomId(null)
+                      setEditingRoomName('')
+                    }}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Отмена"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setEditingRoomId(room.id)
+                      setEditingRoomName(room.name)
+                    }}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Переименовать"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteRoom(room.id)}
+                    className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                    title="Удалить"
+                    disabled={isLoading}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Добавление нового помещения */}
+      {isAddingRoom && (
+        <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+          <div className="flex items-center gap-2">
+            <PlusCircle className="h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              value={newRoomName}
+              onChange={(e) => setNewRoomName(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddRoom()
+                }
+              }}
+              className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Название помещения"
+              autoFocus
+            />
+            <button
+              onClick={handleAddRoom}
+              disabled={!newRoomName.trim() || isLoading}
+              className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {isLoading ? '...' : 'Добавить'}
+            </button>
+            <button
+              onClick={() => {
+                setIsAddingRoom(false)
+                setNewRoomName('')
+              }}
+              className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400 transition-colors"
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Сводная информация */}
+      {isSummaryView && (
+        <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+          <p className="text-sm text-blue-800">
+            Просмотр сводной информации по всем помещениям
+          </p>
+        </div>
+      )}
+    </div>
+  )
+} 

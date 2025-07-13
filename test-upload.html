@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест загрузки файлов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .upload-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        .upload-zone:hover {
+            border-color: #666;
+            background-color: #f9f9f9;
+        }
+        .upload-zone.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Тест загрузки файлов</h1>
+    
+    <h2>Тест 1: Простая загрузка файлов</h2>
+    <div class="upload-zone" onclick="document.getElementById('fileInput1').click()">
+        <p>📁 Нажмите здесь чтобы выбрать файлы</p>
+        <p><small>Поддерживаются: любые файлы</small></p>
+        <input type="file" id="fileInput1" multiple onchange="handleFiles(event, 'test1')">
+    </div>
+    
+    <h2>Тест 2: Загрузка только изображений</h2>
+    <div class="upload-zone" onclick="document.getElementById('fileInput2').click()">
+        <p>🖼️ Нажмите здесь чтобы выбрать изображения</p>
+        <p><small>Поддерживаются: JPG, PNG</small></p>
+        <input type="file" id="fileInput2" multiple accept="image/jpeg,image/png" onchange="handleFiles(event, 'test2')">
+    </div>
+    
+    <h2>Тест 3: Загрузка документов</h2>
+    <div class="upload-zone" onclick="document.getElementById('fileInput3').click()">
+        <p>📄 Нажмите здесь чтобы выбрать документы</p>
+        <p><small>Поддерживаются: PDF, DOC, DOCX</small></p>
+        <input type="file" id="fileInput3" multiple accept="application/pdf,.doc,.docx" onchange="handleFiles(event, 'test3')">
+    </div>
+    
+    <div class="results" id="results">
+        <h3>Результаты:</h3>
+        <p>Выберите файлы чтобы увидеть результат...</p>
+    </div>
+
+    <script>
+        // Добавляем поддержку drag & drop
+        document.querySelectorAll('.upload-zone').forEach((zone, index) => {
+            const fileInputId = `fileInput${index + 1}`;
+            const testName = `test${index + 1}`;
+            
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+            
+            zone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+            });
+            
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                handleFiles({target: {files}}, testName);
+            });
+        });
+        
+        function handleFiles(event, testName) {
+            const files = event.target.files;
+            const resultsDiv = document.getElementById('results');
+            
+            if (files.length === 0) {
+                return;
+            }
+            
+            console.log(`📁 ${testName}: Выбрано файлов:`, files.length);
+            
+            let html = `<h3>Результаты для ${testName}:</h3>`;
+            html += `<p><strong>Выбрано файлов:</strong> ${files.length}</p>`;
+            
+            Array.from(files).forEach((file, index) => {
+                html += `<div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">`;
+                html += `<strong>Файл ${index + 1}:</strong> ${file.name}<br>`;
+                html += `<strong>Размер:</strong> ${(file.size / 1024).toFixed(2)} KB<br>`;
+                html += `<strong>Тип:</strong> ${file.type || 'Неизвестный'}<br>`;
+                html += `</div>`;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Логируем состояние при загрузке страницы
+        console.log('🔍 Страница загружена, проверяем элементы:');
+        console.log('- fileInput1:', document.getElementById('fileInput1'));
+        console.log('- fileInput2:', document.getElementById('fileInput2'));
+        console.log('- fileInput3:', document.getElementById('fileInput3'));
+    </script>
+</body>
+</html> 

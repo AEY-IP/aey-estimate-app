@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Plus, Edit, Trash2, Search, Filter, ArrowLeft, X } from 'lucide-react'
 import Link from 'next/link'
 import { Coefficient, CoefficientCategory } from '@/types/estimate'
@@ -14,6 +15,8 @@ const initialCategoryLabels = {
 }
 
 export default function CoefficientsPage() {
+  const searchParams = useSearchParams()
+  const isReadonly = searchParams.get('readonly') === 'true'
   const [coefficients, setCoefficients] = useState<Coefficient[]>([])
   const [categories, setCategories] = useState<CoefficientCategory[]>([])
   const [categoryLabels, setCategoryLabels] = useState(initialCategoryLabels)
@@ -293,7 +296,7 @@ export default function CoefficientsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center">
-          <Link href="/" className="mr-4 p-2 hover:bg-gray-100 rounded-lg">
+                      <Link href="/dashboard" className="mr-4 p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
@@ -302,13 +305,20 @@ export default function CoefficientsPage() {
           </div>
         </div>
         <div className="flex gap-3">
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="btn-primary flex items-center"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Добавить коэффициент
-          </button>
+          {!isReadonly && (
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="btn-primary flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Добавить коэффициент
+            </button>
+          )}
+          {isReadonly && (
+            <div className="text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-lg">
+              👁️ Режим просмотра (только чтение)
+            </div>
+          )}
         </div>
       </div>
 
@@ -370,7 +380,7 @@ export default function CoefficientsPage() {
                     <th className="text-left py-3 px-4">Значение</th>
                     <th className="text-left py-3 px-4">Описание</th>
                     <th className="text-left py-3 px-4">Статус</th>
-                    <th className="text-left py-3 px-4">Действия</th>
+                    {!isReadonly && <th className="text-left py-3 px-4">Действия</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -402,34 +412,46 @@ export default function CoefficientsPage() {
                         {coefficient.description || '—'}
                       </td>
                       <td className="py-3 px-4">
-                        <button
-                          onClick={() => toggleCoefficientStatus(coefficient.id)}
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        {isReadonly ? (
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                             coefficient.isActive
                               ? 'bg-teal-100 text-teal-800'
                               : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {coefficient.isActive ? 'Активен' : 'Неактивен'}
-                        </button>
+                          }`}>
+                            {coefficient.isActive ? 'Активен' : 'Неактивен'}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => toggleCoefficientStatus(coefficient.id)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              coefficient.isActive
+                                ? 'bg-teal-100 text-teal-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {coefficient.isActive ? 'Активен' : 'Неактивен'}
+                          </button>
+                        )}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => startEditCoefficient(coefficient)}
-                            className="text-blue-600 hover:text-blue-800 p-1"
-                            title="Редактировать"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => deleteCoefficient(coefficient.id)}
-                            className="text-red-600 hover:text-red-800 p-1"
-                            title="Удалить"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        {!isReadonly && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => startEditCoefficient(coefficient)}
+                              className="text-blue-600 hover:text-blue-800 p-1"
+                              title="Редактировать"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteCoefficient(coefficient.id)}
+                              className="text-red-600 hover:text-red-800 p-1"
+                              title="Удалить"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, X, Building2, Phone, Mail, MapPin, FileText, User } from 'lucide-react'
+import { ArrowLeft, Save, X, Building2, Phone, Mail, MapPin, FileText, User, Calendar } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 import { useToast } from '@/components/Toast'
 import { Client } from '@/types/client'
+import DateInput from '@/components/DateInput'
 
 export default function EditClientPage() {
   const params = useParams()
@@ -24,7 +25,8 @@ export default function EditClientPage() {
     email: '',
     address: '',
     contractNumber: '',
-    notes: ''
+    notes: '',
+    contractDate: ''
   })
 
   const clientId = params.id as string
@@ -42,7 +44,8 @@ export default function EditClientPage() {
           email: data.email || '',
           address: data.address || '',
           contractNumber: data.contractNumber || '',
-          notes: data.notes || ''
+          notes: data.notes || '',
+          contractDate: data.contractDate || ''
         })
       } else if (response.status === 404) {
         showToast('error', 'Клиент не найден')
@@ -256,6 +259,19 @@ export default function EditClientPage() {
                 onChange={(e) => handleInputChange('contractNumber', e.target.value)}
                 className="input-field"
                 placeholder="Д-2024-001"
+              />
+            </div>
+
+            {/* Дата договора */}
+            <div>
+              <label htmlFor="contractDate" className="block text-sm font-medium text-gray-700 mb-2">
+                <Calendar className="h-4 w-4 inline mr-2" />
+                Дата договора
+              </label>
+              <DateInput
+                id="contractDate"
+                value={formData.contractDate}
+                onChange={(value) => handleInputChange('contractDate', value)}
               />
             </div>
 

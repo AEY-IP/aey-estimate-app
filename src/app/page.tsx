@@ -1,146 +1,136 @@
-import Link from 'next/link'
-import { FileText, Wrench, Calculator, TrendingUp, Users, Settings, Shield } from 'lucide-react'
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { Calculator, User, Loader2 } from 'lucide-react'
 
 export default function HomePage() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
-              Создавайте сметы
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600"> быстро и точно</span>
-            </h2>
-            <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-              Профессиональная система для составления смет ремонтных работ с гибкими коэффициентами и автоматическими расчетами
+  const router = useRouter()
+  const [isChecking, setIsChecking] = useState(true)
+  const [showAuthSelect, setShowAuthSelect] = useState(false)
+
+  useEffect(() => {
+    checkAuthStatus()
+  }, [router])
+
+  const checkAuthStatus = async () => {
+    try {
+      // Проверяем авторизацию профи
+      const adminResponse = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+      const isAdminAuth = adminResponse.ok
+
+      // Проверяем авторизацию клиента
+      const clientResponse = await fetch('/api/auth/client-me', {
+        credentials: 'include'
+      })
+      const isClientAuth = clientResponse.ok
+
+      // Если пользователь уже авторизован, перенаправляем в соответствующую среду
+      if (isAdminAuth) {
+        console.log('👤 Admin already authenticated, redirecting to dashboard...')
+        router.replace('/dashboard')
+        return
+      }
+
+      if (isClientAuth) {
+        console.log('👤 Client already authenticated, redirecting to client dashboard...')
+        router.replace('/client-dashboard')
+        return
+      }
+
+      // Если никто не авторизован, показываем страницу выбора
+      setIsChecking(false)
+      setShowAuthSelect(true)
+
+    } catch (error) {
+      console.error('Error checking auth status:', error)
+      setIsChecking(false)
+      setShowAuthSelect(true)
+    }
+  }
+
+  // Показываем загрузку пока проверяем авторизацию
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-600">Проверка авторизации...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Показываем страницу выбора авторизации
+  if (showAuthSelect) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          {/* Заголовок */}
+          <div className="text-center mb-8">
+            <h1 className="text-5xl font-bold text-pink-500 mb-2">
+              Идеальный подрядчик
+            </h1>
+            <p className="text-gray-600">
+              Выберите способ входа в систему
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/clients" className="btn-primary text-lg px-8 py-4 inline-flex items-center justify-center">
-                <Users className="h-5 w-5 mr-2" />
-                Управление клиентами
-              </Link>
-              <Link href="/works" className="btn-secondary text-lg px-8 py-4 inline-flex items-center justify-center">
-                <Wrench className="h-5 w-5 mr-2" />
-                Справочник работ
-              </Link>
-            </div>
           </div>
-        </div>
-      </section>
 
-      {/* Features Grid */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">Возможности системы</h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Все необходимые инструменты для профессионального составления смет
+          {/* Варианты входа */}
+          <div className="space-y-4">
+            {/* Вход для профи */}
+            <button
+              onClick={() => router.push('/login')}
+              className="w-full bg-white border-2 border-pink-200 hover:border-pink-300 rounded-xl p-6 transition-all duration-200 hover:shadow-lg group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center group-hover:bg-pink-200 transition-colors">
+                  <Calculator className="h-6 w-6 text-pink-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900 text-lg">
+                    Профессиональная среда
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Для администраторов и менеджеров
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* Вход для клиентов */}
+            <button
+              onClick={() => router.push('/client-login')}
+              className="w-full bg-white border-2 border-teal-200 hover:border-teal-300 rounded-xl p-6 transition-all duration-200 hover:shadow-lg group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center group-hover:bg-teal-200 transition-colors">
+                  <User className="h-6 w-6 text-teal-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900 text-lg">
+                    Кабинет клиента
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Для клиентов компании
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* Дополнительная информация */}
+          <div className="mt-8 text-center">
+            <p className="text-xs text-gray-500">
+              Система управления сметами и проектами
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="card group hover:scale-105 transition-all duration-300 fade-in">
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-3">Управление клиентами</h4>
-              <p className="text-gray-600 leading-relaxed">
-                Ведите базу клиентов и создавайте сметы для каждого клиента с удобным интерфейсом
-              </p>
-              <Link href="/clients" className="inline-flex items-center hover:opacity-80 mt-4 font-medium" style={{color: '#FF006F'}}>
-                Перейти к клиентам
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="card group hover:scale-105 transition-all duration-300 fade-in" style={{animationDelay: '0.1s'}}>
-              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                <Wrench className="h-6 w-6 text-white" />
-              </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-3">Справочник работ</h4>
-              <p className="text-gray-600 leading-relaxed">
-                Обширная база данных работ с возможностью импорта из CSV и гибкой категоризацией
-              </p>
-              <Link href="/works" className="inline-flex items-center text-teal-500 hover:text-teal-600 mt-4 font-medium">
-                Открыть справочник
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="card group hover:scale-105 transition-all duration-300 fade-in" style={{animationDelay: '0.2s'}}>
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                <Calculator className="h-6 w-6 text-white" />
-              </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-3">Коэффициенты</h4>
-              <p className="text-gray-600 leading-relaxed">
-                Настройка коэффициентов для точного расчета стоимости работ с учетом региональных особенностей
-              </p>
-              <Link href="/coefficients" className="inline-flex items-center text-purple-500 hover:text-purple-600 mt-4 font-medium">
-                Настроить коэффициенты
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="card group hover:scale-105 transition-all duration-300 fade-in" style={{animationDelay: '0.3s'}}>
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                <Shield className="h-6 w-6 text-white" />
-              </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-3">Управление менеджерами</h4>
-              <p className="text-gray-600 leading-relaxed">
-                Создание и управление аккаунтами менеджеров, настройка прав доступа и контроль активности
-              </p>
-              <Link href="/admin/users" className="inline-flex items-center text-pink-500 hover:text-pink-600 mt-4 font-medium">
-                Управлять пользователями
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-          </div>
         </div>
-      </section>
+      </div>
+    )
+  }
 
-      {/* CTA Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto">
-          <div className="card text-white text-center" style={{background: 'linear-gradient(to right, #FF006F, #9333ea)'}}>
-            <h3 className="text-3xl font-bold mb-4">Готовы начать работу?</h3>
-                          <p className="text-xl mb-8 text-pink-100">
-              Создайте клиента и составьте для него смету прямо сейчас
-            </p>
-                          <Link href="/clients" className="bg-white hover:bg-gray-100 font-semibold py-3 px-8 rounded-xl transition-all duration-200 inline-flex items-center" style={{color: '#FF006F'}}>
-              <Users className="h-5 w-5 mr-2" />
-              Начать с клиентов
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12 px-6">
-        <div className="container mx-auto text-center">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center">
-              <Calculator className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-lg font-semibold text-gray-900">Идеальный подрядчик</span>
-          </div>
-          <p className="text-gray-600">
-            © 2024 Идеальный подрядчик. Система управления сметами ремонтных работ.
-          </p>
-        </div>
-      </footer>
-    </div>
-  )
+  return null
 } 

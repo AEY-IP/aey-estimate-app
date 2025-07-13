@@ -1,0 +1,56 @@
+{
+  "title": "Смета1", 
+  "type": "rooms", 
+  "totalWorksPrice": 1000, 
+  "totalMaterialsPrice": 500, 
+  "totalPrice": 1500,
+  "coefficientSettings": {},
+  "manualPrices": [],
+  "rooms": [
+    {
+      "id": "room_1748985617743",
+      "name": "Комната1",
+      "totalWorksPrice": 1000,
+      "totalMaterialsPrice": 500,
+      "totalPrice": 1500,
+      "worksBlock": {
+        "id": "works_room_1748985617743",
+        "title": "Работы - Комната1",
+        "blocks": [
+          {
+            "id": "block_1",
+            "title": "Демонтажные работы",
+            "items": [
+              {
+                "id": "work_test_1",
+                "workId": "work_1748476707095_zvcjj97bt",
+                "name": "Нанесение грунтовки на стены (за слой)",
+                "unit": "м²",
+                "quantity": 50,
+                "unitPrice": 28,
+                "totalPrice": 1400
+              }
+            ],
+            "totalPrice": 1400
+          }
+        ],
+        "totalPrice": 1400
+      },
+      "materialsBlock": {
+        "id": "materials_room_1748985617743",
+        "title": "Материалы - Комната1",
+        "items": [
+          {
+            "id": "material_1",
+            "name": "Краска",
+            "unit": "л",
+            "quantity": 5,
+            "unitPrice": 100,
+            "totalPrice": 500
+          }
+        ],
+        "totalPrice": 500
+      }
+    }
+  ]
+}

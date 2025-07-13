@@ -62,11 +62,19 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       )
     }
     
+    // Получаем максимальный sortOrder для новой позиции
+    const maxSortOrder = await prisma.estimateRoom.findFirst({
+      where: { estimateId: params.id },
+      orderBy: { sortOrder: 'desc' },
+      select: { sortOrder: true }
+    })
+    
     // Создаём новое помещение
     const newRoom = await prisma.estimateRoom.create({
       data: {
         name: name.trim(),
         estimateId: params.id,
+        sortOrder: (maxSortOrder?.sortOrder || 0) + 1,
         totalWorksPrice: 0,
         totalMaterialsPrice: 0,
         totalPrice: 0
@@ -282,6 +290,72 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     console.error('Ошибка переименования помещения:', error)
     return NextResponse.json(
       { error: 'Ошибка переименования помещения' },
+      { status: 500 }
+    )
+  }
+}
+
+// PATCH /api/estimates/[id]/rooms - обновить порядок помещений
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    // Проверяем авторизацию
+    const session = await checkAuth()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
+    const { roomsOrder } = await request.json()
+    
+    if (!Array.isArray(roomsOrder)) {
+      return NextResponse.json(
+        { error: 'Некорректный порядок помещений' },
+        { status: 400 }
+      )
+    }
+    
+    // Проверяем что смета существует
+    const estimate = await prisma.estimate.findUnique({
+      where: { id: params.id }
+    })
+    
+    if (!estimate) {
+      return NextResponse.json(
+        { error: 'Смета не найдена' },
+        { status: 404 }
+      )
+    }
+
+    // Обновляем порядок помещений в транзакции
+    await prisma.$transaction(async (tx) => {
+      for (let i = 0; i < roomsOrder.length; i++) {
+        const roomId = roomsOrder[i]
+        await tx.estimateRoom.update({
+          where: {
+            id: roomId,
+            estimateId: params.id // дополнительная проверка принадлежности к смете
+          },
+          data: {
+            sortOrder: i,
+            updatedAt: new Date()
+          }
+        })
+      }
+    })
+    
+    // Обновляем время изменения сметы
+    await prisma.estimate.update({
+      where: { id: params.id },
+      data: { updatedAt: new Date() }
+    })
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Ошибка обновления порядка помещений:', error)
+    return NextResponse.json(
+      { error: 'Ошибка обновления порядка помещений' },
       { status: 500 }
     )
   }

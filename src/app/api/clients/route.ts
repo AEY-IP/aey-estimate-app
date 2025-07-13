@@ -31,7 +31,26 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json(clients)
+    // Получаем информацию о создателях
+    const creatorIds = Array.from(new Set(clients.map(c => c.createdBy)))
+    const creators = await prisma.user.findMany({
+      where: {
+        id: { in: creatorIds }
+      },
+      select: {
+        id: true,
+        name: true,
+        username: true
+      }
+    })
+
+    // Добавляем информацию о создателях к клиентам
+    const clientsWithCreators = clients.map(client => ({
+      ...client,
+      createdByUser: creators.find(creator => creator.id === client.createdBy)
+    }))
+
+    return NextResponse.json(clientsWithCreators)
   } catch (error) {
     console.error('Error fetching clients:', error)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
@@ -48,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: CreateClientRequest = await request.json()
-    const { name, phone, email, address, contractNumber, notes } = body
+    const { name, phone, email, address, contractNumber, contractDate, notes } = body
 
     // Валидация
     if (!name || name.trim() === '') {
@@ -63,6 +82,7 @@ export async function POST(request: NextRequest) {
         email: email?.trim() || null,
         address: address?.trim() || null,
         contractNumber: contractNumber?.trim() || null,
+        contractDate: contractDate?.trim() || null,
         notes: notes?.trim() || null,
         createdBy: session.id,
         isActive: true

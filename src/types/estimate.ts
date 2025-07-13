@@ -127,7 +127,9 @@ export interface Estimate {
   title: string
   type: EstimateType // новое поле для типа сметы
   category: EstimateCategory // категория сметы: основная или дополнительные работы
+  isAct: boolean // флаг что смета является актом
   clientId: string // ID клиента (ссылка на Client)
+  showToClient: boolean // флаг видимости сметы для клиента
   
   // Для смет всей квартиры (type: 'apartment')
   worksBlock?: EstimateWorksBlock
@@ -152,6 +154,16 @@ export interface Estimate {
 
   coefficientSettings?: { [coefficientId: string]: { target: 'global' | string[] } } // Настройки применения коэффициентов
   manualPrices?: string[] // ID позиций работ с ручной ценой (только для apartment)
+  
+  // Настройки дополнительного соглашения
+  additionalAgreementSettings?: {
+    dsDate: string
+    clientName: string
+    contractNumber: string
+    contractDate: string
+    workPeriod: string
+    contractor: string
+  }
 }
 
 // Типы для CSV импорта

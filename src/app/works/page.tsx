@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Search, Filter, Download, Upload, Wrench, Edit, Trash2, Eye, EyeOff, Settings } from 'lucide-react'
 import { WorkItem, RoomParameter } from '@/types/estimate'
 
 export default function WorksPage() {
+  const searchParams = useSearchParams()
+  const isReadonly = searchParams.get('readonly') === 'true'
   const [activeTab, setActiveTab] = useState<'works' | 'parameters'>('works')
   const [works, setWorks] = useState<WorkItem[]>([])
   const [roomParameters, setRoomParameters] = useState<RoomParameter[]>([])
@@ -446,7 +449,7 @@ export default function WorksPage() {
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Link href="/" className="mr-4 p-2 hover:bg-gray-100 rounded-xl transition-colors">
+              <Link href="/dashboard" className="mr-4 p-2 hover:bg-gray-100 rounded-xl transition-colors">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
@@ -455,41 +458,50 @@ export default function WorksPage() {
               </div>
             </div>
             <div className="flex gap-3">
-              {activeTab === 'works' ? (
+              {!isReadonly && (
                 <>
-                  <button
-                    onClick={() => setShowAddWorkModal(true)}
-                    className="btn-primary flex items-center"
-                  >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Добавить работу
-                  </button>
-                  <button
-                    onClick={downloadTemplate}
-                    className="btn-secondary flex items-center"
-                  >
-                    <Download className="h-5 w-5 mr-2" />
-                    Шаблон CSV
-                  </button>
-                  <label className="btn-secondary flex items-center cursor-pointer">
-                    <Upload className="h-5 w-5 mr-2" />
-                    Импорт CSV
-                    <input
-                      type="file"
-                      accept=".csv"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                  </label>
+                  {activeTab === 'works' ? (
+                    <>
+                      <button
+                        onClick={() => setShowAddWorkModal(true)}
+                        className="btn-primary flex items-center"
+                      >
+                        <Plus className="h-5 w-5 mr-2" />
+                        Добавить работу
+                      </button>
+                      <button
+                        onClick={downloadTemplate}
+                        className="btn-secondary flex items-center"
+                      >
+                        <Download className="h-5 w-5 mr-2" />
+                        Шаблон CSV
+                      </button>
+                      <label className="btn-secondary flex items-center cursor-pointer">
+                        <Upload className="h-5 w-5 mr-2" />
+                        Импорт CSV
+                        <input
+                          type="file"
+                          accept=".csv"
+                          onChange={handleFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setShowAddParameterModal(true)}
+                      className="btn-primary flex items-center"
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      Добавить параметр
+                    </button>
+                  )}
                 </>
-              ) : (
-                <button
-                  onClick={() => setShowAddParameterModal(true)}
-                  className="btn-primary flex items-center"
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Добавить параметр
-                </button>
+              )}
+              {isReadonly && (
+                <div className="text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-lg">
+                  👁️ Режим просмотра (только чтение)
+                </div>
               )}
             </div>
           </div>
@@ -691,7 +703,7 @@ export default function WorksPage() {
                         <th className="text-left w-32">Базовая цена</th>
                         <th className="text-left w-40">Параметр</th>
                         <th className="text-left w-28">Статус</th>
-                        <th className="text-left w-24">Действия</th>
+                        {!isReadonly && <th className="text-left w-24">Действия</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -744,34 +756,46 @@ export default function WorksPage() {
                               )}
                             </td>
                             <td>
-                              <button
-                                onClick={() => toggleWorkStatus(work.id, work.isActive)}
-                                className={`status-badge whitespace-nowrap ${
+                              {isReadonly ? (
+                                <span className={`status-badge whitespace-nowrap ${
                                   work.isActive 
-                                    ? 'bg-teal-100 text-teal-700 hover:bg-teal-200' 
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                } transition-colors cursor-pointer`}
-                              >
-                                {work.isActive ? 'Активна' : 'Неактивна'}
-                              </button>
+                                    ? 'bg-teal-100 text-teal-700' 
+                                    : 'bg-gray-100 text-gray-700'
+                                }`}>
+                                  {work.isActive ? 'Активна' : 'Неактивна'}
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => toggleWorkStatus(work.id, work.isActive)}
+                                  className={`status-badge whitespace-nowrap ${
+                                    work.isActive 
+                                      ? 'bg-teal-100 text-teal-700 hover:bg-teal-200' 
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  } transition-colors cursor-pointer`}
+                                >
+                                  {work.isActive ? 'Активна' : 'Неактивна'}
+                                </button>
+                              )}
                             </td>
                             <td>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => editWork(work)}
-                                  className="p-1 text-pink-600 hover:text-pink-800 hover:bg-pink-50 rounded transition-colors"
-                                  title="Редактировать работу"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </button>
-                                <button
-                                  onClick={() => deleteWork(work.id)}
-                                  className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                                  title="Удалить работу"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              </div>
+                              {!isReadonly && (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => editWork(work)}
+                                    className="p-1 text-pink-600 hover:text-pink-800 hover:bg-pink-50 rounded transition-colors"
+                                    title="Редактировать работу"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteWork(work.id)}
+                                    className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                    title="Удалить работу"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              )}
                             </td>
                           </tr>
                         )
@@ -783,7 +807,7 @@ export default function WorksPage() {
             )}
 
             {/* Import Instructions */}
-            {works.length > 0 && (
+            {!isReadonly && works.length > 0 && (
               <div className="mt-12">
                 <div className="card bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Импорт работ из CSV</h3>
@@ -850,13 +874,15 @@ export default function WorksPage() {
                 <p className="text-gray-600 mb-6">
                   Добавьте параметры помещения для автоматического расчета количества единиц в сметах
                 </p>
-                <button
-                  onClick={() => setShowAddParameterModal(true)}
-                  className="btn-primary inline-flex items-center"
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Добавить первый параметр
-                </button>
+                {!isReadonly && (
+                  <button
+                    onClick={() => setShowAddParameterModal(true)}
+                    className="btn-primary inline-flex items-center"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Добавить первый параметр
+                  </button>
+                )}
               </div>
             ) : (
               <div className="card overflow-hidden">
@@ -868,7 +894,7 @@ export default function WorksPage() {
                         <th className="text-left w-32">Единица измерения</th>
                         <th className="text-left">Описание</th>
                         <th className="text-left w-28">Статус</th>
-                        <th className="text-left w-24">Действия</th>
+                        {!isReadonly && <th className="text-left w-24">Действия</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -895,22 +921,24 @@ export default function WorksPage() {
                             </span>
                           </td>
                           <td>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => editParameter(parameter)}
-                                className="p-1 text-pink-600 hover:text-pink-800 hover:bg-pink-50 rounded transition-colors"
-                                title="Редактировать параметр"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => deleteRoomParameter(parameter.id)}
-                                className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                                title="Удалить параметр"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
+                            {!isReadonly && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => editParameter(parameter)}
+                                  className="p-1 text-pink-600 hover:text-pink-800 hover:bg-pink-50 rounded transition-colors"
+                                  title="Редактировать параметр"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => deleteRoomParameter(parameter.id)}
+                                  className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                  title="Удалить параметр"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -1099,13 +1127,41 @@ export default function WorksPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Категория *
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Например: Отделочные работы"
+                  <select
                     value={editingWork.category}
                     onChange={(e) => setEditingWork({ ...editingWork, category: e.target.value })}
                     className="input-field w-full"
-                  />
+                  >
+                    <option value="">Выберите категорию...</option>
+                    {categories.map(category => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                    {/* Если текущая категория не в списке, добавляем её */}
+                    {editingWork.category && !categories.includes(editingWork.category) && editingWork.category !== '__custom__' && (
+                      <option key={editingWork.category} value={editingWork.category}>
+                        {editingWork.category} (текущая)
+                      </option>
+                    )}
+                    <option value="__custom__">✏️ Создать новую категорию</option>
+                  </select>
+                  
+                  {editingWork.category === '__custom__' && (
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        placeholder="Введите название новой категории"
+                        onChange={(e) => {
+                          if (e.target.value.trim()) {
+                            setEditingWork({ ...editingWork, category: e.target.value.trim() })
+                          }
+                        }}
+                        className="input-field w-full"
+                        autoFocus
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1226,19 +1282,35 @@ export default function WorksPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Категория *
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Например: Отделочные работы"
+                  <select
                     value={newWork.category}
                     onChange={(e) => setNewWork({ ...newWork, category: e.target.value })}
                     className="input-field w-full"
-                    list="categories-list"
-                  />
-                  <datalist id="categories-list">
+                  >
+                    <option value="">Выберите категорию...</option>
                     {categories.map(category => (
-                      <option key={category} value={category} />
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
                     ))}
-                  </datalist>
+                    <option value="__custom__">✏️ Создать новую категорию</option>
+                  </select>
+                  
+                  {newWork.category === '__custom__' && (
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        placeholder="Введите название новой категории"
+                        onChange={(e) => {
+                          if (e.target.value.trim()) {
+                            setNewWork({ ...newWork, category: e.target.value.trim() })
+                          }
+                        }}
+                        className="input-field w-full"
+                        autoFocus
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>

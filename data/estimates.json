@@ -792,7 +792,8 @@
           "value": 1
         }
       ]
-    }
+    },
+    "showToClient": true
   },
   {
     "id": "estimate_1749220913687",

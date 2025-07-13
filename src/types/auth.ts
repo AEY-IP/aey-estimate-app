@@ -2,7 +2,7 @@ export interface User {
   id: string
   username: string
   passwordHash: string
-  role: 'ADMIN' | 'MANAGER'
+  role: 'ADMIN' | 'MANAGER' | 'CLIENT'
   name: string
   phone?: string
   createdAt: string

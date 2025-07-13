@@ -166,10 +166,27 @@
   .work-block {
     @apply border border-gray-100 rounded-xl overflow-hidden bg-white;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease-in-out;
   }
   
   .work-block-header {
     @apply bg-gray-50 px-6 py-4 border-b border-gray-100;
+  }
+
+  /* Стили для drag & drop */
+  .drag-handle {
+    @apply cursor-grab active:cursor-grabbing;
+    touch-action: none;
+  }
+  
+  .drag-handle:hover {
+    @apply bg-gray-100;
+  }
+  
+  .work-block.dragging {
+    @apply shadow-lg scale-105;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    z-index: 1000;
   }
   
   /* Стили для статусов */
@@ -282,9 +299,180 @@
   hyphens: auto;
 }
 
+/* Улучшенное отображение названий работ в компактном режиме */
+.estimate-edit-container .work-name-display {
+  line-height: 1.3;
+  max-height: 2.6em; /* 2 строки * 1.3 line-height */
+  font-size: var(--text-sm-compact);
+}
+
 /* Input поле для названий работ */
 .work-name-input {
   min-height: 2.5rem;
   line-height: 1.4;
   padding: 0.5rem;
+}
+
+/* Компактное input поле для названий работ */
+.estimate-edit-container .work-name-input {
+  min-height: 1.8rem;
+  line-height: 1.3;
+  padding: 0.25rem;
+  font-size: var(--text-sm-compact);
+}
+
+/* Компактные размеры шрифтов для редактирования сметы */
+.estimate-edit-container {
+  /* Уменьшенные размеры текста (в 1.5 раза) */
+  --text-xs-compact: 8px;    /* вместо 12px */
+  --text-sm-compact: 9px;    /* вместо 14px */
+  --text-base-compact: 11px; /* вместо 16px */
+  --text-lg-compact: 12px;   /* вместо 18px */
+  --text-xl-compact: 13px;   /* вместо 20px */
+}
+
+/* Компактные заголовки таблицы */
+.estimate-edit-container .table-apple th {
+  @apply px-3 py-2;
+  font-size: var(--text-xs-compact);
+  line-height: 1.2;
+}
+
+/* Компактные ячейки таблицы */
+.estimate-edit-container .table-apple td {
+  @apply px-3 py-2;
+  font-size: var(--text-sm-compact);
+  line-height: 1.3;
+}
+
+/* Компактные поля ввода */
+.estimate-edit-container .input-field {
+  @apply px-2 py-1;
+  font-size: var(--text-sm-compact);
+  line-height: 1.3;
+  min-height: 1.8rem;
+}
+
+/* Компактные селекты */
+.estimate-edit-container select {
+  @apply px-2 py-1 pr-6;
+  font-size: var(--text-sm-compact);
+  line-height: 1.3;
+  min-height: 1.8rem;
+  background-size: 1.2em 1.2em;
+  background-position: right 0.5rem center;
+}
+
+/* Компактные заголовки разделов */
+.estimate-edit-container .section-title {
+  font-size: var(--text-lg-compact) !important;
+  line-height: 1.4;
+}
+
+/* Компактные заголовки блоков работ */
+.estimate-edit-container .block-title {
+  font-size: var(--text-base-compact) !important;
+  line-height: 1.3;
+}
+
+/* Компактные цены и числа */
+.estimate-edit-container .price-text {
+  font-size: var(--text-sm-compact) !important;
+  line-height: 1.3;
+}
+
+/* Компактные итоговые суммы */
+.estimate-edit-container .total-text {
+  font-size: var(--text-lg-compact) !important;
+  line-height: 1.4;
+}
+
+/* Компактные кнопки внутри таблицы */
+.estimate-edit-container .table-btn {
+  @apply p-1;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.estimate-edit-container .table-btn svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Компактные иконки автоматического количества */
+.estimate-edit-container .auto-quantity-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  top: 0.125rem;
+  right: 0.125rem;
+}
+
+.estimate-edit-container .auto-quantity-icon svg {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+/* Компактные заголовки блоков работ */
+.estimate-edit-container .work-block-header {
+  @apply px-4 py-3;
+}
+
+/* Компактное содержимое блоков */
+.estimate-edit-container .work-block .p-6 {
+  @apply p-4;
+}
+
+/* Компактные кнопки добавления */
+.estimate-edit-container .add-btn {
+  @apply px-2 py-1;
+  font-size: var(--text-xs-compact);
+}
+
+/* Компактные поля для ширины */
+.estimate-edit-container .w-16 {
+  width: 3.2rem;
+}
+
+.estimate-edit-container .w-20 {
+  width: 3.8rem;
+}
+
+.estimate-edit-container .w-24 {
+  width: 4.2rem;
+}
+
+.estimate-edit-container .w-28 {
+  width: 5rem;
+}
+
+/* Оптимизированное поле наименования */
+.estimate-edit-container .w-1\/2 {
+  width: 52%;
+}
+
+/* Компактные отступы */
+.estimate-edit-container .mb-6 {
+  margin-bottom: 1rem;
+}
+
+.estimate-edit-container .mb-4 {
+  margin-bottom: 0.75rem;
+}
+
+.estimate-edit-container .mt-6 {
+  margin-top: 1rem;
+}
+
+.estimate-edit-container .space-y-6 > * + * {
+  margin-top: 1rem;
+}
+
+.estimate-edit-container .space-y-4 > * + * {
+  margin-top: 0.75rem;
+}
+
+/* Компактная кнопка сворачивания */
+.estimate-edit-container .apple-collapse-btn {
+  @apply py-1;
+  font-size: var(--text-xs-compact);
 } 
