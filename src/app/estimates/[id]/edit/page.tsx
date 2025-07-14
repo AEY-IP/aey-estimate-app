@@ -1322,8 +1322,27 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     fetch(`/api/clients/${estimate.clientId}`)
       .then(response => response.ok ? response.json() : null)
       .then(clientData => {
-        // Используем обычную функцию для экспорта сметы
-        generateEstimatePDFWithCache(estimate, clientData)
+        // Создаем объект сметы с обновленными настройками дополнительного соглашения
+        const estimateWithSettings = {
+          ...estimate,
+          additionalAgreementSettings: {
+            dsDate: additionalAgreementSettings.dsDate,
+            clientName: additionalAgreementSettings.isManualClientName 
+              ? additionalAgreementSettings.clientName 
+              : (clientData?.name || ''),
+            contractNumber: additionalAgreementSettings.isManualContractNumber 
+              ? additionalAgreementSettings.contractNumber 
+              : (clientData?.contractNumber || ''),
+            contractDate: additionalAgreementSettings.isManualContractDate 
+              ? additionalAgreementSettings.contractDate 
+              : (clientData?.contractDate || ''),
+            workPeriod: additionalAgreementSettings.workPeriod,
+            contractor: additionalAgreementSettings.contractor
+          }
+        }
+        
+        // Используем функцию для экспорта сметы с обновленными настройками
+        generateEstimatePDFWithCache(estimateWithSettings, clientData)
       })
       .catch(error => console.error('Ошибка загрузки клиента:', error))
     

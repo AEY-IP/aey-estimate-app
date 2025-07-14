@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Calculator, Users, Wrench, Percent, ChevronRight, Home, Menu, X, LogOut, User, Shield, FileText, Newspaper, Calendar, Camera, Video, Receipt, Settings } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 
 const Navigation = () => {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { session, logout, loading } = useAuth()
 
@@ -176,12 +177,16 @@ const Navigation = () => {
     const pathSegments = pathname.split('/').filter(Boolean)
     const breadcrumbs: Array<{ name: string; href: string; icon?: any }> = [{ name: 'Главная', href: getHomeUrl(), icon: Home }]
 
+    // Получаем параметр returnTo из URL
+    const returnTo = searchParams.get('returnTo')
+
     let currentPath = ''
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`
       
       let name = segment
       let icon: any = undefined
+      let href = currentPath
 
       // Определяем название и иконку для каждого сегмента
       switch (segment) {
@@ -233,6 +238,10 @@ const Navigation = () => {
         case 'estimates':
           name = 'Сметы'
           icon = Calculator
+          // Если есть returnTo параметр, используем его для ссылки на сметы
+          if (returnTo && returnTo.includes('/estimates')) {
+            href = returnTo
+          }
           break
         case 'acts':
           name = 'Акты'
@@ -264,7 +273,7 @@ const Navigation = () => {
           }
       }
 
-      breadcrumbs.push({ name, href: currentPath, icon })
+      breadcrumbs.push({ name, href, icon })
     })
 
     return breadcrumbs

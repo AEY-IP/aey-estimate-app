@@ -1201,7 +1201,9 @@ export async function generateEstimatePDFWithCache(
       calculatedGrandTotal: estimateData.grandTotal,
       totalWorksPrice: estimateData.totalWorksPrice,
       totalMaterialsPrice: estimateData.totalMaterialsPrice,
-      totalPrice: estimateData.grandTotal
+      totalPrice: estimateData.grandTotal,
+      // Сохраняем настройки дополнительного соглашения
+      additionalAgreementSettings: estimate.additionalAgreementSettings
     }
     
     console.log('Estimate data prepared:', {
