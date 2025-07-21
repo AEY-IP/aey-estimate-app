@@ -266,7 +266,7 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
       font-weight: 500;
       font-size: 13px;
     }
-    
+
     .works-section {
       margin-bottom: 30px;
     }
@@ -875,7 +875,7 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
             font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-size: 14px;
             line-height: 1.6;
-            color: #232323;
+      color: #232323;
             background: #ffffff;
             padding: 20px;
         }
@@ -891,7 +891,7 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
         
         .header {
             text-align: center;
-            margin-bottom: 30px;
+      margin-bottom: 30px;
             padding: 20px;
             background: #000000;
             color: white;
@@ -908,13 +908,13 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
         .header .subtitle {
             font-size: 14px;
             font-weight: 400;
-            color: white;
-        }
-        
+      color: white;
+    }
+    
         .agreement-title {
             text-align: center;
             font-size: 16px;
-            font-weight: 600;
+      font-weight: 600;
             margin-bottom: 20px;
             line-height: 1.4;
         }
@@ -923,7 +923,7 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
             display: flex;
             justify-content: space-between;
             margin-bottom: 20px;
-            font-size: 14px;
+      font-size: 14px;
         }
         
         .agreement-text {
@@ -939,35 +939,35 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
         
         .works-section {
             margin: 20px 0;
-        }
-        
-        .works-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
+    }
+    
+    .works-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
             border: 1px solid #e5e7eb;
-        }
-        
-        .works-table th {
+    }
+    
+    .works-table th {
             background: #f8fafc;
             color: #374151;
-            font-weight: 600;
+      font-weight: 600;
             padding: 12px 8px;
             text-align: left;
             border-bottom: 2px solid #e5e7eb;
-            font-size: 12px;
-        }
-        
-        .works-table td {
+      font-size: 12px;
+    }
+    
+    .works-table td {
             padding: 10px 8px;
             border-bottom: 1px solid #f3f4f6;
-            font-size: 13px;
-        }
-        
+      font-size: 13px;
+    }
+    
         .works-table tr:nth-child(even) {
-            background: #f9fafb;
-        }
-        
+      background: #f9fafb;
+    }
+    
         .block-title {
             background: #e5e7eb;
             font-weight: 600;
@@ -993,7 +993,7 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
         }
         
         .total-row {
-            background: #f3f4f6;
+      background: #f3f4f6;
             font-weight: 600;
             font-size: 14px;
         }
@@ -1013,7 +1013,7 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
         }
         
         .signature-block {
-            text-align: center;
+      text-align: center;
         }
         
         .signature-role {
@@ -1494,7 +1494,7 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
     }
     
     @media print {
-      body {
+      body { 
         padding: 0;
         margin: 0;
       }
@@ -1519,7 +1519,7 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
     <div class="act-title">
       Акт выполненных работ №${act.id} от ${formattedDate}<br>
       в соответствии с Приложением №2 по договору №${clientData?.contractNumber || ''} от ${clientData?.contractDate ? new Date(clientData.contractDate).toLocaleDateString('ru-RU') : ''}
-    </div>
+        </div>
 
     <div class="works-section">
       <h2 class="section-title">Список выполненных работ</h2>
@@ -1581,15 +1581,15 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
           </tr>
         </tbody>
       </table>
-    </div>
+        </div>
 
     <div class="disclaimer">
       Работы, указанные в настоящем акте согласованы заказчиком дополнительно к смете (Приложение №2 к договору).
-    </div>
+      </div>
     
     <div class="disclaimer">
       Подписанием настоящего акта Заказчик подтверждает, что работы выполнены в полном объеме и с надлежащим качеством. Претензий относительно качества и объемов работ Заказчик не имеет.
-    </div>
+          </div>
 
     <div class="signatures-section">
       <div class="signature-block">
@@ -1599,10 +1599,10 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
       <div class="signature-block">
         <div class="signature-title">Заказчик</div>
         <div class="signature-line"></div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-  
+
   <script>
     window.addEventListener('load', function() {
       setTimeout(function() {
@@ -1925,27 +1925,27 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
     <div class="header">
       <div class="company-name">Идеальный подрядчик</div>
       <div class="company-motto">Быстро. Четко. Компонентно.</div>
-    </div>
+        </div>
 
     <div class="act-title">
       Акт выполненных работ №${settings.actNumber} от ${formattedActDate}<br>
       в соответствии с Приложением №2 по договору №${contractNumber} от ${formatDateForAct(contractDate)}
-    </div>
+      </div>
 
-    <div class="works-section">
+      <div class="works-section">
       <h2 class="section-title">Список выполненных работ</h2>
-      <table class="works-table">
-        <thead>
-          <tr>
+        <table class="works-table">
+          <thead>
+            <tr>
             <th>№</th>
             <th>Наименование работ</th>
             <th>Ед. изм.</th>
             <th>Кол-во</th>
             <th>Цена за ед.</th>
             <th>Стоимость</th>
-          </tr>
-        </thead>
-        <tbody>
+            </tr>
+          </thead>
+          <tbody>
           ${(() => {
             const worksData = act.calculatedWorksData || (act.rooms || []);
             let globalItemNumber = 1;
@@ -1978,8 +1978,8 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
               ];
             }).join('');
           })()}
-          <tr class="total-row">
-            <td colspan="5" style="text-align: right; font-size: 16px;">ИТОГО:</td>
+            <tr class="total-row">
+              <td colspan="5" style="text-align: right; font-size: 16px;">ИТОГО:</td>
             <td class="currency" style="font-size: 16px;">
               ${(() => {
                 if (act.calculatedWorksData) {
@@ -1989,14 +1989,14 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
                 }
                 return (act.totalWorksPrice || 0).toLocaleString('ru-RU');
               })()} ₽</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
     <div class="disclaimer">
       Работы, указанные в настоящем акте согласованы заказчиком дополнительно к смете (Приложение №2 к договору).
-    </div>
+      </div>
     
     <div class="disclaimer">
       Подписанием настоящего акта Заказчик подтверждает, что работы выполнены в полном объеме и с надлежащим качеством. Претензий относительно качества и объемов работ Заказчик не имеет.
@@ -2424,7 +2424,7 @@ export async function getEstimateDataWithCoefficients(estimate: any): Promise<an
     
     // Fallback: используем базовые цены без коэффициентов
     console.log('Using fallback - base prices without coefficients')
-    return {
+  return {
       worksData: estimate.worksBlock?.blocks || estimate.summaryWorksBlock?.blocks || [],
       materialsData: estimate.materialsBlock?.items || estimate.summaryMaterialsBlock?.items || [],
       totalWorksPrice: estimate.totalWorksPrice,
@@ -2433,4 +2433,4 @@ export async function getEstimateDataWithCoefficients(estimate: any): Promise<an
       coefficientsInfo: null
     }
   }
-}
+} 

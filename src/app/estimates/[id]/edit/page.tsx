@@ -190,6 +190,13 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     actType: 'simple' as 'simple' | 'additional'
   })
 
+  // Состояние для модального окна изменения типа сметы
+  const [showEstimateTypeModal, setShowEstimateTypeModal] = useState(false)
+  const [estimateTypeChange, setEstimateTypeChange] = useState({
+    currentCategory: estimate?.category || 'main',
+    newCategory: estimate?.category || 'main'
+  })
+
   // Вспомогательные функции для определения текущего режима
   const isRoomsEstimate = estimate?.type === 'rooms'
   const isSummaryView = isRoomsEstimate && currentRoomId === null
@@ -1803,6 +1810,62 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     })
   }
 
+  // Функция для открытия модального окна изменения типа сметы
+  const handleEstimateTypeChangeClick = () => {
+    if (estimate?.isAct) {
+      // Акты не могут изменять тип
+      return
+    }
+    
+    setEstimateTypeChange({
+      currentCategory: estimate?.category || 'main',
+      newCategory: estimate?.category || 'main'
+    })
+    setShowEstimateTypeModal(true)
+  }
+
+  // Функция для применения изменения типа сметы
+  const handleEstimateTypeUpdate = async () => {
+    if (!estimate || estimateTypeChange.currentCategory === estimateTypeChange.newCategory) {
+      setShowEstimateTypeModal(false)
+      return
+    }
+
+    try {
+      setSaving(true)
+      
+      const response = await fetch(`/api/estimates/${estimate.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...estimate,
+          category: estimateTypeChange.newCategory
+        }),
+      })
+      
+      if (response.ok) {
+        const updatedEstimate = await response.json()
+        const estimateWithDates = {
+          ...updatedEstimate,
+          createdAt: new Date(updatedEstimate.createdAt),
+          updatedAt: new Date(updatedEstimate.updatedAt)
+        }
+        setEstimate(estimateWithDates)
+        
+        alert(`Тип сметы успешно изменен на "${estimateTypeChange.newCategory === 'main' ? 'Основная' : 'Дополнительная'}"`)
+        setShowEstimateTypeModal(false)
+      } else {
+        const result = await response.json()
+        alert(`Ошибка изменения типа: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Ошибка изменения типа сметы:', error)
+      alert('Ошибка изменения типа сметы')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -1830,6 +1893,23 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 <ChevronDown className="h-4 w-4 mr-2" />
                 {(isCoefficientsCollapsed && isWorksCollapsed && isMaterialsCollapsed && isRoomParametersCollapsed) ? 'Развернуть все' : 'Свернуть все'}
               </button>
+              
+              {/* Кнопка изменения типа сметы (только для смет, не для актов) */}
+              {!estimate?.isAct && (
+                <button 
+                  onClick={handleEstimateTypeChangeClick}
+                  className={`flex items-center px-4 py-2 rounded-xl font-medium transition-colors border ${
+                    estimate?.category === 'main' 
+                      ? 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100' 
+                      : 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100'
+                  }`}
+                  title="Изменить тип сметы"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  {estimate?.category === 'main' ? 'Основная' : 'Дополнительная'}
+                </button>
+              )}
+              
               <button 
                 onClick={handleExportPDF}
                 className="btn-secondary flex items-center"
@@ -3434,6 +3514,66 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Экспорт акта
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно изменения типа сметы */}
+      {showEstimateTypeModal && (
+        <div className="modal-overlay">
+          <div className="modal-content max-w-2xl">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Изменение типа сметы</h2>
+              
+              <div className="space-y-6">
+                {/* Текущий тип сметы */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Текущий тип сметы:
+                  </label>
+                  <input
+                    type="text"
+                    value={estimate?.category === 'main' ? 'Основная' : 'Дополнительная'}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  />
+                </div>
+
+                {/* Новый тип сметы */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Новый тип сметы:
+                  </label>
+                  <select
+                    value={estimateTypeChange.newCategory}
+                    onChange={(e) => setEstimateTypeChange(prev => ({
+                      ...prev,
+                      newCategory: e.target.value as 'main' | 'additional'
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="main">Основная</option>
+                    <option value="additional">Дополнительная</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowEstimateTypeModal(false)}
+                  className="btn-secondary"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={handleEstimateTypeUpdate}
+                  disabled={estimateTypeChange.currentCategory === estimateTypeChange.newCategory}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Сохранить
                 </button>
               </div>
             </div>
