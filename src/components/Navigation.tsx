@@ -12,8 +12,8 @@ const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { session, logout, loading } = useAuth()
 
-  // Не показываем навигацию на страницах входа, дашбордах или если данные загружаются
-  if (pathname === '/login' || pathname === '/dashboard' || pathname.startsWith('/client-dashboard') || loading) return null
+  // Не показываем навигацию на страницах входа, главном дашборде или если данные загружаются
+  if (pathname === '/login' || pathname === '/dashboard' || loading) return null
 
   const isHomePage = pathname === '/'
 
@@ -304,35 +304,33 @@ const Navigation = () => {
           </Link>
 
           <div className="flex items-center space-x-4">
-            {/* Desktop Navigation - только для профессионального окружения */}
-            {!isClientEnvironment && (
+            {/* Desktop Navigation - для обеих сред */}
             <div className="hidden md:flex items-center space-x-1">
-                {menuItems.slice(0, 4).map((item, index) => {
+              {menuItems.slice(0, isClientEnvironment ? 3 : 4).map((item, index) => {
                 const Icon = item.icon
                 return (
                   <Link 
                     key={index}
                     href={item.href} 
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    className={`px-2 lg:px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive(item.href) 
                         ? item.color + ' shadow-sm' 
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    <Icon className="h-4 w-4 inline mr-2" />
-                    {item.title}
+                    <Icon className="h-4 w-4 inline mr-1 lg:mr-2" />
+                    <span className="hidden lg:inline">{item.title}</span>
                   </Link>
                 )
               })}
             </div>
-            )}
 
             {/* Пользователь и выход */}
             <div className="hidden md:flex items-center space-x-3">
               {session?.user && (
                 <div className="flex items-center space-x-2">
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate max-w-32 lg:max-w-none">{session.user.name}</p>
                     <p className="text-xs text-gray-500">
                       {isClientEnvironment ? 'Клиент' : 
                        session.user.role === 'ADMIN' ? 'Администратор' : 'Менеджер'}
@@ -355,20 +353,18 @@ const Navigation = () => {
               </button>
             </div>
 
-            {/* Mobile menu button - только для профессионального окружения */}
-            {!isClientEnvironment && (
+            {/* Mobile menu button - для обеих сред */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            )}
           </div>
         </div>
 
-        {/* Mobile Navigation Menu - только для профессионального окружения */}
-        {!isClientEnvironment && isMobileMenuOpen && (
+        {/* Mobile Navigation Menu - для обеих сред */}
+        {isMobileMenuOpen && (
           <div className="md:hidden py-3 border-t border-gray-100">
             <div className="space-y-1">
               {menuItems.map((item, index) => {
@@ -419,20 +415,20 @@ const Navigation = () => {
         {/* Breadcrumbs - показываем только НЕ на главной */}
         {!isHomePage && (
           <div className="py-2 border-t border-gray-100">
-            <div className="flex items-center space-x-2 text-sm">
+            <div className="flex items-center space-x-1 sm:space-x-2 text-sm overflow-x-auto">
               {breadcrumbs.map((crumb, index) => (
-                <div key={index} className="flex items-center">
-                  {index > 0 && <ChevronRight className="h-4 w-4 text-gray-400 mx-2" />}
+                <div key={index} className="flex items-center flex-shrink-0">
+                  {index > 0 && <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mx-1 sm:mx-2" />}
                   <Link
                     href={crumb.href}
-                    className={`flex items-center space-x-1 hover:text-gray-900 transition-colors ${
+                    className={`flex items-center space-x-1 hover:text-gray-900 transition-colors whitespace-nowrap ${
                       index === breadcrumbs.length - 1 
                         ? 'text-gray-900 font-medium' 
                         : 'text-gray-500'
                     }`}
                   >
-                    {crumb.icon && <crumb.icon className="h-4 w-4" />}
-                    <span>{crumb.name}</span>
+                    {crumb.icon && <crumb.icon className="h-3 w-3 sm:h-4 sm:w-4" />}
+                    <span className="text-xs sm:text-sm">{crumb.name}</span>
                   </Link>
                 </div>
               ))}

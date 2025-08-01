@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, FileText, User, LogOut, Home } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import DocumentManager from '@/components/DocumentManager';
 
 interface ClientData {
@@ -46,15 +46,6 @@ export default function ClientDocumentsPage() {
     loadClientInfo();
   }, [router]);
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/client-logout', { method: 'POST' })
-      window.location.href = '/'
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -85,63 +76,15 @@ export default function ClientDocumentsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Top Navigation Bar */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
-            {/* Logo & Navigation */}
-            <div className="flex items-center space-x-4">
-              <Link 
-                href="/client-dashboard" 
-                className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
-                </div>
-                <div className="hidden sm:block">
-                  <span className="text-lg font-semibold text-gray-900">Идеальный подрядчик</span>
-                  <p className="text-xs text-gray-500">Кабинет клиента</p>
-                </div>
-              </Link>
-
-              {/* Breadcrumb Navigation */}
-              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500">
-                <span>/</span>
-                <FileText className="h-4 w-4" />
-                <span className="text-gray-900 font-medium">Документы</span>
-              </div>
-            </div>
-
-            {/* Profile & Actions */}
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
-                <User className="h-5 w-5 text-white" />
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">{clientData.client.name}</p>
-                <p className="text-xs text-gray-600">Клиент</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                title="Выйти"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Page Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           {/* Back Button */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <Link 
               href="/client-dashboard"
-              className="inline-flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors group"
+              className="inline-flex items-center px-3 sm:px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors group text-sm sm:text-base"
             >
               <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
               Вернуться в главное меню
@@ -149,48 +92,37 @@ export default function ClientDocumentsPage() {
           </div>
 
           {/* Title Section */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center space-x-3 mb-2">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Документы проекта</h1>
-                  <p className="text-gray-600">Проект: {clientData.client.name}</p>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Документы проекта</h1>
+                  <p className="text-sm sm:text-base text-gray-600">Проект: {clientData.client.name}</p>
                 </div>
               </div>
-              <p className="text-gray-600 ml-15">
+              <p className="text-sm sm:text-base text-gray-600 sm:ml-15">
                 Проектная документация, договоры и другие важные документы
               </p>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="hidden md:flex space-x-3">
-              <Link
-                href="/client-dashboard"
-                className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <Home className="h-4 w-4 mr-2" />
-                Главная
-              </Link>
             </div>
           </div>
         </div>
 
         {/* Documents Content */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
           <DocumentManager clientId={clientData.client.id} canUpload={false} />
         </div>
 
         {/* Footer Navigation for Mobile */}
-        <div className="md:hidden mt-8 flex justify-center">
+        <div className="sm:hidden mt-6 flex justify-center">
           <Link
             href="/client-dashboard"
             className="inline-flex items-center px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors shadow-lg"
           >
-            <Home className="h-5 w-5 mr-2" />
-            Вернуться в главное меню
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Назад
           </Link>
         </div>
       </main>

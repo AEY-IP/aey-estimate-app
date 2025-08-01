@@ -29,18 +29,37 @@
     @apply bg-gray-50 text-gray-900 font-medium;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   }
+
+  /* Мобильная оптимизация viewport */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+
+  /* Улучшенная прокрутка на мобильных */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6 backdrop-blur-sm;
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 backdrop-blur-sm;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease-in-out;
   }
   
   .card:hover {
     @apply shadow-md;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     transition: all 0.2s ease-in-out;
+  }
+
+  /* Мобильная адаптация карточек */
+  @media (max-width: 640px) {
+    .card {
+      @apply p-3 rounded-xl;
+    }
   }
 
   .btn-primary {
@@ -59,6 +78,14 @@
     box-shadow: 0 1px 3px 0 rgba(255, 0, 111, 0.3);
   }
 
+  /* Мобильные кнопки */
+  @media (max-width: 640px) {
+    .btn-primary, .btn-secondary {
+      @apply py-2 px-3 text-sm rounded-lg;
+      min-height: 44px; /* Рекомендуемый минимум для тач-таргетов */
+    }
+  }
+
   .btn-secondary {
     @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition-all duration-200 ease-in-out border border-gray-200;
   }
@@ -74,12 +101,20 @@
   .input-field {
     @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:border-transparent transition-all duration-200 ease-in-out bg-white;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+    min-height: 44px; /* Тач-таргет для мобильных */
   }
   
   .input-field:focus {
     @apply shadow-sm;
     --tw-ring-color: #FF006F;
     box-shadow: 0 0 0 3px rgba(255, 0, 111, 0.1), 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  /* Мобильные поля ввода */
+  @media (max-width: 640px) {
+    .input-field {
+      @apply px-3 py-2 text-sm rounded-lg;
+    }
   }
 
   .primary-600 {
@@ -94,6 +129,17 @@
   .table-apple {
     @apply w-full bg-white rounded-xl overflow-hidden;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  /* Мобильные таблицы */
+  @media (max-width: 640px) {
+    .table-apple {
+      @apply rounded-lg text-sm;
+    }
+    
+    .table-apple th, .table-apple td {
+      @apply px-2 py-2;
+    }
   }
   
   .table-apple th {
@@ -111,11 +157,54 @@
   /* Стили для модальных окон */
   .modal-overlay {
     @apply fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm flex items-center justify-center z-50;
+    padding: 1rem; /* Отступы для мобильных */
   }
   
   .modal-content {
     @apply bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Мобильные модальные окна */
+  @media (max-width: 640px) {
+    .modal-content {
+      @apply mx-2 rounded-xl;
+      max-width: calc(100vw - 1rem);
+    }
+  }
+
+  /* Улучшенные отступы для мобильных */
+  @media (max-width: 640px) {
+    .container {
+      @apply px-3;
+    }
+    
+    /* Мобильная типографика */
+    h1 {
+      @apply text-xl;
+    }
+    
+    h2 {
+      @apply text-lg;
+    }
+    
+    h3 {
+      @apply text-base;
+    }
+  }
+
+  /* Улучшенная прокрутка и touch targets */
+  @media (max-width: 768px) {
+    /* Минимальные размеры для touch targets */
+    button, a, input, select, textarea {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Улучшенные отступы для кликабельных элементов */
+    .card, .btn-primary, .btn-secondary {
+      @apply px-4 py-3;
+    }
   }
   
   /* Стили для чекбоксов и радио-кнопок */
