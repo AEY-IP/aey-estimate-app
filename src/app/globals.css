@@ -40,19 +40,19 @@
   * {
     -webkit-overflow-scrolling: touch;
   }
-}
 
-@layer components {
-  .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 backdrop-blur-sm;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-    transition: all 0.2s ease-in-out;
-  }
-  
-  .card:hover {
-    @apply shadow-md;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    transition: all 0.2s ease-in-out;
+  @layer components {
+    .card {
+      @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 backdrop-blur-sm;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .card:hover {
+      @apply shadow-md;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      transition: all 0.2s ease-in-out;
+    }
   }
 
   /* Мобильная адаптация карточек */
@@ -707,4 +707,62 @@ tr[draggable="true"]:hover td:first-child::before {
 
 tr.drop-success {
   animation: drop-success 0.5s ease-out;
+} 
+
+/* Улучшенное отображение длинных текстов */
+@media (max-width: 768px) {
+  /* Файловые имена и длинные тексты */
+  .break-filename {
+    word-break: break-all;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  /* Заголовки файлов */
+  .file-title {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  /* Контейнеры с ограниченной шириной */
+  .mobile-container {
+    max-width: 100vw;
+    overflow: hidden;
+  }
+  
+  /* Предотвращение горизонтальной прокрутки */
+  .prevent-overflow {
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Главная страница - дополнительные мобильные стили */
+@media (max-width: 480px) {
+  .landing-section {
+    min-height: 45vh;
+  }
+  
+  .landing-content {
+    padding: 1rem;
+  }
+  
+  .landing-title {
+    font-size: 0.875rem;
+    line-height: 1.25;
+  }
+  
+  .landing-subtitle {
+    font-size: 0.75rem;
+    line-height: 1.25;
+  }
+  
+  .landing-description {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    max-width: 260px;
+  }
 } 

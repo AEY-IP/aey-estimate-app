@@ -338,31 +338,31 @@ export default function EstimateDocumentManager({ clientId, canUpload = true }: 
           {documents.map((document) => (
             <div
               key={document.id}
-              className="bg-white border rounded-lg p-4 hover:border-gray-300 transition-all cursor-pointer"
+              className="bg-white border rounded-lg p-3 sm:p-4 hover:border-gray-300 transition-all cursor-pointer"
               onClick={() => previewDocument(document)}
             >
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-3 sm:gap-4">
                 <div className="flex-shrink-0">
-                  <FileText className="h-8 w-8 text-red-500" />
+                  <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-red-500" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 truncate">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <h3 className="font-medium text-gray-900 break-words text-sm sm:text-base leading-tight">
                     {document.name}
                   </h3>
-                  <p className="text-sm font-medium text-blue-600">
+                  <p className="text-xs sm:text-sm font-medium text-blue-600 mt-1">
                     {getCategoryLabel(document.category)}
                   </p>
-                  <p className="text-sm text-gray-600 truncate">
+                  <p className="text-xs sm:text-sm text-gray-600 break-all leading-tight mt-1">
                     {document.fileName}
                   </p>
                   {document.description && (
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1 break-words leading-relaxed">
                       {document.description}
                     </p>
                   )}
-                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                    <span>{formatFileSize(document.fileSize)}</span>
-                    <span>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-gray-400">
+                    <span className="flex-shrink-0">{formatFileSize(document.fileSize)}</span>
+                    <span className="flex-shrink-0">
                       {new Date(document.createdAt).toLocaleDateString('ru-RU', {
                         day: 'numeric',
                         month: 'short',
@@ -371,7 +371,7 @@ export default function EstimateDocumentManager({ clientId, canUpload = true }: 
                     </span>
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex items-center gap-1">
+                <div className="flex-shrink-0 flex flex-col sm:flex-row items-center gap-1">
                   {canUpload && (
                     <>
                       <button
