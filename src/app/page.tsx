@@ -67,6 +67,16 @@ export default function HomePage() {
   if (showAuthSelect) {
     return (
       <div className="min-h-screen flex flex-col">
+        {/* Шапка с логотипом для мобильных */}
+        <div className="md:hidden bg-white border-b border-gray-100 px-4 py-3 text-center">
+          <h1 className="text-lg font-bold text-pink-500 leading-tight">
+            Идеальный подрядчик
+          </h1>
+          <p className="text-gray-500 text-xs leading-tight">
+            Система управления проектами
+          </p>
+        </div>
+
         {/* Профессиональная среда - верх/левая половина */}
         <div 
           onClick={() => router.push('/login')}
@@ -192,13 +202,13 @@ export default function HomePage() {
           <div className="absolute bottom-5 left-3 sm:bottom-10 sm:left-5 md:bottom-20 md:left-10 w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-24 lg:h-24 bg-gray-900/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-200 transform -translate-x-3 sm:-translate-x-5 md:-translate-x-10 group-hover:translate-x-0" />
         </div>
 
-        {/* Логотип компании внизу */}
-        <div className="absolute bottom-2 sm:bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 text-center px-4">
-          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-pink-500 mb-1 leading-tight">
+        {/* Логотип компании внизу - только для десктопа */}
+        <div className="hidden md:block absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 text-center px-4">
+          <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-pink-500 mb-1 leading-tight">
             Идеальный подрядчик
           </h1>
-          <p className="text-gray-500 text-xs sm:text-sm md:text-base leading-tight">
-            Система управления сметами и проектами
+          <p className="text-gray-500 text-sm md:text-base leading-tight">
+            Система управления проектами
           </p>
         </div>
       </div>
