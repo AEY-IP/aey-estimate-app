@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
     const clientId = formData.get('clientId') as string;
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
+    const category = formData.get('category') as string || 'document'; // По умолчанию "document"
 
     if (!file) {
       return NextResponse.json({ error: 'Файл не предоставлен' }, { status: 400 });
@@ -93,16 +94,19 @@ export async function POST(request: NextRequest) {
     });
 
     // Сохраняем информацию о документе в БД
+    const documentData: any = {
+      clientId: clientId,
+      name: name || file.name,
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type,
+      filePath: blob.url,
+      description: description || '',
+      category: category
+    };
+
     const document = await prisma.document.create({
-      data: {
-        clientId: clientId,
-        name: name || file.name,
-        fileName: file.name,
-        fileSize: file.size,
-        mimeType: file.type,
-        filePath: blob.url,
-        description: description || ''
-      }
+      data: documentData
     });
 
     return NextResponse.json({
@@ -111,6 +115,7 @@ export async function POST(request: NextRequest) {
         id: document.id,
         name: document.name,
         description: document.description,
+        category: (document as any).category,
         fileName: document.fileName,
         fileSize: document.fileSize,
         mimeType: document.mimeType,

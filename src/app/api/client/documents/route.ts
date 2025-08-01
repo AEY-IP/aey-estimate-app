@@ -24,19 +24,22 @@ export async function GET(request: NextRequest) {
 
     const clientId = decoded.clientId
 
-    // Получаем документы для клиента
+    // Получаем только обычные документы для клиента (не сметы)
+    const whereClause: any = {
+      clientId: clientId,
+      isVisible: true,
+      category: 'document'
+    };
+
     const documents = await prisma.document.findMany({
-      where: {
-        clientId: clientId,
-        isVisible: true
-      },
+      where: whereClause,
       orderBy: {
         createdAt: 'desc'
       }
     })
 
     return NextResponse.json({
-      documents: documents.map(doc => ({
+      documents: documents.map((doc: any) => ({
         id: doc.id,
         name: doc.name,
         fileName: doc.fileName,
@@ -44,6 +47,7 @@ export async function GET(request: NextRequest) {
         fileSize: doc.fileSize,
         mimeType: doc.mimeType,
         description: doc.description,
+        category: doc.category || 'document',
         createdAt: doc.createdAt
       }))
     })

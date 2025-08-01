@@ -11,6 +11,7 @@ interface Document {
   fileSize: number;
   mimeType: string;
   description?: string;
+  category?: string;
   createdAt: string;
 }
 
@@ -33,7 +34,7 @@ export default function DocumentManager({ clientId, canUpload = true }: Document
   const loadDocuments = async () => {
     try {
       const apiEndpoint = canUpload 
-        ? `/api/documents?clientId=${clientId}` 
+        ? `/api/documents?clientId=${clientId}&category=document` 
         : '/api/client/documents';
       
       const response = await fetch(apiEndpoint);
@@ -73,6 +74,7 @@ export default function DocumentManager({ clientId, canUpload = true }: Document
         formData.append('file', file);
         formData.append('name', newDocumentName);
         formData.append('description', newDocumentDescription);
+        formData.append('category', 'document'); // Явно указываем что это обычный документ
         formData.append('clientId', clientId);
 
         const response = await fetch('/api/documents/upload', {

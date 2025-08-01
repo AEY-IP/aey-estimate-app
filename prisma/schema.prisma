@@ -33,12 +33,12 @@ model Client {
   email            String?
   address          String?
   contractNumber   String?
-  contractDate     String?
   notes            String?
   isActive         Boolean               @default(true)
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
   createdBy        String
+  contractDate     String?
   acts             Act[]
   clientUser       ClientUser?
   creator          User                  @relation(fields: [createdBy], references: [id])
@@ -82,21 +82,23 @@ model Document {
   sortOrder   Int      @default(0)
   tags        String?
   uploadedBy  String?
+  category    String   @default("document")
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("documents")
 }
 
 model ProjectNews {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  comment   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  clientId  String
-  type      String   @default("other")
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  title        String
+  content      String
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  clientId     String
+  type         String   @default("other")
+  showToClient Boolean  @default(true)
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("project_news")
 }
@@ -300,13 +302,13 @@ model Estimate {
 model EstimateRoom {
   id                  String                       @id @default(cuid())
   name                String
-  sortOrder           Int                          @default(0)
   totalWorksPrice     Float                        @default(0)
   totalMaterialsPrice Float                        @default(0)
   totalPrice          Float                        @default(0)
   createdAt           DateTime                     @default(now())
   updatedAt           DateTime                     @updatedAt
   estimateId          String
+  sortOrder           Int                          @default(0)
   materials           EstimateMaterial[]
   roomParameterValues EstimateRoomParameterValue[]
   estimate            Estimate                     @relation(fields: [estimateId], references: [id], onDelete: Cascade)

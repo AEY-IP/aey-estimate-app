@@ -1,7 +1,7 @@
 -- AlterTable
 ALTER TABLE "documents" ADD COLUMN     "isVisible" BOOLEAN NOT NULL DEFAULT true,
 ADD COLUMN     "sortOrder" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN     "tags" TEXT,
 ADD COLUMN     "uploadedBy" TEXT;
 
 -- AlterTable

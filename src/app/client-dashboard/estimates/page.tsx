@@ -1,308 +1,131 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { 
-  FileText, 
-  Calendar,
-  User,
-  Calculator,
-  Eye,
-  ArrowLeft,
-  Package
-} from 'lucide-react'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, FileText } from 'lucide-react';
+import EstimateDocumentManager from '@/components/EstimateDocumentManager';
 
-interface WorkBlock {
-  id: string
-  title: string
-  items: Array<{
-    id: string
-    name: string
-    unit: string
-    quantity: number
-    displayUnitPrice: number
-    displayTotalPrice: number
-  }>
-  totalPrice: number
-}
-
-interface EstimateCache {
-  worksData: WorkBlock[]
-  materialsData: any[]
-  totalWorksPrice: number
-  totalMaterialsPrice: number
-  grandTotal: number
-  coefficientsInfo: {
-    normal: number
-    final: number
-    global: number
-    applied: any[]
-  }
-  estimate: {
-    id: string
-    title: string
-    createdAt: string
-    updatedAt: string
-  }
-}
-
-interface ClientEstimate {
-  id: string
-  title: string
-  type: 'apartment' | 'rooms'
-  category: string
-  showToClient: boolean
-  isAct?: boolean
-  totalPrice: number
-  notes?: string
-  createdAt: string
-  updatedAt: string
-  client: {
-    id: string
-    name: string
-  }
-  creator: {
-    id: string
-    name: string
-  }
-  // Данные из кеша экспорта
-  cache?: EstimateCache
-}
-
-interface ClientData {
-  id: string
-  name: string
+interface ClientInfo {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  contractNumber?: string;
 }
 
 export default function ClientEstimatesPage() {
-  const [estimates, setEstimates] = useState<ClientEstimate[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [clientData, setClientData] = useState<ClientData | null>(null)
-  const router = useRouter()
+  const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    fetchClientData()
-  }, [])
+    loadClientInfo();
+  }, []);
 
-  useEffect(() => {
-    if (clientData) {
-      fetchEstimates()
-    }
-  }, [clientData])
-
-  const fetchClientData = async () => {
+  const loadClientInfo = async () => {
     try {
-      const response = await fetch('/api/auth/client-me')
-      
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push('/client-login')
-          return
-        }
-        throw new Error('Ошибка загрузки данных клиента')
+      const response = await fetch('/api/client/profile');
+      if (response.ok) {
+        const data = await response.json();
+        setClientInfo(data.client);
+      } else {
+        console.error('Ошибка загрузки информации о клиенте');
+        router.push('/client-login');
       }
-      
-      const data = await response.json()
-      setClientData(data.client)
     } catch (error) {
-      console.error('Ошибка загрузки данных клиента:', error)
-      setError('Ошибка загрузки данных клиента')
-    }
-  }
-
-  const fetchEstimates = async () => {
-    if (!clientData) return
-    
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/estimates?clientId=${clientData.id}`)
-      
-      if (!response.ok) {
-        throw new Error('Ошибка загрузки смет')
-      }
-      
-      const data = await response.json()
-      const estimateList = data.estimates || []
-      
-      // Кеш экспорта уже включен в основной ответ API
-      setEstimates(estimateList)
-    } catch (error) {
-      console.error('Ошибка загрузки смет:', error)
-      setError('Ошибка загрузки смет')
+      console.error('Ошибка загрузки профиля:', error);
+      router.push('/client-login');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price)
-  }
-
-  const getCategoryBadgeColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      'main': 'bg-blue-100 text-blue-800',
-      'additional': 'bg-green-100 text-green-800',
-      'optional': 'bg-yellow-100 text-yellow-800',
-    }
-    return colors[category] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getCategoryName = (category: string) => {
-    const names: { [key: string]: string } = {
-      'main': 'Основная',
-      'additional': 'Дополнительная', 
-      'optional': 'Опциональная',
-    }
-    return names[category] || category
-  }
-
-
+  };
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500">Загрузка смет...</p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
         </div>
       </div>
-    )
+    );
   }
 
-  if (error) {
+  if (!clientInfo) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <p className="text-red-500">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="btn-primary mt-4"
-          >
-            Попробовать снова
-          </button>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <p className="text-red-500">Ошибка загрузки данных</p>
+            <button
+              onClick={() => router.push('/client-login')}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Вернуться к входу
+            </button>
+          </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      
-      {/* Навигация */}
-      <div className="flex items-center mb-8">
-        <Link href="/client-dashboard" className="mr-4 p-2 hover:bg-gray-100 rounded-lg">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Ваши сметы</h1>
-          <p className="text-gray-600 mt-1">Просмотр и загрузка ваших смет</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Хлебные крошки */}
+        <div className="flex items-center gap-2 mb-6">
+          <button
+            onClick={() => router.push('/client-dashboard')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Личный кабинет
+          </button>
+          <span className="text-gray-400">/</span>
+          <span className="font-medium">Сметы</span>
+        </div>
+
+        {/* Заголовок */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+            <FileText className="h-6 w-6 text-blue-600" />
+            Сметы проекта
+          </h1>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h2 className="font-semibold text-blue-900 mb-1">
+              {clientInfo.name}
+            </h2>
+            <div className="text-sm text-blue-700 space-y-1">
+              {clientInfo.phone && <p>📞 {clientInfo.phone}</p>}
+              {clientInfo.email && <p>✉️ {clientInfo.email}</p>}
+              {clientInfo.contractNumber && <p>📄 Договор: {clientInfo.contractNumber}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Описание раздела */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+          <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+            <FileText className="h-5 w-5 text-blue-500" />
+            О ваших сметах
+          </h3>
+          <div className="text-sm text-gray-600 space-y-2">
+            <p>• Здесь размещены готовые сметы по вашему проекту</p>
+            <p>• Вы можете просматривать и скачивать PDF файлы смет</p>
+            <p>• Сметы разделены на основные и дополнительные работы</p>
+            <p>• При появлении новых смет вы будете уведомлены</p>
+          </div>
+        </div>
+
+        {/* Список смет */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <EstimateDocumentManager 
+            clientId={clientInfo.id} 
+            canUpload={false} 
+          />
         </div>
       </div>
-
-      {/* Список смет */}
-      {estimates.length === 0 ? (
-        <div className="text-center py-12">
-          <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Нет смет</h3>
-          <p className="text-gray-500">У вас пока нет доступных смет</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Сметы */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-500" />
-              Сметы ({estimates.length})
-            </h2>
-              <div className="grid gap-6">
-                {estimates.map((estimate) => {
-                         const hasCache = estimate.cache
-             const totalPrice = hasCache ? estimate.cache!.grandTotal : 0
-             const worksPrice = hasCache ? estimate.cache!.totalWorksPrice : 0
-             const materialsPrice = hasCache ? estimate.cache!.totalMaterialsPrice : 0
-            
-            return (
-              <div key={estimate.id} className="card hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <FileText className="h-6 w-6 text-primary-600" />
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-900">
-                          {estimate.title}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryBadgeColor(estimate.category)}`}>
-                            {getCategoryName(estimate.category)}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {estimate.type === 'apartment' ? 'По квартире' : 'По помещениям'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {hasCache ? (
-                      <>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calculator className="h-4 w-4 mr-2" />
-                            <span>Работы: {formatPrice(worksPrice)}</span>
-                          </div>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Package className="h-4 w-4 mr-2" />
-                            <span>Материалы: {formatPrice(materialsPrice)}</span>
-                          </div>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <User className="h-4 w-4 mr-2" />
-                            <span>Менеджер: {estimate.creator.name}</span>
-                          </div>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            <span>{new Date(estimate.updatedAt).toLocaleDateString('ru-RU')}</span>
-                          </div>
-                        </div>
-
-                      </>
-                    ) : (
-                      <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <p className="text-sm text-yellow-800">
-                          ⚠️ Смета еще обрабатывается.
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between">
-                      <div className="text-lg font-bold text-primary-600">
-                        Общая сумма: {formatPrice(estimate.totalPrice)}
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/client-dashboard/estimates/${estimate.id}`}
-                          className="btn-primary flex items-center"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Просмотр
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-              </div>
-            </div>
-        </div>
-      )}
     </div>
-  )
+  );
 } 

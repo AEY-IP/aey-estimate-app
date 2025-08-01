@@ -387,28 +387,7 @@ function EstimateCard({
         </div>
         
         <div className="flex items-center gap-2 ml-4">
-          {/* Переключатель видимости */}
-          <button
-            onClick={() => onToggleVisibility(estimate.id, estimate.showToClient)}
-            className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-              estimate.showToClient
-                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-            title={estimate.showToClient ? 'Скрыть от клиента' : 'Показать клиенту'}
-          >
-            {estimate.showToClient ? (
-              <>
-                <ToggleRight className="h-4 w-4" />
-                Видна клиенту
-              </>
-            ) : (
-              <>
-                <ToggleLeft className="h-4 w-4" />
-                Скрыта
-              </>
-            )}
-          </button>
+
           
           {/* Кнопки действий */}
           <Link

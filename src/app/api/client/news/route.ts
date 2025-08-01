@@ -22,8 +22,17 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Пока возвращаем пустой массив, так как модели еще не созданы в базе
-    const news: any[] = []
+    const clientId = decoded.clientId
+
+    // Получаем новости для клиента
+    const news = await prisma.projectNews.findMany({
+      where: { 
+        clientId: clientId
+      },
+      orderBy: { 
+        createdAt: 'desc' 
+      }
+    })
 
     return NextResponse.json({
       news

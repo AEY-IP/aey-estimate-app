@@ -1,75 +1,181 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { del } from '@vercel/blob';
 import { PrismaClient } from '@prisma/client';
-import jwt from 'jsonwebtoken';
 import { checkAuth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
-export async function DELETE(
+// GET - получение одного документа
+export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const documentId = params.id;
-
-    // Сначала пробуем cookie-авторизацию (для админов)
     const session = checkAuth(request);
-    let userId: string;
-    let userType: 'admin' | 'client' = 'admin';
-
-    if (session) {
-      // Cookie-авторизация успешна
-      userId = session.id;
-      userType = 'admin';
-    } else {
-      // Пробуем JWT авторизацию (для клиентов)
-      const token = request.headers.get('authorization')?.replace('Bearer ', '');
-      if (!token) {
-        return NextResponse.json({ error: 'Авторизация не предоставлена' }, { status: 401 });
-      }
-
-      try {
-        const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET!) as any;
-        userId = decoded.userId;
-        userType = decoded.userType || 'client';
-      } catch (error) {
-        return NextResponse.json({ error: 'Недействительный токен' }, { status: 401 });
-      }
+    if (!session) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
 
-    // Получаем документ
     const document = await prisma.document.findUnique({
-      where: { id: documentId },
-      include: { client: true }
+      where: { id: params.id }
     });
 
     if (!document) {
       return NextResponse.json({ error: 'Документ не найден' }, { status: 404 });
     }
 
-    // Проверяем права доступа - только админы могут удалять
-    if (userType === 'client') {
-      return NextResponse.json({ error: 'Клиенты не могут удалять документы' }, { status: 403 });
+    // Проверяем доступ к клиенту документа
+    const client = await prisma.client.findFirst({
+      where: { id: document.clientId, isActive: true }
+    });
+
+    if (!client) {
+      return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 });
     }
 
-    // Для менеджеров проверяем права доступа к клиенту
-    if (session && session.role === 'MANAGER' && document.client.createdBy !== session.id) {
+    // Для менеджеров проверяем права доступа
+    if (session.role === 'MANAGER' && client.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
-    // Удаляем файл из Vercel Blob
-    try {
-      await del(document.filePath);
-    } catch (error) {
-      console.warn('Ошибка удаления файла из Blob:', error);
-      // Продолжаем удаление записи из БД даже если файл не удалился
+    return NextResponse.json({
+      success: true,
+      document: {
+        id: document.id,
+        name: document.name,
+        description: document.description,
+        category: (document as any).category || 'document',
+        fileName: document.fileName,
+        fileSize: document.fileSize,
+        mimeType: document.mimeType,
+        filePath: document.filePath,
+        createdAt: document.createdAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Ошибка получения документа:', error);
+    return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });
+  }
+}
+
+// PUT - редактирование документа
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = checkAuth(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
 
-    // Удаляем запись из БД
-    await prisma.document.delete({
-      where: { id: documentId }
+    const body = await request.json();
+    const { name, description, category } = body;
+
+    if (!name?.trim()) {
+      return NextResponse.json({ error: 'Название обязательно' }, { status: 400 });
+    }
+
+    const document = await prisma.document.findUnique({
+      where: { id: params.id }
     });
+
+    if (!document) {
+      return NextResponse.json({ error: 'Документ не найден' }, { status: 404 });
+    }
+
+    // Проверяем доступ к клиенту документа
+    const client = await prisma.client.findFirst({
+      where: { id: document.clientId, isActive: true }
+    });
+
+    if (!client) {
+      return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 });
+    }
+
+    // Для менеджеров проверяем права доступа
+    if (session.role === 'MANAGER' && client.createdBy !== session.id) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
+    }
+
+    // Обновляем документ
+    const updateData: any = {
+      name: name.trim(),
+      description: description || '',
+      updatedAt: new Date()
+    };
+
+    if (category) {
+      updateData.category = category;
+    }
+
+    const updatedDocument = await prisma.document.update({
+      where: { id: params.id },
+      data: updateData
+    });
+
+    return NextResponse.json({
+      success: true,
+      document: {
+        id: updatedDocument.id,
+        name: updatedDocument.name,
+        description: updatedDocument.description,
+        category: (updatedDocument as any).category || 'document',
+        fileName: updatedDocument.fileName,
+        fileSize: updatedDocument.fileSize,
+        mimeType: updatedDocument.mimeType,
+        filePath: updatedDocument.filePath,
+        createdAt: updatedDocument.createdAt,
+        updatedAt: updatedDocument.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Ошибка редактирования документа:', error);
+    return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });
+  }
+}
+
+// DELETE - удаление документа
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = checkAuth(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
+    }
+
+    const document = await prisma.document.findUnique({
+      where: { id: params.id }
+    });
+
+    if (!document) {
+      return NextResponse.json({ error: 'Документ не найден' }, { status: 404 });
+    }
+
+    // Проверяем доступ к клиенту документа
+    const client = await prisma.client.findFirst({
+      where: { id: document.clientId, isActive: true }
+    });
+
+    if (!client) {
+      return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 });
+    }
+
+    // Для менеджеров проверяем права доступа
+    if (session.role === 'MANAGER' && client.createdBy !== session.id) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
+    }
+
+    // Удаляем документ из БД
+    await prisma.document.delete({
+      where: { id: params.id }
+    });
+
+    // TODO: Можно добавить удаление файла из Vercel Blob, но это не критично
+    // так как файлы не занимают много места и это может быть опасно
 
     return NextResponse.json({
       success: true,

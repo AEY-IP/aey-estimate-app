@@ -767,6 +767,77 @@ export async function PUT(
   }
 }
 
+// PATCH метод для обновления названия сметы
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Проверяем авторизацию (только админы и менеджеры)
+    const session = checkAuth(request)
+    
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const { title } = body
+
+    if (!title?.trim()) {
+      return NextResponse.json(
+        { error: 'Название сметы обязательно' },
+        { status: 400 }
+      )
+    }
+
+    // Получаем смету для проверки прав доступа
+    const estimate = await (prisma as any).estimate.findUnique({
+      where: { id: params.id },
+      include: {
+        client: true
+      }
+    })
+
+    if (!estimate) {
+      return NextResponse.json(
+        { error: 'Смета не найдена' },
+        { status: 404 }
+      )
+    }
+
+    // Для менеджеров проверяем права доступа к клиенту
+    if (session.role === 'MANAGER' && estimate.client.createdBy !== session.id) {
+      return NextResponse.json(
+        { error: 'Доступ запрещен' },
+        { status: 403 }
+      )
+    }
+
+    // Обновляем название сметы
+    const updatedEstimate = await (prisma as any).estimate.update({
+      where: { id: params.id },
+      data: { 
+        title: title.trim(),
+        updatedAt: new Date()
+      }
+    })
+
+    return NextResponse.json({
+      message: 'Название сметы успешно обновлено',
+      title: updatedEstimate.title
+    })
+  } catch (error) {
+    console.error('Ошибка обновления названия сметы:', error)
+    return NextResponse.json(
+      { error: 'Ошибка обновления названия сметы' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }

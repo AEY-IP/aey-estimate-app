@@ -260,8 +260,8 @@ export default function ClientDetailPage() {
 
   const menuItems = [
     {
-      title: 'Сметы и акты',
-      description: 'Управление сметами и расчетами',
+      title: 'Сметы. Рабочее пространство',
+      description: 'Создание и редактирование смет',
       icon: Calculator,
       href: `/clients/${clientId}/estimates`,
       color: 'from-purple-500 to-purple-600',
@@ -271,6 +271,20 @@ export default function ClientDetailPage() {
         badge: stats.estimates.draft > 0 ? `${stats.estimates.draft} черновик` : null,
         status: stats.estimates.visible > 0 ? 'active' : 'inactive'
       } : null,
+      priority: 'high'
+    },
+    {
+      title: 'Сметы. Экспорт',
+      description: 'PDF сметы для клиента',
+      icon: FileText,
+      href: `/clients/${clientId}/estimates-export`,
+      color: 'from-red-500 to-red-600',
+      stats: {
+        primary: 'PDF файлы',
+        secondary: 'Готовые сметы для клиента',
+        badge: null,
+        status: 'active'
+      },
       priority: 'high'
     },
     {

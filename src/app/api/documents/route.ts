@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get('clientId');
+    const category = searchParams.get('category'); // Фильтр по категории: "document", "estimate_main", "estimate_additional" или несколько через запятую
 
     if (!clientId) {
       return NextResponse.json({ error: 'ID клиента не предоставлен' }, { status: 400 });
@@ -74,11 +75,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
+    // Формируем фильтр для категорий
+    const whereClause: any = {
+      clientId: clientId
+    };
+
+    if (category) {
+      const categories = category.split(',').map(c => c.trim());
+      whereClause.category = {
+        in: categories
+      };
+    } else {
+      // По умолчанию показываем только обычные документы (не сметы)
+      whereClause.category = 'document';
+    }
+
     // Получаем документы
     const documents = await prisma.document.findMany({
-      where: {
-        clientId: clientId
-      },
+      where: whereClause,
       orderBy: {
         createdAt: 'desc'
       }
@@ -90,6 +104,7 @@ export async function GET(request: NextRequest) {
         id: doc.id,
         name: doc.name,
         description: doc.description,
+        category: doc.category || 'document',
         fileName: doc.fileName,
         fileSize: doc.fileSize,
         mimeType: doc.mimeType,

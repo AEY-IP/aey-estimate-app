@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings, Info } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings, Info, Edit } from 'lucide-react'
 import Link from 'next/link'
 import { generateEstimatePDFWithCache, generateEstimatePDF, generateActPDF, generateActWithSettings } from '@/lib/pdf-export'
 import { Estimate, Coefficient, WorkBlock, WorkItem, RoomParameter, RoomParameterValue, Room } from '@/types/estimate'
@@ -193,9 +193,19 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   // Состояние для модального окна изменения типа сметы
   const [showEstimateTypeModal, setShowEstimateTypeModal] = useState(false)
   const [estimateTypeChange, setEstimateTypeChange] = useState({
-    currentCategory: estimate?.category || 'main',
-    newCategory: estimate?.category || 'main'
+    currentCategory: 'main',
+    newCategory: 'main'
   })
+
+  // Состояние для редактирования заголовка сметы
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [editingTitle, setEditingTitle] = useState('')
+
+  // Состояния для drag&drop
+  const [draggedBlock, setDraggedBlock] = useState<string | null>(null)
+  const [draggedItem, setDraggedItem] = useState<{ blockId: string, itemId: string } | null>(null)
+  const [dragOverBlock, setDragOverBlock] = useState<string | null>(null)
+  const [dragOverItem, setDragOverItem] = useState<{ blockId: string, itemId: string } | null>(null)
 
   // Вспомогательные функции для определения текущего режима
   const isRoomsEstimate = estimate?.type === 'rooms'
@@ -630,33 +640,267 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     }
   }
 
-  const toggleClientVisibility = async () => {
-    if (!estimate) return
+  // Функция для начала редактирования заголовка
+  const startEditingTitle = () => {
+    setEditingTitle(estimate?.title || '')
+    setIsEditingTitle(true)
+  }
+
+  // Функция для сохранения заголовка
+  const saveTitle = async () => {
+    if (!estimate || !editingTitle.trim()) return
     
     try {
-      const response = await fetch(`/api/estimates/${estimate.id}/toggle-visibility`, {
+      const response = await fetch(`/api/estimates/${estimate.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          title: editingTitle.trim()
+        })
       })
 
       if (!response.ok) {
-        throw new Error('Failed to toggle visibility')
+        throw new Error('Failed to update title')
       }
 
-      const result = await response.json()
-      
       setEstimate(prev => prev ? {
         ...prev,
-        showToClient: result.showToClient
+        title: editingTitle.trim()
       } : null)
 
-      // Показываем уведомление через alert (можно заменить на toast если нужно)
-      alert(result.showToClient ? 'Смета теперь видна клиенту' : 'Смета скрыта от клиента')
+      setIsEditingTitle(false)
+      alert('Название сметы успешно обновлено')
     } catch (error) {
-      console.error('Ошибка переключения видимости:', error)
-      alert('Ошибка изменения видимости сметы')
+      console.error('Ошибка обновления названия:', error)
+      alert('Ошибка обновления названия сметы')
+    }
+  }
+
+  // Функция для отмены редактирования заголовка
+  const cancelEditingTitle = () => {
+    setEditingTitle('')
+    setIsEditingTitle(false)
+  }
+
+  // Функции для drag&drop блоков
+  const handleBlockDragStart = (e: React.DragEvent, blockId: string) => {
+    setDraggedBlock(blockId)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', blockId)
+    // Добавляем класс для тела документа чтобы показать что идет перетаскивание
+    document.body.classList.add('dragging-block')
+  }
+
+  const handleBlockDragOver = (e: React.DragEvent, blockId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverBlock(blockId)
+  }
+
+  const handleBlockDragLeave = () => {
+    setDragOverBlock(null)
+  }
+
+  const handleBlockDrop = (e: React.DragEvent, targetBlockId: string) => {
+    e.preventDefault()
+    
+    if (!draggedBlock || draggedBlock === targetBlockId) {
+      resetDragState()
+      return
+    }
+
+    // Переупорядочиваем блоки
+    reorderBlocks(draggedBlock, targetBlockId)
+    
+    resetDragState()
+  }
+
+  // Функция для сброса всех состояний drag&drop
+  const resetDragState = () => {
+    setDraggedBlock(null)
+    setDraggedItem(null)
+    setDragOverBlock(null)
+    setDragOverItem(null)
+    document.body.classList.remove('dragging-block', 'dragging-item')
+  }
+
+  // Обработчик окончания drag операции (при отмене)
+  const handleDragEnd = () => {
+    resetDragState()
+  }
+
+  // Обработчик для отмены drag операции на уровне документа
+  useEffect(() => {
+    const handleDocumentDragEnd = () => {
+      resetDragState()
+    }
+
+    document.addEventListener('dragend', handleDocumentDragEnd)
+    return () => {
+      document.removeEventListener('dragend', handleDocumentDragEnd)
+    }
+  }, [])
+
+  // Функции для drag&drop работ
+  const handleItemDragStart = (e: React.DragEvent, blockId: string, itemId: string) => {
+    setDraggedItem({ blockId, itemId })
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', `${blockId}:${itemId}`)
+    e.stopPropagation() // Предотвращаем всплытие к блоку
+    document.body.classList.add('dragging-item')
+  }
+
+  const handleItemDragOver = (e: React.DragEvent, blockId: string, itemId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverItem({ blockId, itemId })
+    e.stopPropagation()
+  }
+
+  const handleItemDragLeave = () => {
+    setDragOverItem(null)
+  }
+
+  const handleItemDrop = (e: React.DragEvent, targetBlockId: string, targetItemId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!draggedItem || (draggedItem.blockId === targetBlockId && draggedItem.itemId === targetItemId)) {
+      resetDragState()
+      return
+    }
+
+    // Переупорядочиваем работы
+    reorderItems(draggedItem.blockId, draggedItem.itemId, targetBlockId, targetItemId)
+    
+    resetDragState()
+  }
+
+  // Функция для переупорядочивания блоков
+  const reorderBlocks = (fromBlockId: string, toBlockId: string) => {
+    const currentWorksBlock = getCurrentWorksBlock()
+    if (!currentWorksBlock) return
+
+    const blocks = [...currentWorksBlock.blocks]
+    const fromIndex = blocks.findIndex(b => b.id === fromBlockId)
+    const toIndex = blocks.findIndex(b => b.id === toBlockId)
+    
+    if (fromIndex === -1 || toIndex === -1) return
+
+    // Перемещаем блок
+    const [movedBlock] = blocks.splice(fromIndex, 1)
+    blocks.splice(toIndex, 0, movedBlock)
+
+    // Обновляем состояние
+    if (estimate?.type === 'apartment' && estimate.worksBlock) {
+      setEstimate(prev => prev ? {
+        ...prev,
+        worksBlock: {
+          ...prev.worksBlock!,
+          blocks: blocks
+        }
+      } : null)
+    } else if (estimate?.type === 'rooms') {
+      if (isSummaryView && estimate.summaryWorksBlock) {
+        setEstimate(prev => prev ? {
+          ...prev,
+          summaryWorksBlock: {
+            ...prev.summaryWorksBlock!,
+            blocks: blocks
+          }
+        } : null)
+      } else if (currentRoom) {
+        setRooms(prev => prev.map(room => 
+          room.id === currentRoomId ? {
+            ...room,
+            worksBlock: {
+              ...room.worksBlock,
+              blocks: blocks
+            }
+          } : room
+        ))
+      }
+    }
+  }
+
+  // Функция для переупорядочивания работ
+  const reorderItems = (fromBlockId: string, fromItemId: string, toBlockId: string, toItemId: string) => {
+    const currentWorksBlock = getCurrentWorksBlock()
+    if (!currentWorksBlock) return
+
+    const blocks = [...currentWorksBlock.blocks]
+    const fromBlockIndex = blocks.findIndex(b => b.id === fromBlockId)
+    const toBlockIndex = blocks.findIndex(b => b.id === toBlockId)
+    
+    if (fromBlockIndex === -1 || toBlockIndex === -1) return
+
+    const fromBlock = { ...blocks[fromBlockIndex] }
+    const toBlock = fromBlockId === toBlockId ? fromBlock : { ...blocks[toBlockIndex] }
+    
+    const fromItemIndex = fromBlock.items.findIndex(i => i.id === fromItemId)
+    const toItemIndex = toBlock.items.findIndex(i => i.id === toItemId)
+    
+    if (fromItemIndex === -1 || toItemIndex === -1) return
+
+    // Если перемещаем в тот же блок
+    if (fromBlockId === toBlockId) {
+      const items = [...fromBlock.items]
+      const [movedItem] = items.splice(fromItemIndex, 1)
+      items.splice(toItemIndex, 0, movedItem)
+      
+      blocks[fromBlockIndex] = {
+        ...fromBlock,
+        items: items
+      }
+    } else {
+      // Перемещаем между блоками
+      const fromItems = [...fromBlock.items]
+      const toItems = [...toBlock.items]
+      
+      const [movedItem] = fromItems.splice(fromItemIndex, 1)
+      toItems.splice(toItemIndex, 0, movedItem)
+      
+      blocks[fromBlockIndex] = {
+        ...fromBlock,
+        items: fromItems
+      }
+      blocks[toBlockIndex] = {
+        ...toBlock,
+        items: toItems
+      }
+    }
+
+    // Обновляем состояние
+    if (estimate?.type === 'apartment' && estimate.worksBlock) {
+      setEstimate(prev => prev ? {
+        ...prev,
+        worksBlock: {
+          ...prev.worksBlock!,
+          blocks: blocks
+        }
+      } : null)
+    } else if (estimate?.type === 'rooms') {
+      if (isSummaryView && estimate.summaryWorksBlock) {
+        setEstimate(prev => prev ? {
+          ...prev,
+          summaryWorksBlock: {
+            ...prev.summaryWorksBlock!,
+            blocks: blocks
+          }
+        } : null)
+      } else if (currentRoom) {
+        setRooms(prev => prev.map(room => 
+          room.id === currentRoomId ? {
+            ...room,
+            worksBlock: {
+              ...room.worksBlock,
+              blocks: blocks
+            }
+          } : room
+        ))
+      }
     }
   }
 
@@ -740,14 +984,34 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           // Создаем кеш экспорта если смета видна клиенту
           if (estimateWithDates.showToClient) {
             try {
-              // Рассчитываем данные для кеша экспорта
-              const worksData = updatedBlocks
+              // Рассчитываем данные для кеша экспорта в правильном формате
               const globalCoeff = calculateNormalCoefficients() * calculateFinalCoefficients()
+              
+              // Форматируем работы для клиентского просмотра
+              const worksData = updatedBlocks.map(block => ({
+                id: block.id,
+                title: block.title,
+                items: block.items.map(item => ({
+                  id: item.id,
+                  name: item.name,
+                  unit: item.unit,
+                  quantity: item.quantity,
+                  unitPrice: item.unitPrice, // уже с коэффициентами
+                  totalPrice: item.totalPrice // уже с коэффициентами
+                })),
+                totalPrice: block.totalPrice
+              }))
+              
+              // Форматируем материалы для клиентского просмотра
               const materialsData = (estimate.materialsBlock?.items || []).map(item => ({
-                ...item,
+                id: item.id,
+                name: item.name,
+                unit: item.unit,
+                quantity: item.quantity,
                 unitPrice: Math.round(item.unitPrice * globalCoeff),
                 totalPrice: Math.round(item.unitPrice * globalCoeff * item.quantity)
               }))
+              
               const coefficientsInfo = {
                 normal: calculateNormalCoefficients(),
                 final: calculateFinalCoefficients(),
@@ -767,6 +1031,8 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   coefficientsInfo
                 })
               })
+              
+              console.log('✅ Кеш экспорта создан/обновлен')
             } catch (cacheError) {
               console.error('Ошибка создания кеша экспорта:', cacheError)
               // Не показываем ошибку пользователю, просто логируем
@@ -955,8 +1221,32 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           if (estimateWithDates.showToClient) {
             try {
               // Рассчитываем данные для кеша экспорта (для rooms используем сводные данные)
-              const worksData = summaryWorksBlocks
-              const materialsData = summaryMaterialsItems
+              
+              // Форматируем работы для клиентского просмотра
+              const worksData = summaryWorksBlocks.map(block => ({
+                id: block.id,
+                title: block.title,
+                items: block.items.map(item => ({
+                  id: item.id,
+                  name: item.name,
+                  unit: item.unit,
+                  quantity: item.quantity,
+                  unitPrice: item.unitPrice, // уже с коэффициентами
+                  totalPrice: item.totalPrice // уже с коэффициентами
+                })),
+                totalPrice: block.totalPrice
+              }))
+              
+              // Форматируем материалы для клиентского просмотра
+              const materialsData = summaryMaterialsItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                unit: item.unit,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice, // уже с коэффициентами
+                totalPrice: item.totalPrice // уже с коэффициентами
+              }))
+              
               const coefficientsInfo = {
                 normal: calculateNormalCoefficients(),
                 final: calculateFinalCoefficients(),
@@ -976,6 +1266,8 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   coefficientsInfo
                 })
               })
+              
+              console.log('✅ Кеш экспорта для rooms создан/обновлен')
             } catch (cacheError) {
               console.error('Ошибка создания кеша экспорта:', cacheError)
               // Не показываем ошибку пользователю, просто логируем
@@ -1877,7 +2169,47 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{estimate?.title}</h1>
+                {isEditingTitle ? (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      className="text-2xl font-bold text-gray-900 bg-white border border-gray-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      autoFocus
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          saveTitle()
+                        } else if (e.key === 'Escape') {
+                          cancelEditingTitle()
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={saveTitle}
+                      className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Сохранить
+                    </button>
+                    <button
+                      onClick={cancelEditingTitle}
+                      className="px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-gray-900">{estimate?.title}</h1>
+                    <button
+                      onClick={startEditingTitle}
+                      className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                      title="Редактировать название"
+                    >
+                      <Edit className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
                 <p className="text-gray-600 mt-1">Редактирование сметы</p>
               </div>
             </div>
@@ -1918,19 +2250,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 Экспорт PDF
               </button>
               
-              {/* Энейблер видимости клиенту */}
-              <button
-                onClick={toggleClientVisibility}
-                className={`flex items-center px-4 py-2 rounded-xl font-medium transition-colors ${
-                  estimate?.showToClient 
-                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                title={estimate?.showToClient ? 'Скрыть от клиента' : 'Показать клиенту'}
-              >
-                <CheckCircle className={`h-5 w-5 mr-2 ${estimate?.showToClient ? 'text-green-600' : 'text-gray-400'}`} />
-                {estimate?.showToClient ? 'Видна клиенту' : 'Скрыта от клиента'}
-              </button>
+
               
               <button 
                 onClick={saveEstimate}
@@ -2134,9 +2454,17 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
               
               <div className={`collapsible-content ${isWorksCollapsed ? 'collapsed' : 'expanded'}`}>
                 <div className="flex items-center justify-between mb-6">
-                  <span className="text-sm text-gray-600">
-                    Блоков работ: {getCurrentWorksBlock()?.blocks.length || 0}
-                  </span>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm text-gray-600">
+                      Блоков работ: {getCurrentWorksBlock()?.blocks.length || 0}
+                    </span>
+                    {!isSummaryView && (
+                      <div className="flex items-center text-xs text-gray-500 bg-blue-50 px-3 py-1 rounded-lg">
+                        <Info className="h-3 w-3 mr-2" />
+                        Перетаскивайте блоки и работы для изменения порядка
+                      </div>
+                    )}
+                  </div>
                   {!isSummaryView && (
                     <button 
                       onClick={() => setShowAddBlockModal(true)}
@@ -2162,7 +2490,16 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 )}
 
                 {getCurrentWorksBlock()?.blocks.map((block) => (
-                  <div key={block.id} className="work-block mb-6">
+                  <div 
+                    key={block.id} 
+                    className={`work-block mb-6 ${dragOverBlock === block.id ? 'drag-over' : ''} ${draggedBlock === block.id ? 'dragging' : ''}`}
+                    draggable={!isSummaryView}
+                    onDragStart={(e) => handleBlockDragStart(e, block.id)}
+                    onDragOver={(e) => handleBlockDragOver(e, block.id)}
+                    onDragLeave={handleBlockDragLeave}
+                    onDrop={(e) => handleBlockDrop(e, block.id)}
+                    onDragEnd={handleDragEnd}
+                  >
                     {/* Заголовок блока */}
                     <div className="work-block-header flex items-center justify-between">
                       <div className="flex items-center flex-1">
@@ -2311,7 +2648,16 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                   }
                                   
                                   return (
-                                  <tr key={item.id}>
+                                  <tr 
+                                    key={item.id}
+                                    className={`${dragOverItem?.blockId === block.id && dragOverItem?.itemId === item.id ? 'drag-over-item' : ''} ${draggedItem?.blockId === block.id && draggedItem?.itemId === item.id ? 'dragging-item' : ''}`}
+                                    draggable={!isSummaryView}
+                                    onDragStart={(e) => handleItemDragStart(e, block.id, item.id)}
+                                    onDragOver={(e) => handleItemDragOver(e, block.id, item.id)}
+                                    onDragLeave={handleItemDragLeave}
+                                    onDrop={(e) => handleItemDrop(e, block.id, item.id)}
+                                    onDragEnd={handleDragEnd}
+                                  >
                                     <td>
                                       {isSummaryView ? (
                                         <WorkNameDisplay name={item.name} className="text-sm text-gray-900" />
