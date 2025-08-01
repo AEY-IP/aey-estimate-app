@@ -66,7 +66,7 @@ export default function HomePage() {
   // Показываем страницу выбора авторизации
   if (showAuthSelect) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col md:flex-row">
         {/* Шапка с логотипом для мобильных */}
         <div className="md:hidden bg-white border-b border-gray-100 px-4 py-3 text-center">
           <h1 className="text-lg font-bold text-pink-500 leading-tight">
@@ -138,8 +138,8 @@ export default function HomePage() {
           <div className="absolute bottom-5 right-3 sm:bottom-10 sm:right-5 md:bottom-20 md:right-10 w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-24 lg:h-24 bg-pink-400/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-200 transform translate-x-3 sm:translate-x-5 md:translate-x-10 group-hover:translate-x-0" />
         </div>
 
-        {/* Разделительная линия */}
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+        {/* Разделительная линия - только для мобильных */}
+        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent md:hidden" />
 
         {/* Кабинет клиента - низ/правая половина */}
         <div 
