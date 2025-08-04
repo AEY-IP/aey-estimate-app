@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, ZoomIn, Download, ChevronLeft, ChevronRight, Receipt, Plus, FileText, Image, File } from 'lucide-react';
+import { X, ZoomIn, Download, ChevronLeft, ChevronRight, Receipt, Plus, FileText, Image, File, Edit, Trash2 } from 'lucide-react';
 
 interface ReceiptFile {
   id: string;
@@ -40,6 +40,15 @@ export default function ReceiptEventManager({ clientId, canUpload = true }: Rece
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptFile | null>(null);
   const [currentReceiptIndex, setCurrentReceiptIndex] = useState(0);
   const [allReceipts, setAllReceipts] = useState<ReceiptFile[]>([]);
+  
+  // Состояния для редактирования блока
+  const [editingEvent, setEditingEvent] = useState<ReceiptEvent | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  
+  // Состояния для удаления
+  const [deletingEvent, setDeletingEvent] = useState<ReceiptEvent | null>(null);
+  const [deletingReceipt, setDeletingReceipt] = useState<ReceiptFile | null>(null);
 
   // Загрузка событий
   const loadEvents = async () => {
@@ -225,6 +234,96 @@ export default function ReceiptEventManager({ clientId, canUpload = true }: Rece
     }
   };
 
+  // Редактирование блока
+  const startEdit = (event: ReceiptEvent) => {
+    setEditingEvent(event);
+    setEditTitle(event.title);
+    setEditDescription(event.description || '');
+  };
+
+  const saveEdit = async () => {
+    if (!editingEvent || !editTitle.trim()) {
+      alert('Название блока обязательно');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/receipt-events/${editingEvent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          description: editDescription.trim() || null
+        }),
+      });
+
+      if (response.ok) {
+        setEditingEvent(null);
+        await loadEvents();
+      } else {
+        alert(`Ошибка обновления блока: ${response.statusText}`);
+      }
+    } catch (error) {
+      alert('Ошибка сети при обновлении блока');
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingEvent(null);
+    setEditTitle('');
+    setEditDescription('');
+  };
+
+  // Удаление блока
+  const startDeleteEvent = (event: ReceiptEvent) => {
+    setDeletingEvent(event);
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!deletingEvent) return;
+
+    try {
+      const response = await fetch(`/api/receipt-events/${deletingEvent.id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setDeletingEvent(null);
+        await loadEvents();
+      } else {
+        alert(`Ошибка удаления блока: ${response.statusText}`);
+      }
+    } catch (error) {
+      alert('Ошибка сети при удалении блока');
+    }
+  };
+
+  // Удаление отдельного чека
+  const startDeleteReceipt = (receipt: ReceiptFile) => {
+    setDeletingReceipt(receipt);
+  };
+
+  const confirmDeleteReceipt = async () => {
+    if (!deletingReceipt) return;
+
+    try {
+      const response = await fetch(`/api/receipts/${deletingReceipt.id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setDeletingReceipt(null);
+        await loadEvents();
+      } else {
+        alert(`Ошибка удаления чека: ${response.statusText}`);
+      }
+    } catch (error) {
+      alert('Ошибка сети при удалении чека');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -325,13 +424,29 @@ export default function ReceiptEventManager({ clientId, canUpload = true }: Rece
                 </div>
                 
                 {canUpload && (
-                  <button
-                    onClick={() => handleFileSelect(event.id)}
-                    disabled={uploading}
-                    className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 disabled:bg-gray-300 transition-colors"
-                  >
-                    Добавить чек
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleFileSelect(event.id)}
+                      disabled={uploading}
+                      className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 disabled:bg-gray-300 transition-colors"
+                    >
+                      Добавить чек
+                    </button>
+                    <button
+                      onClick={() => startEdit(event)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Редактировать блок"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => startDeleteEvent(event)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Удалить блок"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -340,26 +455,42 @@ export default function ReceiptEventManager({ clientId, canUpload = true }: Rece
                   {event.receipts.map((receipt) => (
                     <div 
                       key={receipt.id} 
-                      className="border rounded-lg p-3 hover:border-gray-300 transition-all cursor-pointer bg-white"
-                      onClick={() => openReceiptModal(receipt, event.receipts)}
+                      className="relative group border rounded-lg p-3 hover:border-gray-300 transition-all bg-white"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0">
-                          {getFileIcon(receipt.mimeType)}
+                      <div 
+                        className="cursor-pointer"
+                        onClick={() => openReceiptModal(receipt, event.receipts)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            {getFileIcon(receipt.mimeType)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{receipt.fileName}</p>
+                            <p className="text-xs text-gray-500">
+                              {Math.round(receipt.fileSize / 1024)} KB
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {new Date(receipt.createdAt).toLocaleDateString('ru-RU')}
+                            </p>
+                          </div>
+                          {receipt.mimeType.startsWith('image/') && (
+                            <ZoomIn className="h-4 w-4 text-gray-400" />
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{receipt.fileName}</p>
-                          <p className="text-xs text-gray-500">
-                            {Math.round(receipt.fileSize / 1024)} KB
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {new Date(receipt.createdAt).toLocaleDateString('ru-RU')}
-                          </p>
-                        </div>
-                        {receipt.mimeType.startsWith('image/') && (
-                          <ZoomIn className="h-4 w-4 text-gray-400" />
-                        )}
                       </div>
+                      {canUpload && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startDeleteReceipt(receipt);
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          title="Удалить чек"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -452,6 +583,96 @@ export default function ReceiptEventManager({ clientId, canUpload = true }: Rece
             className="absolute inset-0 -z-10" 
             onClick={closeReceiptModal}
           />
+        </div>
+      )}
+
+      {/* Модальное окно редактирования блока */}
+      {editingEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="font-medium mb-4">Редактировать блок чеков</h3>
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Название блока"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Описание (необязательно)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                rows={3}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={saveEdit}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Сохранить
+                </button>
+                <button
+                  onClick={cancelEdit}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальные окна подтверждения удаления */}
+      {deletingEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="font-medium mb-4">Удалить блок чеков?</h3>
+            <p className="text-gray-600 mb-4">
+              Блок "{deletingEvent.title}" и все чеки в нем будут удалены безвозвратно.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={confirmDeleteEvent}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Удалить
+              </button>
+              <button
+                onClick={() => setDeletingEvent(null)}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deletingReceipt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="font-medium mb-4">Удалить чек?</h3>
+            <p className="text-gray-600 mb-4">
+              Чек "{deletingReceipt.fileName}" будет удален безвозвратно.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={confirmDeleteReceipt}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Удалить
+              </button>
+              <button
+                onClick={() => setDeletingReceipt(null)}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -43,6 +43,7 @@ model Client {
   clientUser       ClientUser?
   creator          User                  @relation(fields: [createdBy], references: [id])
   documents        Document[]
+  documentBlocks   DocumentBlock[]
   estimates        Estimate[]
   photoBlocks      PhotoBlock[]
   projectNews      ProjectNews[]
@@ -68,22 +69,24 @@ model ClientUser {
 }
 
 model Document {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
   fileName    String
   filePath    String
   fileSize    Int
   mimeType    String
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   clientId    String
-  isVisible   Boolean  @default(true)
-  sortOrder   Int      @default(0)
+  blockId     String?        // Связь с блоком (необязательная для обратной совместимости)
+  isVisible   Boolean        @default(true)
+  sortOrder   Int            @default(0)
   tags        String?
   uploadedBy  String?
-  category    String   @default("document")
-  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  category    String         @default("document")
+  client      Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  block       DocumentBlock? @relation(fields: [blockId], references: [id], onDelete: Cascade)
 
   @@map("documents")
 }
@@ -172,6 +175,24 @@ model ReceiptBlock {
   receipts    Receipt[]
 
   @@map("receipt_blocks")
+}
+
+model DocumentBlock {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  clientId    String
+  createdBy   String?
+  eventDate   DateTime?
+  isVisible   Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  tags        String[]   @default([])
+  client      Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  documents   Document[]
+
+  @@map("document_blocks")
 }
 
 model Receipt {

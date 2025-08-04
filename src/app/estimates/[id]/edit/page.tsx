@@ -328,6 +328,19 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     const summaryWorksBlocks: any[] = []
     const summaryMaterialsItems: any[] = []
     
+    // Функция для создания стабильного уникального ID блока
+    const createStableSummaryBlockId = (blockTitle: string) => {
+      const cleanTitle = blockTitle.replace(/[^a-zA-Zа-яА-Я0-9]/g, '_')
+      // Используем простой хеш от названия для стабильности
+      let hash = 0
+      for (let i = 0; i < blockTitle.length; i++) {
+        const char = blockTitle.charCodeAt(i)
+        hash = ((hash << 5) - hash) + char
+        hash = hash & hash // Convert to 32bit integer
+      }
+      return `summary_${cleanTitle}_${Math.abs(hash)}`
+    }
+    
     // Собираем все блоки работ из всех помещений
     rooms.forEach(room => {
       room.worksBlock.blocks.forEach(block => {
@@ -344,14 +357,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             } else {
               existingBlock.items.push({ 
                 ...item, 
-                unitPrice: Math.round(priceWithCoeff),
-                totalPrice: itemTotalPrice 
+                unitPrice: item.unitPrice,
+                totalPrice: item.totalPrice 
               })
             }
           })
         } else {
-          // Создаем новый блок с уникальным ID на основе названия
-          const summaryBlockId = `summary_${block.title.replace(/[^a-zA-Zа-яА-Я0-9]/g, '_')}_${Math.random().toString(36).substring(2, 15)}`
+          // Создаем новый блок с стабильным уникальным ID
+          const summaryBlockId = createStableSummaryBlockId(block.title)
           summaryWorksBlocks.push({
             ...block,
             id: summaryBlockId,
@@ -2489,9 +2502,17 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   </div>
                 )}
 
-                {getCurrentWorksBlock()?.blocks.map((block) => (
+                {getCurrentWorksBlock()?.blocks.map((block, blockIndex) => {
+                  // Создаем уникальный ключ для каждого контекста (помещение/сводная смета)
+                  const uniqueKey = isSummaryView 
+                    ? `summary_${block.id}_${blockIndex}` 
+                    : currentRoomId 
+                      ? `room_${currentRoomId}_${block.id}_${blockIndex}`
+                      : `apartment_${block.id}_${blockIndex}`
+                  
+                  return (
                   <div 
-                    key={block.id} 
+                    key={uniqueKey} 
                     className={`work-block mb-6 ${dragOverBlock === block.id ? 'drag-over' : ''} ${draggedBlock === block.id ? 'dragging' : ''}`}
                     draggable={!isSummaryView}
                     onDragStart={(e) => handleBlockDragStart(e, block.id)}
@@ -2664,7 +2685,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                       ) : !item.workId && !manualInputCompleted.has(item.id) ? (
                                         <div className="space-y-2">
                                           <select
-                                            value={item.workId}
+                                            value={item.workId || ''}
                                             onChange={(e) => {
                                               const selectedWork = availableWorks.find(w => w.id === e.target.value)
                                               if (selectedWork) {
@@ -2972,7 +2993,8 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                       </div>
                     )}
                   </div>
-                ))}
+                  )
+                })}
 
                 {(!getCurrentWorksBlock()?.blocks || getCurrentWorksBlock()?.blocks.length === 0) && (
                   <div className="text-center py-12 text-gray-500">
@@ -3359,8 +3381,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
                                       {!isGlobalCoefficient(coefficient.id) && (
                                         <div className="ml-6 space-y-2">
-                                          {getCurrentWorksBlock()?.blocks?.map(block => (
-                                            <label key={block.id} className="flex items-center p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                                          {getCurrentWorksBlock()?.blocks?.map((block, blockIndex) => {
+                                            const uniqueKey = isSummaryView 
+                                              ? `summary_coeff_${block.id}_${blockIndex}` 
+                                              : currentRoomId 
+                                                ? `room_coeff_${currentRoomId}_${block.id}_${blockIndex}`
+                                                : `apartment_coeff_${block.id}_${blockIndex}`
+                                            return (
+                                            <label key={uniqueKey} className="flex items-center p-2 rounded-lg hover:bg-gray-50 transition-colors">
                                               <input
                                                 type="checkbox"
                                                 checked={isBlockSelectedForCoefficient(coefficient.id, block.id)}
@@ -3369,7 +3397,8 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                               />
                                               <span className="text-sm">{block.title}</span>
                                             </label>
-                                          )) || []}
+                                            )
+                                          }) || []}
                                         </div>
                                       )}
                                     </div>
@@ -3443,12 +3472,18 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                       )}
 
                       {/* Коэффициенты по блокам */}
-                      {getCurrentWorksBlock()?.blocks?.map(block => {
+                      {getCurrentWorksBlock()?.blocks?.map((block, blockIndex) => {
                         const blockCoeffs = getCoefficientsForBlock(block.id)
                         if (blockCoeffs.length === 0) return null
                         
+                        const uniqueKey = isSummaryView 
+                          ? `summary_block_coeff_${block.id}_${blockIndex}` 
+                          : currentRoomId 
+                            ? `room_block_coeff_${currentRoomId}_${block.id}_${blockIndex}`
+                            : `apartment_block_coeff_${block.id}_${blockIndex}`
+                        
                         return (
-                          <div key={block.id} className="p-4 bg-gradient-to-r from-teal-50 to-teal-100 rounded-xl border border-teal-200">
+                          <div key={uniqueKey} className="p-4 bg-gradient-to-r from-teal-50 to-teal-100 rounded-xl border border-teal-200">
                             <div className="flex items-center mb-3">
                                                               <CheckCircle className="h-4 w-4 text-teal-600 mr-2" />
                                                               <span className="text-sm font-semibold text-teal-900">

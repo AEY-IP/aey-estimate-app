@@ -31,6 +31,15 @@ export default function ClientNewsPage() {
     comment: '',
     type: 'other'
   })
+  
+  // Состояния для редактирования
+  const [editingNews, setEditingNews] = useState<NewsItem | null>(null)
+  const [editNewsItem, setEditNewsItem] = useState({
+    title: '',
+    content: '',
+    comment: '',
+    type: 'other'
+  })
 
   const clientId = params.id as string
 
@@ -81,6 +90,50 @@ export default function ClientNewsPage() {
     } catch (error) {
       showToast('error', 'Ошибка сети')
     }
+  }
+
+  const handleEditNews = (newsItem: NewsItem) => {
+    setEditingNews(newsItem)
+    setEditNewsItem({
+      title: newsItem.title,
+      content: newsItem.content,
+      comment: newsItem.comment || '',
+      type: newsItem.type || 'other'
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingNews || !editNewsItem.title.trim() || !editNewsItem.content.trim()) {
+      showToast('error', 'Заполните заголовок и содержание')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/clients/${clientId}/news/${editingNews.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editNewsItem),
+      })
+
+      if (response.ok) {
+        showToast('success', 'Новость обновлена')
+        setEditingNews(null)
+        setEditNewsItem({ title: '', content: '', comment: '', type: 'other' })
+        loadNews()
+      } else {
+        const error = await response.json()
+        showToast('error', error.error || 'Ошибка обновления новости')
+      }
+    } catch (error) {
+      showToast('error', 'Ошибка сети')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingNews(null)
+    setEditNewsItem({ title: '', content: '', comment: '', type: 'other' })
   }
 
   const handleDeleteNews = async (newsId: string, title: string) => {
@@ -241,6 +294,87 @@ export default function ClientNewsPage() {
           </div>
         )}
 
+        {/* Форма редактирования новости */}
+        {editingNews && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Редактировать новость</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Заголовок *
+                </label>
+                <input
+                  type="text"
+                  value={editNewsItem.title}
+                  onChange={(e) => setEditNewsItem({ ...editNewsItem, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  placeholder="Введите заголовок новости"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Тип новости
+                </label>
+                <select
+                  value={editNewsItem.type}
+                  onChange={(e) => setEditNewsItem({ ...editNewsItem, type: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                >
+                  <option value="work">🔨 Работы</option>
+                  <option value="materials">📦 Материалы</option>
+                  <option value="admin">📋 Административный процесс</option>
+                  <option value="other">📝 Прочее</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Содержание *
+                </label>
+                <textarea
+                  value={editNewsItem.content}
+                  onChange={(e) => setEditNewsItem({ ...editNewsItem, content: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  rows={4}
+                  placeholder="Опишите что происходит на объекте"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Комментарий (необязательно)
+                </label>
+                <input
+                  type="text"
+                  value={editNewsItem.comment}
+                  onChange={(e) => setEditNewsItem({ ...editNewsItem, comment: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  placeholder="Дополнительный комментарий"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3 mt-6">
+              <button
+                onClick={handleSaveEdit}
+                className="flex items-center space-x-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
+              >
+                <Save className="h-4 w-4" />
+                <span>Сохранить изменения</span>
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                className="flex items-center space-x-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <X className="h-4 w-4" />
+                <span>Отмена</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Список новостей */}
         {news.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
@@ -293,7 +427,11 @@ export default function ClientNewsPage() {
                     </div>
                     
                     <div className="flex items-center space-x-2 ml-4">
-                      <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => handleEditNews(item)}
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Редактировать новость"
+                      >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button

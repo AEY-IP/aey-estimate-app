@@ -121,7 +121,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
 }
 
-// DELETE /api/estimates/[id]/rooms?roomId=xxx - удалить помещение
+// DELETE /api/estimates/[id]/rooms - удалить помещение
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     // Проверяем авторизацию
@@ -133,8 +133,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
 
-    const url = new URL(request.url)
-    const roomId = url.searchParams.get('roomId')
+    const { roomId } = await request.json()
     
     if (!roomId) {
       return NextResponse.json(
@@ -190,7 +189,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   }
 }
 
-// PUT /api/estimates/[id]/rooms?roomId=xxx - переименовать помещение
+// PUT /api/estimates/[id]/rooms - переименовать помещение
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     // Проверяем авторизацию
@@ -202,9 +201,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    const url = new URL(request.url)
-    const roomId = url.searchParams.get('roomId')
-    const { name } = await request.json()
+    const { roomId, name } = await request.json()
     
     if (!roomId) {
       return NextResponse.json(

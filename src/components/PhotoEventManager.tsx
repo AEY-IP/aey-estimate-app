@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, ZoomIn, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ZoomIn, Download, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react';
 
 interface Photo {
   id: string;
@@ -40,6 +40,15 @@ export default function PhotoEventManager({ clientId, canUpload = true }: PhotoE
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
+  
+  // Состояния для редактирования блока
+  const [editingEvent, setEditingEvent] = useState<PhotoEvent | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  
+  // Состояния для удаления
+  const [deletingEvent, setDeletingEvent] = useState<PhotoEvent | null>(null);
+  const [deletingPhoto, setDeletingPhoto] = useState<Photo | null>(null);
 
   // Загрузка событий
   const loadEvents = async () => {
@@ -243,6 +252,96 @@ export default function PhotoEventManager({ clientId, canUpload = true }: PhotoE
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [selectedPhoto, currentPhotoIndex, allPhotos]);
 
+  // Редактирование блока
+  const startEdit = (event: PhotoEvent) => {
+    setEditingEvent(event);
+    setEditTitle(event.title);
+    setEditDescription(event.description || '');
+  };
+
+  const saveEdit = async () => {
+    if (!editingEvent || !editTitle.trim()) {
+      alert('Название блока обязательно');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/photo-events/${editingEvent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          description: editDescription.trim() || null
+        }),
+      });
+
+      if (response.ok) {
+        setEditingEvent(null);
+        await loadEvents();
+      } else {
+        alert(`Ошибка обновления блока: ${response.statusText}`);
+      }
+    } catch (error) {
+      alert('Ошибка сети при обновлении блока');
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingEvent(null);
+    setEditTitle('');
+    setEditDescription('');
+  };
+
+  // Удаление блока
+  const startDeleteEvent = (event: PhotoEvent) => {
+    setDeletingEvent(event);
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!deletingEvent) return;
+
+    try {
+      const response = await fetch(`/api/photo-events/${deletingEvent.id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setDeletingEvent(null);
+        await loadEvents();
+      } else {
+        alert(`Ошибка удаления блока: ${response.statusText}`);
+      }
+    } catch (error) {
+      alert('Ошибка сети при удалении блока');
+    }
+  };
+
+  // Удаление отдельного фото
+  const startDeletePhoto = (photo: Photo) => {
+    setDeletingPhoto(photo);
+  };
+
+  const confirmDeletePhoto = async () => {
+    if (!deletingPhoto) return;
+
+    try {
+      const response = await fetch(`/api/photos/${deletingPhoto.id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setDeletingPhoto(null);
+        await loadEvents();
+      } else {
+        alert(`Ошибка удаления фото: ${response.statusText}`);
+      }
+    } catch (error) {
+      alert('Ошибка сети при удалении фото');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -343,13 +442,29 @@ export default function PhotoEventManager({ clientId, canUpload = true }: PhotoE
                 </div>
                 
                 {canUpload && (
-                  <button
-                    onClick={() => handleFileSelect(event.id)}
-                    disabled={uploading}
-                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
-                  >
-                    Добавить фото
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleFileSelect(event.id)}
+                      disabled={uploading}
+                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
+                    >
+                      Добавить фото
+                    </button>
+                    <button
+                      onClick={() => startEdit(event)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Редактировать блок"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => startDeleteEvent(event)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Удалить блок"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -359,17 +474,33 @@ export default function PhotoEventManager({ clientId, canUpload = true }: PhotoE
                   {event.photos.map((photo) => (
                     <div 
                       key={photo.id} 
-                      className="relative group cursor-pointer"
-                      onClick={() => openPhotoModal(photo, event.photos)}
+                      className="relative group"
                     >
-                      <img
-                        src={photo.filePath}
-                        alt={photo.fileName}
-                        className="w-full h-24 object-cover rounded-lg border transition-transform group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
-                        <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6" />
+                      <div 
+                        className="cursor-pointer"
+                        onClick={() => openPhotoModal(photo, event.photos)}
+                      >
+                        <img
+                          src={photo.filePath}
+                          alt={photo.fileName}
+                          className="w-full h-24 object-cover rounded-lg border transition-transform group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                          <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6" />
+                        </div>
                       </div>
+                      {canUpload && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startDeletePhoto(photo);
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          title="Удалить фото"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -469,6 +600,96 @@ export default function PhotoEventManager({ clientId, canUpload = true }: PhotoE
             className="absolute inset-0 -z-10" 
             onClick={closePhotoModal}
           />
+        </div>
+      )}
+
+      {/* Модальное окно редактирования блока */}
+      {editingEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="font-medium mb-4">Редактировать блок фотографий</h3>
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Название блока"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Описание (необязательно)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                rows={3}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={saveEdit}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Сохранить
+                </button>
+                <button
+                  onClick={cancelEdit}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальные окна подтверждения удаления */}
+      {deletingEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="font-medium mb-4">Удалить блок фотографий?</h3>
+            <p className="text-gray-600 mb-4">
+              Блок "{deletingEvent.title}" и все фотографии в нем будут удалены безвозвратно.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={confirmDeleteEvent}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Удалить
+              </button>
+              <button
+                onClick={() => setDeletingEvent(null)}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deletingPhoto && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="font-medium mb-4">Удалить фотографию?</h3>
+            <p className="text-gray-600 mb-4">
+              Фотография "{deletingPhoto.fileName}" будет удалена безвозвратно.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={confirmDeletePhoto}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Удалить
+              </button>
+              <button
+                onClick={() => setDeletingPhoto(null)}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

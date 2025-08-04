@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const clientId = formData.get('clientId') as string;
+    const blockId = formData.get('blockId') as string; // ID блока документов (необязательный)
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const category = formData.get('category') as string || 'document'; // По умолчанию "document"
@@ -104,6 +105,11 @@ export async function POST(request: NextRequest) {
       description: description || '',
       category: category
     };
+
+    // Добавляем blockId если указан (для блочной системы)
+    if (blockId) {
+      documentData.blockId = blockId;
+    }
 
     const document = await prisma.document.create({
       data: documentData

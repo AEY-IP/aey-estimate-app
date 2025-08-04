@@ -684,7 +684,16 @@ export async function PUT(
           roomParameterValues: room.roomParameterValues?.map((rpv: any) => ({
             ...rpv,
             parameter: rpv.parameter
-          })) || []
+          })) || [],
+          roomParameters: {
+            id: `room_params_${room.id}`,
+            title: `Параметры помещения - ${room.name}`,
+            parameters: room.roomParameterValues?.map((rpv: any) => ({
+              parameterId: rpv.parameterId,
+              value: rpv.value,
+              parameter: rpv.parameter
+            })) || []
+          }
         }
       })
     } else if (finalEstimate?.rooms) {
@@ -710,7 +719,17 @@ export async function PUT(
       // @ts-ignore
       summaryWorksBlock: finalEstimate?.summaryWorksBlock ? JSON.parse(finalEstimate.summaryWorksBlock) : null,
       // @ts-ignore
-      summaryMaterialsBlock: finalEstimate?.summaryMaterialsBlock ? JSON.parse(finalEstimate.summaryMaterialsBlock) : null
+      summaryMaterialsBlock: finalEstimate?.summaryMaterialsBlock ? JSON.parse(finalEstimate.summaryMaterialsBlock) : null,
+      // Добавляем глобальные параметры помещений (для сводной сметы)
+      roomParameters: (finalEstimate?.roomParameterValues && finalEstimate.roomParameterValues.filter((rpv: any) => rpv.roomId === null).length > 0) ? {
+        id: `room_params_summary_${finalEstimate.id}`,
+        title: 'Параметры сводной сметы',
+        parameters: finalEstimate.roomParameterValues.filter((rpv: any) => rpv.roomId === null).map((rpv: any) => ({
+          parameterId: rpv.parameterId,
+          value: rpv.value,
+          parameter: rpv.parameter
+        }))
+      } : null
     }
     
     // Для смет типа "rooms" добавляем сводные блоки если их нет
