@@ -57,6 +57,11 @@ export async function GET(
             id: true,
             username: true
           }
+        },
+        roomParameterValues: {
+          include: {
+            parameter: true
+          }
         }
       }
     })
@@ -74,7 +79,12 @@ export async function GET(
                 workItem: true
               }
             },
-            materials: true
+            materials: true,
+            roomParameterValues: {
+              include: {
+                parameter: true
+              }
+            }
           },
           orderBy: {
             sortOrder: 'asc'
@@ -142,6 +152,19 @@ export async function GET(
                 description: material.description
               })),
               totalPrice: room.totalMaterialsPrice
+            },
+            roomParameterValues: room.roomParameterValues?.map((rpv: any) => ({
+              ...rpv,
+              parameter: rpv.parameter
+            })) || [],
+            roomParameters: {
+              id: `room_params_${room.id}`,
+              title: `Параметры помещения - ${room.name}`,
+              parameters: room.roomParameterValues?.map((rpv: any) => ({
+                parameterId: rpv.parameterId,
+                value: rpv.value,
+                parameter: rpv.parameter
+              })) || []
             }
       }
     })
@@ -195,7 +218,17 @@ export async function GET(
       worksBlock: estimate?.worksBlock ? JSON.parse(estimate.worksBlock) : null,
       materialsBlock: estimate?.materialsBlock ? JSON.parse(estimate.materialsBlock) : null,
       summaryWorksBlock: estimate?.summaryWorksBlock ? JSON.parse(estimate.summaryWorksBlock) : null,
-      summaryMaterialsBlock: estimate?.summaryMaterialsBlock ? JSON.parse(estimate.summaryMaterialsBlock) : null
+      summaryMaterialsBlock: estimate?.summaryMaterialsBlock ? JSON.parse(estimate.summaryMaterialsBlock) : null,
+      // Добавляем глобальные параметры помещений (для сводной сметы)
+      roomParameters: (estimate?.roomParameterValues && estimate.roomParameterValues.filter((rpv: any) => rpv.roomId === null).length > 0) ? {
+        id: `room_params_summary_${estimate.id}`,
+        title: 'Параметры сводной сметы',
+        parameters: estimate.roomParameterValues.filter((rpv: any) => rpv.roomId === null).map((rpv: any) => ({
+          parameterId: rpv.parameterId,
+          value: rpv.value,
+          parameter: rpv.parameter
+        }))
+      } : null
     }
 
     // Для смет типа "apartment" добавляем базовые блоки если их нет

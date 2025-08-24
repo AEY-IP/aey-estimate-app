@@ -382,10 +382,12 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.4;
-  max-height: 2.8em; /* 2 строки * 1.4 line-height */
+  line-height: var(--estimate-line-height, 1.4);
+  font-size: var(--estimate-text-base, 1rem);
+  max-height: calc(2 * var(--estimate-line-height, 1.4) * 1em);
   word-wrap: break-word;
   hyphens: auto;
+  font-weight: 500;
 }
 
 /* Стили для модальных окон */
@@ -430,12 +432,7 @@
   }
 }
 
-/* Улучшенное отображение названий работ в компактном режиме */
-.estimate-edit-container .work-name-display {
-  line-height: 1.3;
-  max-height: 2.6em; /* 2 строки * 1.3 line-height */
-  font-size: var(--text-sm-compact);
-}
+/* Адаптация работает через CSS переменные выше */
 
 /* Input поле для названий работ */
 .work-name-input {
@@ -765,4 +762,157 @@ tr.drop-success {
     line-height: 1.4;
     max-width: 260px;
   }
+}
+
+/* Размеры шрифтов для режима редактирования сметы */
+.estimate-font-small {
+  --estimate-text-xs: 0.6rem;      /* 9.6px */
+  --estimate-text-sm: 0.65rem;     /* 10.4px */
+  --estimate-text-base: 0.7rem;    /* 11.2px */
+  --estimate-text-lg: 0.75rem;     /* 12px */
+  --estimate-header: 0.8rem;       /* 12.8px */
+  --estimate-number: 0.65rem;      /* 10.4px */
+  --estimate-subtotal: 0.875rem;   /* 14px */
+  --estimate-line-height: 1.25;
+}
+
+.estimate-font-normal {
+  --estimate-text-xs: 0.75rem;     /* 12px */
+  --estimate-text-sm: 0.875rem;    /* 14px */
+  --estimate-text-base: 1rem;      /* 16px */
+  --estimate-text-lg: 1.125rem;    /* 18px */
+  --estimate-header: 1.25rem;      /* 20px */
+  --estimate-number: 0.875rem;     /* 14px */
+  --estimate-subtotal: 1.125rem;   /* 18px */
+  --estimate-line-height: 1.4;
+}
+
+/* Применение переменных к элементам таблицы */
+.estimate-table {
+  line-height: var(--estimate-line-height);
+}
+
+.estimate-table th {
+  font-size: var(--estimate-text-xs) !important;
+  line-height: var(--estimate-line-height) !important;
+  padding: 0.5rem !important;
+  font-weight: 600 !important;
+}
+
+.estimate-table td {
+  font-size: var(--estimate-text-sm) !important;
+  line-height: var(--estimate-line-height) !important;
+  padding: 0.5rem !important;
+  vertical-align: middle !important;
+}
+
+.estimate-table .work-name {
+  font-size: var(--estimate-text-base) !important;
+  font-weight: 500 !important;
+}
+
+.estimate-table .price-cell {
+  font-size: var(--estimate-text-sm) !important;
+  font-weight: 600 !important;
+  text-align: right !important;
+}
+
+.estimate-table .number-input {
+  font-size: var(--estimate-number) !important;
+  line-height: var(--estimate-line-height) !important;
+  padding: 0.25rem 0.5rem !important;
+  height: auto !important;
+  min-height: 2rem !important;
+}
+
+.estimate-table .select-input {
+  font-size: var(--estimate-number) !important;
+  line-height: var(--estimate-line-height) !important;
+  padding: 0.25rem 0.5rem !important;
+  height: auto !important;
+  min-height: 2rem !important;
+}
+
+.estimate-block-header {
+  font-size: var(--estimate-header) !important;
+  line-height: var(--estimate-line-height) !important;
+  font-weight: 700 !important;
+}
+
+.estimate-subtotal {
+  font-size: var(--estimate-subtotal) !important;
+  line-height: var(--estimate-line-height) !important;
+  font-weight: 700 !important;
+  color: #374151 !important; /* Темно-серый для лучшей читаемости */
+}
+
+/* Специальные правила для сводной сметы */
+.estimate-font-small .estimate-subtotal,
+.estimate-font-normal .estimate-subtotal {
+  font-size: var(--estimate-subtotal) !important;
+}
+
+/* Убираем конфликтующие размеры текста в сводной смете */
+.estimate-font-small span:not(.estimate-subtotal):not(.estimate-block-header),
+.estimate-font-normal span:not(.estimate-subtotal):not(.estimate-block-header) {
+  font-size: inherit !important;
+}
+
+/* Текст в ячейках таблицы должен наследовать размер */
+.estimate-table span {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+/* Фиксируем размер для полей ввода в таблице */
+.estimate-table input, 
+.estimate-table select {
+  font-size: var(--estimate-number) !important;
+  line-height: var(--estimate-line-height) !important;
+}
+
+/* Исправляем шрифты для кнопок действий в таблицах */
+.estimate-table button {
+  font-size: var(--estimate-text-xs) !important;
+}
+
+/* Единый стиль для всех кнопок в режиме редактирования сметы */
+.estimate-action-btn {
+  @apply inline-flex items-center px-4 py-2.5 text-sm font-medium rounded-xl border transition-all duration-200 ease-in-out;
+  min-height: 40px;
+  gap: 0.5rem;
+}
+
+.estimate-action-btn:hover {
+  @apply transform -translate-y-0.5 shadow-sm;
+}
+
+.estimate-action-btn:active {
+  @apply transform translate-y-0;
+}
+
+.estimate-action-btn-primary {
+  @apply estimate-action-btn bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700;
+  box-shadow: 0 1px 3px 0 rgba(59, 130, 246, 0.3);
+}
+
+.estimate-action-btn-primary:hover {
+  box-shadow: 0 4px 12px 0 rgba(59, 130, 246, 0.4);
+}
+
+.estimate-action-btn-secondary {
+  @apply estimate-action-btn bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300;
+}
+
+.estimate-action-btn-success {
+  @apply estimate-action-btn bg-green-600 text-white border-green-600 hover:bg-green-700 hover:border-green-700;
+  box-shadow: 0 1px 3px 0 rgba(34, 197, 94, 0.3);
+}
+
+.estimate-action-btn-success:hover {
+  box-shadow: 0 4px 12px 0 rgba(34, 197, 94, 0.4);
+}
+
+.estimate-action-btn-icon {
+  @apply w-4 h-4 flex-shrink-0;
 } 

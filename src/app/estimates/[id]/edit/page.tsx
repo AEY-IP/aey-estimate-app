@@ -52,8 +52,10 @@ const WorkNameDisplay = ({ name, className = '' }: { name: string, className?: s
       </div>
       {isOverflowing && showTooltip && (
         <div 
-          className="fixed z-[9999] px-3 py-2 bg-gray-800 text-white text-sm rounded-lg shadow-lg max-w-sm whitespace-normal break-words pointer-events-none"
+          className="fixed z-[9999] px-3 py-2 bg-gray-800 text-white rounded-lg shadow-lg max-w-sm whitespace-normal break-words pointer-events-none"
           style={{
+            fontSize: 'var(--estimate-text-sm, 0.875rem)',
+            lineHeight: 'var(--estimate-line-height, 1.4)',
             top: `${tooltipPos.top}px`,
             left: `${tooltipPos.left}px`
           }}
@@ -125,8 +127,10 @@ const PriceWithTooltip = ({
       </span>
       {showTooltip && (
         <div 
-          className="fixed z-[9999] px-3 py-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg max-w-xs whitespace-normal break-words pointer-events-none"
+          className="fixed z-[9999] px-3 py-2 bg-gray-800 text-white rounded-lg shadow-lg max-w-xs whitespace-normal break-words pointer-events-none"
           style={{
+            fontSize: 'var(--estimate-text-xs, 0.75rem)',
+            lineHeight: 'var(--estimate-line-height, 1.4)',
             top: `${tooltipPos.top}px`,
             left: `${tooltipPos.left}px`
           }}
@@ -206,6 +210,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   const [draggedItem, setDraggedItem] = useState<{ blockId: string, itemId: string } | null>(null)
   const [dragOverBlock, setDragOverBlock] = useState<string | null>(null)
   const [dragOverItem, setDragOverItem] = useState<{ blockId: string, itemId: string } | null>(null)
+
+  // Состояние для размера шрифта
+  const [fontSize, setFontSize] = useState<'small' | 'normal'>('small')
 
   // Вспомогательные функции для определения текущего режима
   const isRoomsEstimate = estimate?.type === 'rooms'
@@ -1239,7 +1246,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
               const worksData = summaryWorksBlocks.map(block => ({
                 id: block.id,
                 title: block.title,
-                items: block.items.map(item => ({
+                items: block.items.map((item: any) => ({
                   id: item.id,
                   name: item.name,
                   unit: item.unit,
@@ -2226,16 +2233,16 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 <p className="text-gray-600 mt-1">Редактирование сметы</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <button 
                 onClick={() => {
                   const allCollapsed = isCoefficientsCollapsed && isWorksCollapsed && isMaterialsCollapsed && isRoomParametersCollapsed
                   setIsCoefficientsCollapsed(!allCollapsed)
                   setIsWorksCollapsed(!allCollapsed)
                 }}
-                className="btn-secondary flex items-center text-sm"
+                className="estimate-action-btn-secondary"
               >
-                <ChevronDown className="h-4 w-4 mr-2" />
+                <ChevronDown className="estimate-action-btn-icon" />
                 {(isCoefficientsCollapsed && isWorksCollapsed && isMaterialsCollapsed && isRoomParametersCollapsed) ? 'Развернуть все' : 'Свернуть все'}
               </button>
               
@@ -2243,34 +2250,46 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
               {!estimate?.isAct && (
                 <button 
                   onClick={handleEstimateTypeChangeClick}
-                  className={`flex items-center px-4 py-2 rounded-xl font-medium transition-colors border ${
+                  className={`estimate-action-btn ${
                     estimate?.category === 'main' 
                       ? 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100' 
                       : 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100'
                   }`}
                   title="Изменить тип сметы"
                 >
-                  <Settings className="h-4 w-4 mr-2" />
+                  <Settings className="estimate-action-btn-icon" />
                   {estimate?.category === 'main' ? 'Основная' : 'Дополнительная'}
                 </button>
               )}
               
+              {/* Переключатель размера шрифта */}
               <button 
-                onClick={handleExportPDF}
-                className="btn-secondary flex items-center"
+                onClick={() => setFontSize(fontSize === 'small' ? 'normal' : 'small')}
+                className={`estimate-action-btn ${
+                  fontSize === 'small' 
+                    ? 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100' 
+                    : 'bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100'
+                }`}
+                title="Переключить размер шрифта"
               >
-                <Download className="h-5 w-5 mr-2" />
-                Экспорт PDF
+                <span className="text-xs font-bold">Aa</span>
+                {fontSize === 'small' ? 'Мелкий' : 'Обычный'}
               </button>
               
-
+              <button 
+                onClick={handleExportPDF}
+                className="estimate-action-btn-secondary"
+              >
+                <Download className="estimate-action-btn-icon" />
+                Экспорт PDF
+              </button>
               
               <button 
                 onClick={saveEstimate}
                 disabled={saving}
-                className="btn-primary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="estimate-action-btn-success disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
               >
-                <Save className="h-5 w-5 mr-2" />
+                <Save className="estimate-action-btn-icon" />
                 {saving ? 'Сохранение...' : 'Сохранить'}
               </button>
             </div>
@@ -2290,7 +2309,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         />
       )}
 
-      <div className="container mx-auto px-6 py-8">
+      <div className={`container mx-auto px-6 py-8 estimate-font-${fontSize}`}>
         <div className={`grid gap-8 ${
           (estimate?.type === 'rooms' && isSummaryView) 
             ? 'lg:grid-cols-3' 
@@ -2479,11 +2498,11 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                     )}
                   </div>
                   {!isSummaryView && (
-                    <button 
+                                        <button
                       onClick={() => setShowAddBlockModal(true)}
-                      className="btn-primary flex items-center text-sm add-btn"
+                      className="estimate-action-btn-primary add-btn"
                     >
-                      <FolderPlus className="h-4 w-4 mr-2" />
+                      <FolderPlus className="estimate-action-btn-icon" />
                       Добавить блок работ
                     </button>
                   )}
@@ -2534,7 +2553,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                         <div className="flex-1">
                           {isSummaryView ? (
                             <div>
-                              <h3 className="font-semibold text-gray-900 text-lg block-title">{block.title}</h3>
+                              <h3 className="estimate-block-header font-semibold text-gray-900 block-title">{block.title}</h3>
                               {block.description && (
                                 <p className="text-sm text-gray-600 mt-1">{block.description}</p>
                               )}
@@ -2635,7 +2654,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                     {!block.isCollapsed && (
                       <div className="p-6">
                         {block.items.length > 0 ? (
-                          <div className="table-apple">
+                          <div className={`table-apple estimate-table estimate-font-${fontSize}`}>
                             <table className="w-full">
                               <thead>
                                 <tr>
@@ -2679,9 +2698,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                     onDrop={(e) => handleItemDrop(e, block.id, item.id)}
                                     onDragEnd={handleDragEnd}
                                   >
-                                    <td>
+                                    <td className="work-name">
                                       {isSummaryView ? (
-                                        <WorkNameDisplay name={item.name} className="text-sm text-gray-900" />
+                                        <WorkNameDisplay name={item.name} className="work-name" />
                                       ) : !item.workId && !manualInputCompleted.has(item.id) ? (
                                         <div className="space-y-2">
                                           <select
@@ -2713,7 +2732,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                 }
                                               }
                                             }}
-                                            className="input-field text-sm"
+                                            className="input-field select-input"
                                           >
                                             <option value="">Выберите работу</option>
                                             {availableWorks
@@ -2753,7 +2772,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                 }
                                               }
                                             }}
-                                            className="input-field text-sm work-name-input"
+                                            className="input-field number-input work-name-input"
                                             placeholder="Или введите название вручную"
                                           />
                                         </div>
@@ -2764,7 +2783,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                               type="text"
                                               value={item.name}
                                               onChange={(e) => updateWorkInBlock(block.id, item.id, 'name', e.target.value)}
-                                              className="input-field text-sm w-full work-name-input"
+                                              className="input-field number-input w-full work-name-input"
                                               placeholder="Название работы"
                                             />
                                           </div>
@@ -2795,7 +2814,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                           type="text"
                                           value={item.unit}
                                           onChange={(e) => updateWorkInBlock(block.id, item.id, 'unit', e.target.value)}
-                                          className="input-field w-16 text-sm"
+                                          className="input-field number-input w-16"
                                           placeholder="м²"
                                         />
                                       )}
@@ -2829,7 +2848,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                 }
                                               }
                                             }}
-                                            className={`input-field w-16 no-number-arrows ${
+                                            className={`input-field number-input w-16 no-number-arrows ${
                                               item.workId && (() => {
                                                 const workInCatalog = availableWorks.find(w => w.id === item.workId)
                                                 const isManuallyEdited = manuallyEditedQuantities.has(item.id)
@@ -2908,7 +2927,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                 setManuallyEditedPrices(prev => new Set([...Array.from(prev), item.id]))
                                               }
                                             }}
-                                            className={`input-field w-24 no-number-arrows ${
+                                            className={`input-field number-input w-24 no-number-arrows ${
                                               manuallyEditedPrices.has(item.id) ? 'bg-pink-50 border-pink-300' : ''
                                             }`}
                                             min="0"
@@ -2946,7 +2965,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                         </div>
                                       )}
                                     </td>
-                                    <td>
+                                    <td className="price-cell">
                                       <PriceWithTooltip 
                                         price={adjustedUnitPrice}
                                         item={item}
@@ -2955,7 +2974,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                         isManualPrice={manuallyEditedPrices.has(item.id)}
                                       />
                                     </td>
-                                    <td>
+                                    <td className="price-cell">
                                       <span className="font-semibold text-gray-900">
                                         {Math.round(adjustedTotalPrice).toLocaleString('ru-RU')}
                                       </span>
@@ -2990,6 +3009,36 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                             )}
                           </div>
                         )}
+                        
+                        {/* Сабтотал блока работ */}
+                        {block.items.length > 0 && (
+                          <div className="mt-4 p-3 bg-gray-50 rounded-lg border-t">
+                            <div className="text-right">
+                              <span className="estimate-subtotal font-semibold text-gray-800">
+                                Итого по блоку: {(() => {
+                                  const normalCoeff = calculateNormalCoefficients(block.id)
+                                  const finalCoeff = calculateFinalCoefficients(block.id)
+                                  
+                                  const blockTotal = block.items.reduce((sum, item) => {
+                                    let adjustedTotalPrice: number
+                                    
+                                    if (manuallyEditedPrices.has(item.id)) {
+                                      // Для ручных цен применяем только конечные коэффициенты
+                                      adjustedTotalPrice = item.unitPrice * finalCoeff * item.quantity
+                                    } else {
+                                      // Для автоматических цен применяем сначала обычные, потом конечные
+                                      adjustedTotalPrice = item.unitPrice * normalCoeff * finalCoeff * item.quantity
+                                    }
+                                    
+                                    return sum + adjustedTotalPrice
+                                  }, 0)
+                                  
+                                  return Math.round(blockTotal).toLocaleString('ru-RU')
+                                })()} ₽
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -3013,7 +3062,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
                 <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                   <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900 total-text">
+                    <span className="estimate-subtotal font-bold text-gray-900 total-text">
                       Итого по работам: {totalWorksPrice.toLocaleString('ru-RU')} ₽
                     </span>
                   </div>
@@ -3073,7 +3122,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   </div>
                 )}
 
-                <div className="table-apple">
+                <div className={`table-apple estimate-table estimate-font-${fontSize}`}>
                   <table className="w-full">
                     <thead>
                       <tr>
@@ -3089,15 +3138,15 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                     <tbody>
                       {getCurrentMaterialsBlock()?.items?.map((item) => (
                         <tr key={item.id}>
-                          <td>
+                          <td className="work-name">
                             {isSummaryView ? (
-                              <WorkNameDisplay name={item.name} className="text-sm text-gray-900" />
+                              <WorkNameDisplay name={item.name} className="work-name" />
                             ) : (
                               <input
                                 type="text"
                                 value={item.name}
                                 onChange={(e) => updateMaterialItem(item.id, 'name', e.target.value)}
-                                className="input-field work-name-input"
+                                className="input-field number-input work-name-input"
                                 placeholder="Название материала"
                               />
                             )}
@@ -3110,7 +3159,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                 type="text"
                                 value={item.unit}
                                 onChange={(e) => updateMaterialItem(item.id, 'unit', e.target.value)}
-                                className="input-field w-16"
+                                className="input-field number-input w-16"
                                 placeholder="шт"
                               />
                             )}
@@ -3123,7 +3172,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                 type="number"
                                 value={item.quantity}
                                 onChange={(e) => updateMaterialItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                                className="input-field w-16 no-number-arrows"
+                                className="input-field number-input w-16 no-number-arrows"
                                 min="0"
                                 step="1"
                               />
@@ -3137,13 +3186,13 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                 type="number"
                                 value={item.unitPrice}
                                 onChange={(e) => updateMaterialItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                                className="input-field w-24 no-number-arrows"
+                                className="input-field number-input w-24 no-number-arrows"
                                 min="0"
                                 step="1"
                               />
                             )}
                           </td>
-                          <td>
+                          <td className="price-cell">
                             {(() => {
                               const globalCoeff = calculateGlobalCoefficient()
                               return (
@@ -3157,7 +3206,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                               )
                             })()}
                           </td>
-                          <td>
+                          <td className="price-cell">
                             <span className="font-semibold text-gray-900">
                               {(() => {
                                 // Для материалов пока применяем глобальный коэффициент
@@ -3200,7 +3249,7 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
 
                 <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                   <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900">
+                    <span className="estimate-subtotal font-bold text-gray-900">
                       Итого по материалам: {totalMaterialsPrice.toLocaleString('ru-RU')} ₽
                     </span>
                   </div>
