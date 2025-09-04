@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings, Info, Edit } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings, Info, Edit, FileSpreadsheet } from 'lucide-react'
 import Link from 'next/link'
 import { generateEstimatePDFWithCache, generateEstimatePDF, generateActPDF, generateActWithSettings } from '@/lib/pdf-export'
 import { Estimate, Coefficient, WorkBlock, WorkItem, RoomParameter, RoomParameterValue, Room } from '@/types/estimate'
@@ -150,6 +150,8 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   const [coefficients, setCoefficients] = useState<Coefficient[]>([])
   const [availableWorks, setAvailableWorks] = useState<WorkItem[]>([])
   const [showAddBlockModal, setShowAddBlockModal] = useState(false)
+  const [showCustomBlockModal, setShowCustomBlockModal] = useState(false)
+  const [customBlockName, setCustomBlockName] = useState('')
   const [workCategories, setWorkCategories] = useState<string[]>([])
   const [manualInputCompleted, setManualInputCompleted] = useState<Set<string>>(new Set())
 
@@ -161,6 +163,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   const [isRoomParametersCollapsed, setIsRoomParametersCollapsed] = useState(false)
   const [roomParameters, setRoomParameters] = useState<RoomParameter[]>([])
   const [roomParameterValues, setRoomParameterValues] = useState<RoomParameterValue[]>([])
+
+  const { showToast } = useToast()
+  const { session } = useAuth()
   const [loadingParameters, setLoadingParameters] = useState(false)
   const [manuallyEditedQuantities, setManuallyEditedQuantities] = useState<Set<string>>(new Set())
   const [manuallyEditedPrices, setManuallyEditedPrices] = useState<Set<string>>(new Set())
@@ -1331,21 +1336,21 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     )
   }
 
-  const addWorkBlock = (categoryName: string) => {
+  const addWorkBlock = (categoryName: string, isCustom = false) => {
     const currentWorksBlock = getCurrentWorksBlock()
     if (!currentWorksBlock) return
     
-    // Проверяем, что блок с такой категорией еще не добавлен
+    // Проверяем, что блок с таким названием еще не добавлен
     const existingBlock = currentWorksBlock.blocks.find(block => block.title === categoryName)
     if (existingBlock) {
-      alert('Блок с такой категорией уже добавлен')
+      alert('Блок с таким названием уже добавлен')
       return
     }
     
     const newBlock: WorkBlock = {
       id: `block_${Date.now()}`,
       title: categoryName,
-      description: `Работы категории: ${categoryName}`,
+      description: isCustom ? `Произвольный блок: ${categoryName}` : `Работы категории: ${categoryName}`,
       items: [],
       totalPrice: 0,
       isCollapsed: false
@@ -1357,6 +1362,16 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     }))
     
     setShowAddBlockModal(false)
+    setShowCustomBlockModal(false)
+    setCustomBlockName('')
+  }
+
+  const addCustomWorkBlock = () => {
+    if (!customBlockName.trim()) {
+      alert('Введите название блока')
+      return
+    }
+    addWorkBlock(customBlockName.trim(), true)
   }
 
   const removeWorkBlock = (blockId: string) => {
@@ -1716,6 +1731,44 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     }
     
     setShowActExportModal(false)
+  }
+
+  const handleExportXLSX = async () => {
+    if (!estimate) return
+
+    try {
+      // Используем window.open для открытия в новой вкладке
+      // Это гарантированно передает куки и правильно обрабатывает скачивание
+      const exportUrl = `/api/estimates/${params.id}/export-xlsx`
+      
+      // Открываем в новой вкладке
+      const newWindow = window.open(exportUrl, '_blank')
+      
+      // Если окно не открылось (блокировщик попапов), используем прямое перенаправление
+      if (!newWindow) {
+        // Альтернативный способ - создаем скрытую ссылку
+        const link = document.createElement('a')
+        link.href = exportUrl
+        link.download = ''
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } else {
+        // Закрываем окно через небольшую задержку (после начала скачивания)
+        setTimeout(() => {
+          try {
+            newWindow.close()
+          } catch (e) {
+            // Игнорируем ошибки закрытия окна
+          }
+        }, 2000)
+      }
+      
+    } catch (error) {
+      console.error('Ошибка экспорта в Excel:', error)
+      alert('Ошибка при экспорте в Excel: ' + (error instanceof Error ? error.message : 'Неизвестная ошибка'))
+    }
   }
 
   const handleCoefficientToggle = (coefficientId: string) => {
@@ -2283,6 +2336,15 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 <Download className="estimate-action-btn-icon" />
                 Экспорт PDF
               </button>
+
+              <button 
+                onClick={handleExportXLSX}
+                className="estimate-action-btn-secondary"
+                title="Скачать смету в формате Excel"
+              >
+                <FileSpreadsheet className="estimate-action-btn-icon" />
+                Скачать xlsx
+              </button>
               
               <button 
                 onClick={saveEstimate}
@@ -2735,29 +2797,77 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                             className="input-field select-input"
                                           >
                                             <option value="">Выберите работу</option>
-                                            {availableWorks
-                                              .filter(work => work.category === block.title)
-                                              .map(work => {
-                                                const linkedParameter = work.parameterId ? roomParameters.find(p => p.id === work.parameterId) : null
-                                                
-                                                // Извлекаем оригинальную цену из описания для работ с basePrice = 0
-                                                let priceDisplay = `${work.basePrice.toLocaleString('ru-RU')} ₽`
-                                                if (work.basePrice === 0 && work.description) {
-                                                  const priceMatch = work.description.match(/Цена:\s*(.+?)(?:\.|$)/)
-                                                  if (priceMatch) {
-                                                    priceDisplay = priceMatch[1]
-                                                  } else {
-                                                    priceDisplay = 'цена не указана'
-                                                  }
+                                            {(() => {
+                                              const isCustomBlock = block.description?.startsWith('Произвольный блок:')
+                                              const filteredWorks = availableWorks.filter(work => {
+                                                // Для произвольных блоков показываем все работы
+                                                if (isCustomBlock) {
+                                                  return true
                                                 }
+                                                // Для обычных блоков показываем только работы соответствующей категории
+                                                return work.category === block.title
+                                              })
+                                              
+                                              if (isCustomBlock) {
+                                                // Группируем работы по категориям для произвольного блока
+                                                const groupedWorks: { [key: string]: any[] } = {}
+                                                filteredWorks.forEach(work => {
+                                                  if (!groupedWorks[work.category]) {
+                                                    groupedWorks[work.category] = []
+                                                  }
+                                                  groupedWorks[work.category].push(work)
+                                                })
                                                 
-                                                return (
-                                                  <option key={work.id} value={work.id}>
-                                                    {work.name} ({priceDisplay}/{work.unit})
-                                                    {linkedParameter ? ` 🔗 ${linkedParameter.name}` : ''}
-                                                  </option>
-                                                )
-                                              })}
+                                                return Object.keys(groupedWorks).sort().map(category => (
+                                                  <optgroup key={category} label={category}>
+                                                    {groupedWorks[category].map(work => {
+                                                      const linkedParameter = work.parameterId ? roomParameters.find(p => p.id === work.parameterId) : null
+                                                      
+                                                      // Извлекаем оригинальную цену из описания для работ с basePrice = 0
+                                                      let priceDisplay = `${work.basePrice.toLocaleString('ru-RU')} ₽`
+                                                      if (work.basePrice === 0 && work.description) {
+                                                        const priceMatch = work.description.match(/Цена:\s*(.+?)(?:\.|$)/)
+                                                        if (priceMatch) {
+                                                          priceDisplay = priceMatch[1]
+                                                        } else {
+                                                          priceDisplay = 'цена не указана'
+                                                        }
+                                                      }
+                                                      
+                                                      return (
+                                                        <option key={work.id} value={work.id}>
+                                                          {work.name} ({priceDisplay}/{work.unit})
+                                                          {linkedParameter ? ` 🔗 ${linkedParameter.name}` : ''}
+                                                        </option>
+                                                      )
+                                                    })}
+                                                  </optgroup>
+                                                ))
+                                              } else {
+                                                // Обычный блок - показываем работы без группировки
+                                                return filteredWorks.map(work => {
+                                                  const linkedParameter = work.parameterId ? roomParameters.find(p => p.id === work.parameterId) : null
+                                                  
+                                                  // Извлекаем оригинальную цену из описания для работ с basePrice = 0
+                                                  let priceDisplay = `${work.basePrice.toLocaleString('ru-RU')} ₽`
+                                                  if (work.basePrice === 0 && work.description) {
+                                                    const priceMatch = work.description.match(/Цена:\s*(.+?)(?:\.|$)/)
+                                                    if (priceMatch) {
+                                                      priceDisplay = priceMatch[1]
+                                                    } else {
+                                                      priceDisplay = 'цена не указана'
+                                                    }
+                                                  }
+                                                  
+                                                  return (
+                                                    <option key={work.id} value={work.id}>
+                                                      {work.name} ({priceDisplay}/{work.unit})
+                                                      {linkedParameter ? ` 🔗 ${linkedParameter.name}` : ''}
+                                                    </option>
+                                                  )
+                                                })
+                                              }
+                                            })()}
                                           </select>
                                           <input
                                             type="text"
@@ -3608,7 +3718,28 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Выберите категорию работ</h2>
+              <h2 className="text-xl font-semibold mb-4">Добавить блок работ</h2>
+              
+              {/* Кнопка для создания произвольного блока (только для админов и менеджеров) */}
+              {(session?.user?.role === 'ADMIN' || session?.user?.role === 'MANAGER') && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <h3 className="font-medium text-blue-900 mb-2">Создать произвольный блок</h3>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Создайте блок с произвольным названием. В такой блок можно добавить любые работы из справочника.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowAddBlockModal(false)
+                      setShowCustomBlockModal(true)
+                    }}
+                    className="btn-primary text-sm px-4 py-2"
+                  >
+                    Создать произвольный блок
+                  </button>
+                </div>
+              )}
+
+              <h3 className="font-medium mb-2">Или выберите категорию из справочника</h3>
               <p className="text-sm text-gray-600 mb-6">
                 Выберите категорию из справочника работ для создания блока
               </p>
@@ -3649,6 +3780,62 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   className="btn-secondary"
                 >
                   Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно для создания произвольного блока */}
+      {showCustomBlockModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Создать произвольный блок работ</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                Введите название для нового блока работ. В этот блок вы сможете добавить любые работы из справочника.
+              </p>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Название блока *
+                </label>
+                <input
+                  type="text"
+                  value={customBlockName}
+                  onChange={(e) => setCustomBlockName(e.target.value)}
+                  placeholder="Например: Дополнительные работы"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  autoFocus
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      addCustomWorkBlock()
+                    }
+                  }}
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowCustomBlockModal(false)
+                    setCustomBlockName('')
+                  }}
+                  className="btn-secondary"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={addCustomWorkBlock}
+                  disabled={!customBlockName.trim()}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    customBlockName.trim()
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  Создать блок
                 </button>
               </div>
             </div>
