@@ -188,6 +188,8 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
   <meta charset="utf-8">
   <meta name="robots" content="noindex">
   <title>Смета - ${estimate.title}</title>
+  <meta name="cache-bust" content="${Date.now()}">
+  <!-- PDF Styles Updated -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
     
@@ -326,22 +328,22 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
     }
     
     .works-table td:nth-child(1) {
-      width: 15px !important;
+      width: 10px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 460px !important;
+      width: 500px !important;
       text-align: left !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
@@ -421,22 +423,22 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
     }
     
     .materials-table td:nth-child(1) {
-      width: 15px !important;
+      width: 10px !important;
       text-align: center !important;
     }
     
     .materials-table td:nth-child(2) {
-      width: 460px !important;
+      width: 500px !important;
       text-align: left !important;
     }
     
     .materials-table td:nth-child(3) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
     .materials-table td:nth-child(4) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
@@ -1389,22 +1391,22 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
     }
     
     .works-table td:nth-child(1) {
-      width: 15px !important;
+      width: 10px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 460px !important;
+      width: 500px !important;
       text-align: left !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
@@ -1800,22 +1802,22 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
     }
     
     .works-table td:nth-child(1) {
-      width: 15px !important;
+      width: 10px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 460px !important;
+      width: 500px !important;
       text-align: left !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
@@ -2137,22 +2139,22 @@ function generateAdditionalActHTML(act: any, settings: any, clientData: any = nu
     }
     
     .works-table td:nth-child(1) {
-      width: 15px !important;
+      width: 10px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 460px !important;
+      width: 500px !important;
       text-align: left !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 25px !important;
+      width: 20px !important;
       text-align: center !important;
     }
     
