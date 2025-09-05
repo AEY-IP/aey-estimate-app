@@ -234,13 +234,19 @@ export async function GET(
 
     if (estimate.exportCache) {
       console.log('📊 Используем кеш экспорта для Excel')
+      console.log('📊 Кеш данные:', {
+        worksDataLength: estimate.exportCache.worksData?.length || 0,
+        materialsDataLength: estimate.exportCache.materialsData?.length || 0,
+        totalWorksPrice: estimate.exportCache.totalWorksPrice,
+        totalMaterialsPrice: estimate.exportCache.totalMaterialsPrice
+      })
       try {
         // Парсим данные из кеша
         const worksData = JSON.parse(estimate.exportCache.worksData)
         const materialsData = JSON.parse(estimate.exportCache.materialsData)
         
         // Преобразуем данные кеша в формат для Excel
-        if (Array.isArray(worksData)) {
+        if (Array.isArray(worksData) && worksData.length > 0) {
           worksData.forEach((block: any) => {
             if (block.items && Array.isArray(block.items)) {
               block.items.forEach((item: any) => {
@@ -255,9 +261,11 @@ export async function GET(
               })
             }
           })
+        } else {
+          console.log('⚠️ Кеш экспорта пуст или неправильный формат worksData')
         }
         
-        if (Array.isArray(materialsData)) {
+        if (Array.isArray(materialsData) && materialsData.length > 0) {
           materialsData.forEach((item: any) => {
             allMaterials.push({
               name: item.name,
@@ -267,6 +275,8 @@ export async function GET(
               totalPrice: item.totalPrice
             })
           })
+        } else {
+          console.log('⚠️ Кеш экспорта пуст или неправильный формат materialsData')
         }
       } catch (error) {
         console.error('❌ Ошибка парсинга кеша экспорта:', error)
@@ -276,27 +286,142 @@ export async function GET(
       }
     }
 
-    // Если нет кеша или ошибка парсинга, собираем данные из помещений (fallback)
-    if (allWorks.length === 0 && allMaterials.length === 0 && estimate.rooms && estimate.rooms.length > 0) {
-      console.log('📊 Fallback: собираем данные из помещений')
-      estimate.rooms.forEach((room: any) => {
-        if (room.works && room.works.length > 0) {
-          room.works.forEach((work: any) => {
-            allWorks.push({
-              ...work,
-              roomContext: room.name
+    // Если нет кеша или ошибка парсинга, пробуем альтернативные источники данных
+    if (allWorks.length === 0 && allMaterials.length === 0) {
+      console.log('📊 Fallback: пробуем альтернативные источники данных')
+      console.log('📊 Estimate type:', estimate.type)
+      console.log('📊 Estimate rooms count:', estimate.rooms?.length || 0)
+      console.log('📊 Has worksBlock:', !!estimate.worksBlock)
+      console.log('📊 Has summaryWorksBlock:', !!estimate.summaryWorksBlock)
+      
+      // Сначала пробуем JSON поля сметы
+      if (estimate.summaryWorksBlock) {
+        try {
+          console.log('📊 Используем summaryWorksBlock')
+          const summaryWorksData = JSON.parse(estimate.summaryWorksBlock)
+          if (summaryWorksData.blocks && Array.isArray(summaryWorksData.blocks)) {
+            summaryWorksData.blocks.forEach((block: any) => {
+              if (block.items && Array.isArray(block.items)) {
+                block.items.forEach((item: any) => {
+                  allWorks.push({
+                    ...item,
+                    blockTitle: block.title,
+                    workItem: { name: item.name, unit: item.unit },
+                    quantity: item.quantity,
+                    price: item.unitPrice,
+                    totalPrice: item.totalPrice
+                  })
+                })
+              }
             })
-          })
+          }
+        } catch (error) {
+          console.error('❌ Ошибка парсинга summaryWorksBlock:', error)
         }
-        
-        if (room.materials && room.materials.length > 0) {
-          room.materials.forEach((material: any) => {
-            allMaterials.push({
-              ...material,
-              roomContext: room.name
+      } else if (estimate.worksBlock) {
+        try {
+          console.log('📊 Используем worksBlock')
+          const worksData = JSON.parse(estimate.worksBlock)
+          if (worksData.blocks && Array.isArray(worksData.blocks)) {
+            worksData.blocks.forEach((block: any) => {
+              if (block.items && Array.isArray(block.items)) {
+                block.items.forEach((item: any) => {
+                  allWorks.push({
+                    ...item,
+                    blockTitle: block.title,
+                    workItem: { name: item.name, unit: item.unit },
+                    quantity: item.quantity,
+                    price: item.unitPrice,
+                    totalPrice: item.totalPrice
+                  })
+                })
+              }
             })
-          })
+          }
+        } catch (error) {
+          console.error('❌ Ошибка парсинга worksBlock:', error)
         }
+      }
+      
+      // Материалы из JSON полей
+      if (estimate.summaryMaterialsBlock) {
+        try {
+          console.log('📊 Используем summaryMaterialsBlock')
+          const summaryMaterialsData = JSON.parse(estimate.summaryMaterialsBlock)
+          if (summaryMaterialsData.items && Array.isArray(summaryMaterialsData.items)) {
+            summaryMaterialsData.items.forEach((item: any) => {
+              allMaterials.push({
+                name: item.name,
+                unit: item.unit,
+                quantity: item.quantity,
+                price: item.unitPrice,
+                totalPrice: item.totalPrice
+              })
+            })
+          }
+        } catch (error) {
+          console.error('❌ Ошибка парсинга summaryMaterialsBlock:', error)
+        }
+      } else if (estimate.materialsBlock) {
+        try {
+          console.log('📊 Используем materialsBlock')
+          const materialsData = JSON.parse(estimate.materialsBlock)
+          if (materialsData.items && Array.isArray(materialsData.items)) {
+            materialsData.items.forEach((item: any) => {
+              allMaterials.push({
+                name: item.name,
+                unit: item.unit,
+                quantity: item.quantity,
+                price: item.unitPrice,
+                totalPrice: item.totalPrice
+              })
+            })
+          }
+        } catch (error) {
+          console.error('❌ Ошибка парсинга materialsBlock:', error)
+        }
+      }
+      
+      if (estimate.rooms && estimate.rooms.length > 0) {
+        estimate.rooms.forEach((room: any, index: number) => {
+          console.log(`📊 Room ${index + 1} (${room.name}):`, {
+            worksCount: room.works?.length || 0,
+            materialsCount: room.materials?.length || 0
+          })
+          
+          if (room.works && room.works.length > 0) {
+            room.works.forEach((work: any) => {
+              allWorks.push({
+                ...work,
+                blockTitle: work.blockTitle || 'Без блока',
+                workItem: work.workItem || { name: work.manualWorkName || 'Неизвестная работа', unit: work.manualWorkUnit || 'шт' },
+                quantity: work.quantity || 0,
+                price: work.price || 0,
+                totalPrice: work.totalPrice || 0,
+                roomContext: room.name
+              })
+            })
+          }
+          
+          if (room.materials && room.materials.length > 0) {
+            room.materials.forEach((material: any) => {
+              allMaterials.push({
+                ...material,
+                name: material.name || 'Неизвестный материал',
+                unit: material.unit || 'шт',
+                quantity: material.quantity || 0,
+                price: material.price || 0,
+                totalPrice: material.totalPrice || 0,
+                roomContext: room.name
+              })
+            })
+          }
+        })
+      }
+      
+      console.log('📊 Fallback результат:', {
+        worksCount: allWorks.length,
+        materialsCount: allMaterials.length
       })
     }
 
