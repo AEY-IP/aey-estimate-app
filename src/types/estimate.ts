@@ -106,6 +106,7 @@ export interface Room {
   totalMaterialsPrice: number
   totalPrice: number
   manualPrices?: string[] // ID позиций работ с ручной ценой для этого помещения
+  coefficients?: string[] // ID выбранных коэффициентов для этого помещения
   createdAt: Date
   updatedAt: Date
 }

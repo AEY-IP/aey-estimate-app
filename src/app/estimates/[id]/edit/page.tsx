@@ -1815,6 +1815,63 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           }
         }
       }
+      // Для смет по помещениям в режиме редактирования конкретного помещения
+      else if (prev.type === 'rooms' && currentRoomId) {
+        const currentRoom = rooms.find(r => r.id === currentRoomId)
+        if (!currentRoom) return prev
+        
+        const currentCoefficients = currentRoom.coefficients || []
+        const isCurrentlySelected = currentCoefficients.includes(coefficientId)
+        
+        // Обновляем коэффициенты в текущем помещении
+        const updatedRooms = rooms.map(room => {
+          if (room.id === currentRoomId) {
+            let newCoefficients: string[]
+            
+            if (isCurrentlySelected) {
+              // Убираем коэффициент из выбранных
+              newCoefficients = currentCoefficients.filter((id: string) => id !== coefficientId)
+              
+              // Убираем настройки для этого коэффициента
+              setCoefficientSettings(prevSettings => {
+                const newSettings = { ...prevSettings }
+                delete newSettings[coefficientId]
+                return newSettings
+              })
+            } else {
+              // Добавляем коэффициент в выбранные
+              newCoefficients = [...currentCoefficients, coefficientId]
+              
+              // Устанавливаем настройки по умолчанию (применить ко всей смете)
+              setCoefficientSettings(prevSettings => ({
+                ...prevSettings,
+                [coefficientId]: { target: 'global' as 'global' | string[] }
+              }))
+            }
+            
+            return {
+              ...room,
+              coefficients: newCoefficients
+            }
+          }
+          return room
+        })
+        
+        setRooms(updatedRooms)
+        
+        // Также обновляем общие коэффициенты сметы (для совместимости)
+        const allRoomCoefficients = new Set<string>()
+        updatedRooms.forEach(room => {
+          if (room.coefficients) {
+            room.coefficients.forEach((coefId: string) => allRoomCoefficients.add(coefId))
+          }
+        })
+        
+        return {
+          ...prev,
+          coefficients: Array.from(allRoomCoefficients)
+        }
+      }
       
       return prev
     })
@@ -1942,6 +1999,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   }, {} as { [key: string]: Coefficient[] })
 
   const getSelectedCoefficients = () => {
+    // Для смет по помещениям в режиме редактирования конкретного помещения
+    if (estimate?.type === 'rooms' && currentRoomId) {
+      const currentRoom = rooms.find(r => r.id === currentRoomId)
+      if (!currentRoom?.coefficients) return []
+      return coefficients.filter(c => currentRoom.coefficients?.includes(c.id) && !c.id.startsWith('manual_'))
+    }
+    
+    // Для смет по квартире или сводной сметы по помещениям
     if (!estimate?.coefficients) return []
     return coefficients.filter(c => estimate.coefficients?.includes(c.id) && !c.id.startsWith('manual_'))
   }
