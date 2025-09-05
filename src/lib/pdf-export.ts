@@ -326,22 +326,22 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
     }
     
     .works-table td:nth-child(1) {
-      width: 30px !important;
+      width: 15px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 400px !important;
+      width: 460px !important;
       text-align: left !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
@@ -421,22 +421,22 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
     }
     
     .materials-table td:nth-child(1) {
-      width: 30px !important;
+      width: 15px !important;
       text-align: center !important;
     }
     
     .materials-table td:nth-child(2) {
-      width: 400px !important;
+      width: 460px !important;
       text-align: left !important;
     }
     
     .materials-table td:nth-child(3) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
     .materials-table td:nth-child(4) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
@@ -1389,22 +1389,22 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
     }
     
     .works-table td:nth-child(1) {
-      width: 30px !important;
+      width: 15px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 400px !important;
+      width: 460px !important;
       text-align: left !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
@@ -1800,22 +1800,22 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
     }
     
     .works-table td:nth-child(1) {
-      width: 30px !important;
+      width: 15px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 400px !important;
+      width: 460px !important;
       text-align: left !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
@@ -2137,22 +2137,22 @@ function generateAdditionalActHTML(act: any, settings: any, clientData: any = nu
     }
     
     .works-table td:nth-child(1) {
-      width: 30px !important;
+      width: 15px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 400px !important;
+      width: 460px !important;
       text-align: left !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 50px !important;
+      width: 25px !important;
       text-align: center !important;
     }
     
