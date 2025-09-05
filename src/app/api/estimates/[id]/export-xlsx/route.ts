@@ -26,10 +26,11 @@ export async function GET(
     }
     */
 
-    // Загружаем смету
+    // Загружаем смету с кешем экспорта
     const estimate = await prisma.estimate.findUnique({
       where: { id: params.id },
       include: {
+        exportCache: true,
         rooms: {
           include: {
             works: {
@@ -227,18 +228,63 @@ export async function GET(
 
     let workRowNumber = 1
 
-    // Собираем все работы и материалы из всех помещений в сводную смету
-    const allWorks: any[] = []
-    const allMaterials: any[] = []
+    // Получаем данные из кеша экспорта или собираем из помещений
+    let allWorks: any[] = []
+    let allMaterials: any[] = []
 
-    if (estimate.rooms && estimate.rooms.length > 0) {
-      // Собираем работы из всех помещений
+    if (estimate.exportCache) {
+      console.log('📊 Используем кеш экспорта для Excel')
+      try {
+        // Парсим данные из кеша
+        const worksData = JSON.parse(estimate.exportCache.worksData)
+        const materialsData = JSON.parse(estimate.exportCache.materialsData)
+        
+        // Преобразуем данные кеша в формат для Excel
+        if (Array.isArray(worksData)) {
+          worksData.forEach((block: any) => {
+            if (block.items && Array.isArray(block.items)) {
+              block.items.forEach((item: any) => {
+                allWorks.push({
+                  ...item,
+                  blockTitle: block.title,
+                  workItem: { name: item.name, unit: item.unit },
+                  quantity: item.quantity,
+                  price: item.unitPrice,
+                  totalPrice: item.totalPrice
+                })
+              })
+            }
+          })
+        }
+        
+        if (Array.isArray(materialsData)) {
+          materialsData.forEach((item: any) => {
+            allMaterials.push({
+              name: item.name,
+              unit: item.unit,
+              quantity: item.quantity,
+              price: item.unitPrice,
+              totalPrice: item.totalPrice
+            })
+          })
+        }
+      } catch (error) {
+        console.error('❌ Ошибка парсинга кеша экспорта:', error)
+        // Fallback к старому методу
+        allWorks = []
+        allMaterials = []
+      }
+    }
+
+    // Если нет кеша или ошибка парсинга, собираем данные из помещений (fallback)
+    if (allWorks.length === 0 && allMaterials.length === 0 && estimate.rooms && estimate.rooms.length > 0) {
+      console.log('📊 Fallback: собираем данные из помещений')
       estimate.rooms.forEach((room: any) => {
         if (room.works && room.works.length > 0) {
           room.works.forEach((work: any) => {
             allWorks.push({
               ...work,
-              roomContext: room.name // Добавляем контекст помещения
+              roomContext: room.name
             })
           })
         }
@@ -311,8 +357,10 @@ export async function GET(
       addSectionHeader('РАБОТЫ')
       processWorkItems(allWorks, true)
       
-      // Общий итог по работам
-      const totalWorksPrice = allWorks.reduce((sum: number, work: any) => sum + (work.totalPrice || 0), 0)
+      // Общий итог по работам (используем данные из кеша если есть)
+      const totalWorksPrice = estimate.exportCache 
+        ? estimate.exportCache.totalWorksPrice 
+        : allWorks.reduce((sum: number, work: any) => sum + (work.totalPrice || 0), 0)
       addSubtotal('ОБЩИЙ ИТОГ ПО РАБОТАМ', totalWorksPrice)
     }
 
@@ -321,8 +369,10 @@ export async function GET(
       addSectionHeader('МАТЕРИАЛЫ')
       processWorkItems(allMaterials, false)
       
-      // Общий итог по материалам
-      const totalMaterialsPrice = allMaterials.reduce((sum: number, material: any) => sum + (material.totalPrice || 0), 0)
+      // Общий итог по материалам (используем данные из кеша если есть)
+      const totalMaterialsPrice = estimate.exportCache 
+        ? estimate.exportCache.totalMaterialsPrice 
+        : allMaterials.reduce((sum: number, material: any) => sum + (material.totalPrice || 0), 0)
       addSubtotal('ОБЩИЙ ИТОГ ПО МАТЕРИАЛАМ', totalMaterialsPrice)
     }
 
@@ -333,8 +383,11 @@ export async function GET(
       currentRow++
     }
 
-    // Общий итог сметы
-    addSubtotal('ОБЩИЙ ИТОГ СМЕТЫ', estimate.totalPrice || 0, true)
+    // Общий итог сметы (используем данные из кеша если есть)
+    const grandTotal = estimate.exportCache 
+      ? estimate.exportCache.grandTotal 
+      : estimate.totalPrice || 0
+    addSubtotal('ОБЩИЙ ИТОГ СМЕТЫ', grandTotal, true)
 
     // Настраиваем ширину колонок
     worksheet.columns = [
