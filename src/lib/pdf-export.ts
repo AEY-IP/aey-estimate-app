@@ -970,6 +970,36 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
       background: #f9fafb;
     }
     
+    .works-table td:nth-child(1) {
+      width: 10px !important;
+      text-align: center !important;
+    }
+    
+    .works-table td:nth-child(2) {
+      width: 500px !important;
+      text-align: left !important;
+    }
+    
+    .works-table td:nth-child(3) {
+      width: 20px !important;
+      text-align: center !important;
+    }
+    
+    .works-table td:nth-child(4) {
+      width: 20px !important;
+      text-align: center !important;
+    }
+    
+    .works-table td:nth-child(5) {
+      width: 80px !important;
+      text-align: right !important;
+    }
+    
+    .works-table td:nth-child(6) {
+      width: 80px !important;
+      text-align: right !important;
+    }
+    
         .block-title {
             background: #e5e7eb;
             font-weight: 600;
