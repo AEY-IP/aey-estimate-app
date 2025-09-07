@@ -1634,12 +1634,12 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
       <table class="works-table">
         <thead>
           <tr>
-            <th>№</th>
-            <th>Наименование работ</th>
-            <th>Ед. изм.</th>
-            <th>Кол-во</th>
-            <th>Цена за ед.</th>
-            <th>Стоимость</th>
+            <th style="width: 5% !important; text-align: center;">№</th>
+            <th style="text-align: left;">Наименование работ</th>
+            <th style="width: 7% !important; text-align: center;">Ед. изм.</th>
+            <th style="width: 7% !important; text-align: center;">Кол-во</th>
+            <th style="width: 80px !important; text-align: right;">Цена за ед.</th>
+            <th style="width: 80px !important; text-align: right;">Стоимость</th>
           </tr>
         </thead>
         <tbody>
@@ -1660,12 +1660,12 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
                 </tr>`,
                 ...block.items.map((item: any) => `
                   <tr>
-                    <td class="number">${globalItemNumber++}</td>
-                    <td class="work-name">${item.workName || item.name}${item.description ? ` (${item.description})` : ''}</td>
-                    <td class="number">${item.unit}</td>
-                    <td class="number">${item.quantity}</td>
-                    <td class="currency">${(item.displayUnitPrice || item.unitPrice || item.price || 0).toLocaleString('ru-RU')} ₽</td>
-                    <td class="currency">${(item.displayTotalPrice || item.totalPrice || 0).toLocaleString('ru-RU')} ₽</td>
+                    <td class="number" style="width: 5% !important; max-width: 5% !important; text-align: center; padding: 2px; overflow: hidden;">${globalItemNumber++}</td>
+                    <td class="work-name" style="text-align: left; word-wrap: break-word;">${item.workName || item.name}${item.description ? ` (${item.description})` : ''}</td>
+                    <td class="number" style="width: 7% !important; max-width: 7% !important; text-align: center; padding: 2px; overflow: hidden;">${item.unit}</td>
+                    <td class="number" style="width: 7% !important; max-width: 7% !important; text-align: center; padding: 2px; overflow: hidden;">${item.quantity}</td>
+                    <td class="currency" style="width: 80px !important; text-align: right;">${(item.displayUnitPrice || item.unitPrice || item.price || 0).toLocaleString('ru-RU')} ₽</td>
+                    <td class="currency" style="width: 80px !important; text-align: right;">${(item.displayTotalPrice || item.totalPrice || 0).toLocaleString('ru-RU')} ₽</td>
                   </tr>
                 `),
                 `<tr class="block-total">
@@ -2070,12 +2070,12 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
         <table class="works-table">
           <thead>
             <tr>
-            <th>№</th>
-            <th>Наименование работ</th>
-            <th>Ед. изм.</th>
-            <th>Кол-во</th>
-            <th>Цена за ед.</th>
-            <th>Стоимость</th>
+            <th style="width: 5% !important; text-align: center;">№</th>
+            <th style="text-align: left;">Наименование работ</th>
+            <th style="width: 7% !important; text-align: center;">Ед. изм.</th>
+            <th style="width: 7% !important; text-align: center;">Кол-во</th>
+            <th style="width: 80px !important; text-align: right;">Цена за ед.</th>
+            <th style="width: 80px !important; text-align: right;">Стоимость</th>
             </tr>
           </thead>
           <tbody>
@@ -2096,12 +2096,12 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
                 </tr>`,
                 ...block.items.map((item: any) => `
                   <tr>
-                    <td class="number">${globalItemNumber++}</td>
-                    <td class="work-name">${item.workName || item.name}${item.description ? ` (${item.description})` : ''}</td>
-                    <td class="number">${item.unit}</td>
-                    <td class="number">${item.quantity}</td>
-                    <td class="currency">${(item.displayUnitPrice || item.unitPrice || item.price || 0).toLocaleString('ru-RU')} ₽</td>
-                    <td class="currency">${(item.displayTotalPrice || item.totalPrice || 0).toLocaleString('ru-RU')} ₽</td>
+                    <td class="number" style="width: 5% !important; max-width: 5% !important; text-align: center; padding: 2px; overflow: hidden;">${globalItemNumber++}</td>
+                    <td class="work-name" style="text-align: left; word-wrap: break-word;">${item.workName || item.name}${item.description ? ` (${item.description})` : ''}</td>
+                    <td class="number" style="width: 7% !important; max-width: 7% !important; text-align: center; padding: 2px; overflow: hidden;">${item.unit}</td>
+                    <td class="number" style="width: 7% !important; max-width: 7% !important; text-align: center; padding: 2px; overflow: hidden;">${item.quantity}</td>
+                    <td class="currency" style="width: 80px !important; text-align: right;">${(item.displayUnitPrice || item.unitPrice || item.price || 0).toLocaleString('ru-RU')} ₽</td>
+                    <td class="currency" style="width: 80px !important; text-align: right;">${(item.displayTotalPrice || item.totalPrice || 0).toLocaleString('ru-RU')} ₽</td>
                   </tr>
                 `),
                 `<tr class="block-total">
@@ -2432,12 +2432,12 @@ function generateAdditionalActHTML(act: any, settings: any, clientData: any = nu
       <table class="works-table">
         <thead>
           <tr>
-            <th>№</th>
-            <th>Наименование работ</th>
-            <th>Ед. изм.</th>
-            <th>Кол-во</th>
-            <th>Цена за ед.</th>
-            <th>Стоимость</th>
+            <th style="width: 5% !important; text-align: center;">№</th>
+            <th style="text-align: left;">Наименование работ</th>
+            <th style="width: 7% !important; text-align: center;">Ед. изм.</th>
+            <th style="width: 7% !important; text-align: center;">Кол-во</th>
+            <th style="width: 80px !important; text-align: right;">Цена за ед.</th>
+            <th style="width: 80px !important; text-align: right;">Стоимость</th>
           </tr>
         </thead>
         <tbody>
@@ -2458,12 +2458,12 @@ function generateAdditionalActHTML(act: any, settings: any, clientData: any = nu
                 </tr>`,
                 ...block.items.map((item: any) => `
                   <tr>
-                    <td class="number">${globalItemNumber++}</td>
-                    <td class="work-name">${item.workName || item.name}${item.description ? ` (${item.description})` : ''}</td>
-                    <td class="number">${item.unit}</td>
-                    <td class="number">${item.quantity}</td>
-                    <td class="currency">${(item.displayUnitPrice || item.unitPrice || item.price || 0).toLocaleString('ru-RU')} ₽</td>
-                    <td class="currency">${(item.displayTotalPrice || item.totalPrice || 0).toLocaleString('ru-RU')} ₽</td>
+                    <td class="number" style="width: 5% !important; max-width: 5% !important; text-align: center; padding: 2px; overflow: hidden;">${globalItemNumber++}</td>
+                    <td class="work-name" style="text-align: left; word-wrap: break-word;">${item.workName || item.name}${item.description ? ` (${item.description})` : ''}</td>
+                    <td class="number" style="width: 7% !important; max-width: 7% !important; text-align: center; padding: 2px; overflow: hidden;">${item.unit}</td>
+                    <td class="number" style="width: 7% !important; max-width: 7% !important; text-align: center; padding: 2px; overflow: hidden;">${item.quantity}</td>
+                    <td class="currency" style="width: 80px !important; text-align: right;">${(item.displayUnitPrice || item.unitPrice || item.price || 0).toLocaleString('ru-RU')} ₽</td>
+                    <td class="currency" style="width: 80px !important; text-align: right;">${(item.displayTotalPrice || item.totalPrice || 0).toLocaleString('ru-RU')} ₽</td>
                   </tr>
                 `),
                 `<tr class="block-total">
