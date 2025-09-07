@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ТЕСТ СТИЛЕЙ PDF - Проверка изменений</title>
+  <style>
+    .works-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      border: 1px solid #000;
+    }
+    
+    .works-table th,
+    .works-table td {
+      padding: 8px 4px;
+      text-align: left;
+      border: 1px solid #000;
+      font-size: 12px;
+    }
+    
+    .works-table td:nth-child(1) {
+      width: 10px !important;
+      text-align: center !important;
+      background: red !important;
+    }
+    
+    .works-table td:nth-child(2) {
+      width: 500px !important;
+      text-align: left !important;
+    }
+    
+    .works-table td:nth-child(3) {
+      width: 20px !important;
+      text-align: center !important;
+    }
+    
+    .works-table td:nth-child(4) {
+      width: 20px !important;
+      text-align: center !important;
+    }
+    
+    .works-table td:nth-child(5) {
+      width: 80px !important;
+      text-align: right !important;
+    }
+    
+    .works-table td:nth-child(6) {
+      width: 80px !important;
+      text-align: right !important;
+    }
+  </style>
+</head>
+<body>
+  <h1>ТЕСТ ИЗМЕНЕНИЙ СТИЛЕЙ PDF</h1>
+  <p>Если изменения работают, то:</p>
+  <ul>
+    <li>1-й столбец должен быть КРАСНЫМ и очень узким (10px)</li>
+    <li>2-й столбец должен быть очень широким (500px)</li>
+    <li>3-й и 4-й столбцы должны быть узкими (20px)</li>
+  </ul>
+  
+  <table class="works-table">
+    <thead>
+      <tr>
+        <th>№</th>
+        <th>Наименование работ</th>
+        <th>Ед.</th>
+        <th>Кол.</th>
+        <th>Цена</th>
+        <th>Сумма</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Очень длинное название работы для проверки ширины столбца</td>
+        <td>м2</td>
+        <td>10</td>
+        <td>1000</td>
+        <td>10000</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Еще одна работа с длинным названием</td>
+        <td>шт</td>
+        <td>5</td>
+        <td>500</td>
+        <td>2500</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
