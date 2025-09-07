@@ -187,9 +187,9 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
 <head>
   <meta charset="utf-8">
   <meta name="robots" content="noindex">
-  <title>Смета - ${estimate.title}</title>
+  <title>ТЕСТ ИЗМЕНЕНИЙ - ${estimate.title}</title>
   <meta name="cache-bust" content="${Date.now()}">
-  <!-- PDF Styles Updated -->
+  <!-- PDF Styles Updated ${Date.now()} -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
     
@@ -328,23 +328,35 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
     }
     
     .works-table td:nth-child(1) {
-      width: 10px !important;
+      width: 5% !important;
+      max-width: 5% !important;
+      min-width: 5% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 500px !important;
       text-align: left !important;
+      word-wrap: break-word !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(5) {
@@ -355,6 +367,19 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
     .works-table td:nth-child(6) {
       width: 80px !important;
       text-align: right !important;
+    }
+    
+    @media print {
+      .works-table {
+        table-layout: fixed !important;
+        width: 100% !important;
+      }
+      .works-table td:nth-child(1) { width: 5px !important; max-width: 5px !important; }
+      .works-table td:nth-child(2) { width: 600px !important; max-width: 600px !important; }
+      .works-table td:nth-child(3) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(4) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(5) { width: 80px !important; max-width: 80px !important; }
+      .works-table td:nth-child(6) { width: 80px !important; max-width: 80px !important; }
     }
     
     .number {
@@ -559,12 +584,12 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
         <table class="works-table">
           <thead>
             <tr>
-              <th>№</th>
-              <th>Наименование работ</th>
-              <th>Ед. изм.</th>
-              <th>Кол-во</th>
-              <th>Цена за ед.</th>
-              <th>Стоимость</th>
+              <th style="width: 5% !important; text-align: center;">№</th>
+              <th style="text-align: left;">Наименование работ</th>
+              <th style="width: 7% !important; text-align: center;">Ед. изм.</th>
+              <th style="width: 7% !important; text-align: center;">Кол-во</th>
+              <th style="width: 80px !important; text-align: right;">Цена за ед.</th>
+              <th style="width: 80px !important; text-align: right;">Стоимость</th>
             </tr>
           </thead>
           <tbody>
@@ -584,12 +609,12 @@ function generateMainEstimateHTML(estimate: Estimate, coefficients: any[] = [], 
                   </tr>`,
                   ...block.items.map((item: any) => `
                     <tr>
-                      <td class="number">${globalItemNumber++}</td>
-                      <td class="work-name">${item.workName || item.name}${item.description ? ` (${item.description})` : ''}</td>
-                      <td class="number">${item.unit}</td>
-                      <td class="number">${item.quantity}</td>
-                      <td class="currency">${(item.displayUnitPrice || item.unitPrice || 0).toLocaleString('ru-RU')} ₽</td>
-                      <td class="currency">${(item.displayTotalPrice || item.totalPrice || 0).toLocaleString('ru-RU')} ₽</td>
+                      <td class="number" style="width: 5% !important; max-width: 5% !important; text-align: center; padding: 2px; overflow: hidden;">${globalItemNumber++}</td>
+                      <td class="work-name" style="text-align: left; word-wrap: break-word;">${item.workName || item.name}${item.description ? ` (${item.description})` : ''}</td>
+                      <td class="number" style="width: 7% !important; max-width: 7% !important; text-align: center; padding: 2px; overflow: hidden;">${item.unit}</td>
+                      <td class="number" style="width: 7% !important; max-width: 7% !important; text-align: center; padding: 2px; overflow: hidden;">${item.quantity}</td>
+                      <td class="currency" style="width: 80px !important; text-align: right;">${(item.displayUnitPrice || item.unitPrice || 0).toLocaleString('ru-RU')} ₽</td>
+                      <td class="currency" style="width: 80px !important; text-align: right;">${(item.displayTotalPrice || item.totalPrice || 0).toLocaleString('ru-RU')} ₽</td>
                     </tr>
                   `),
                   `<tr class="block-total">
@@ -945,9 +970,10 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
     
     .works-table {
       width: 100%;
+      table-layout: fixed !important;
       border-collapse: collapse;
       margin-bottom: 20px;
-            border: 1px solid #e5e7eb;
+      border: 1px solid #e5e7eb;
     }
     
     .works-table th {
@@ -971,23 +997,35 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
     }
     
     .works-table td:nth-child(1) {
-      width: 10px !important;
+      width: 5% !important;
+      max-width: 5% !important;
+      min-width: 5% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 500px !important;
       text-align: left !important;
+      word-wrap: break-word !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(5) {
@@ -998,6 +1036,19 @@ function generateAdditionalEstimateHTML(estimate: Estimate, coefficients: any[] 
     .works-table td:nth-child(6) {
       width: 80px !important;
       text-align: right !important;
+    }
+    
+    @media print {
+      .works-table {
+        table-layout: fixed !important;
+        width: 100% !important;
+      }
+      .works-table td:nth-child(1) { width: 5px !important; max-width: 5px !important; }
+      .works-table td:nth-child(2) { width: 600px !important; max-width: 600px !important; }
+      .works-table td:nth-child(3) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(4) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(5) { width: 80px !important; max-width: 80px !important; }
+      .works-table td:nth-child(6) { width: 80px !important; max-width: 80px !important; }
     }
     
         .block-title {
@@ -1421,23 +1472,35 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
     }
     
     .works-table td:nth-child(1) {
-      width: 10px !important;
+      width: 5% !important;
+      max-width: 5% !important;
+      min-width: 5% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 500px !important;
       text-align: left !important;
+      word-wrap: break-word !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(5) {
@@ -1448,6 +1511,19 @@ function generateActHTML(act: any, actDate: string, clientData: any = null): str
     .works-table td:nth-child(6) {
       width: 80px !important;
       text-align: right !important;
+    }
+    
+    @media print {
+      .works-table {
+        table-layout: fixed !important;
+        width: 100% !important;
+      }
+      .works-table td:nth-child(1) { width: 5px !important; max-width: 5px !important; }
+      .works-table td:nth-child(2) { width: 600px !important; max-width: 600px !important; }
+      .works-table td:nth-child(3) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(4) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(5) { width: 80px !important; max-width: 80px !important; }
+      .works-table td:nth-child(6) { width: 80px !important; max-width: 80px !important; }
     }
     
     .number {
@@ -1832,23 +1908,35 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
     }
     
     .works-table td:nth-child(1) {
-      width: 10px !important;
+      width: 5% !important;
+      max-width: 5% !important;
+      min-width: 5% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 500px !important;
       text-align: left !important;
+      word-wrap: break-word !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(5) {
@@ -1859,6 +1947,19 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
     .works-table td:nth-child(6) {
       width: 80px !important;
       text-align: right !important;
+    }
+    
+    @media print {
+      .works-table {
+        table-layout: fixed !important;
+        width: 100% !important;
+      }
+      .works-table td:nth-child(1) { width: 5px !important; max-width: 5px !important; }
+      .works-table td:nth-child(2) { width: 600px !important; max-width: 600px !important; }
+      .works-table td:nth-child(3) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(4) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(5) { width: 80px !important; max-width: 80px !important; }
+      .works-table td:nth-child(6) { width: 80px !important; max-width: 80px !important; }
     }
     
     .number {
@@ -2169,23 +2270,35 @@ function generateAdditionalActHTML(act: any, settings: any, clientData: any = nu
     }
     
     .works-table td:nth-child(1) {
-      width: 10px !important;
+      width: 5% !important;
+      max-width: 5% !important;
+      min-width: 5% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(2) {
-      width: 500px !important;
       text-align: left !important;
+      word-wrap: break-word !important;
     }
     
     .works-table td:nth-child(3) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(4) {
-      width: 20px !important;
+      width: 7% !important;
+      max-width: 7% !important;
+      min-width: 7% !important;
       text-align: center !important;
+      padding: 2px !important;
+      overflow: hidden !important;
     }
     
     .works-table td:nth-child(5) {
@@ -2196,6 +2309,19 @@ function generateAdditionalActHTML(act: any, settings: any, clientData: any = nu
     .works-table td:nth-child(6) {
       width: 80px !important;
       text-align: right !important;
+    }
+    
+    @media print {
+      .works-table {
+        table-layout: fixed !important;
+        width: 100% !important;
+      }
+      .works-table td:nth-child(1) { width: 5px !important; max-width: 5px !important; }
+      .works-table td:nth-child(2) { width: 600px !important; max-width: 600px !important; }
+      .works-table td:nth-child(3) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(4) { width: 10px !important; max-width: 10px !important; }
+      .works-table td:nth-child(5) { width: 80px !important; max-width: 80px !important; }
+      .works-table td:nth-child(6) { width: 80px !important; max-width: 80px !important; }
     }
     
     .number {
