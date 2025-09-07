@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings, Info, Edit, FileSpreadsheet } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Trash2, Wrench, Package, Download, Percent, CheckCircle, ChevronDown, ChevronRight, FolderPlus, ChevronLeft, Settings, Info, Edit, FileSpreadsheet, Layout } from 'lucide-react'
 import Link from 'next/link'
 import { generateEstimatePDFWithCache, generateEstimatePDF, generateActPDF, generateActWithSettings } from '@/lib/pdf-export'
 import { Estimate, Coefficient, WorkBlock, WorkItem, RoomParameter, RoomParameterValue, Room } from '@/types/estimate'
@@ -152,6 +152,10 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
   const [showAddBlockModal, setShowAddBlockModal] = useState(false)
   const [showCustomBlockModal, setShowCustomBlockModal] = useState(false)
   const [customBlockName, setCustomBlockName] = useState('')
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [availableTemplates, setAvailableTemplates] = useState<any[]>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [applyingTemplate, setApplyingTemplate] = useState(false)
   const [workCategories, setWorkCategories] = useState<string[]>([])
   const [manualInputCompleted, setManualInputCompleted] = useState<Set<string>>(new Set())
 
@@ -2296,6 +2300,88 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
     }
   }
 
+  // Функции для работы с шаблонами
+  const loadTemplates = async () => {
+    if (!session?.user || !['ADMIN', 'MANAGER'].includes(session.user.role)) {
+      return
+    }
+
+    try {
+      const response = await fetch('/api/templates')
+      if (response.ok) {
+        const templates = await response.json()
+        setAvailableTemplates(templates)
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки шаблонов:', error)
+    }
+  }
+
+  const handleApplyTemplate = async () => {
+    if (!selectedTemplateId || !estimate) {
+      showToast('error', 'Выберите шаблон')
+      return
+    }
+
+    // Определяем целевое помещение для применения шаблона
+    let targetRoomId = null
+    if (estimate.type === 'rooms') {
+      if (currentRoomId) {
+        targetRoomId = currentRoomId
+      } else {
+        showToast('error', 'Для смет по помещениям нужно выбрать конкретное помещение')
+        return
+      }
+    }
+
+    setApplyingTemplate(true)
+    try {
+      const response = await fetch(`/api/templates/${selectedTemplateId}/apply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          estimateId: estimate.id,
+          roomId: targetRoomId
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Ошибка применения шаблона')
+      }
+
+      const result = await response.json()
+      
+      // Перезагружаем смету для отображения новых работ
+      window.location.reload()
+      
+      showToast('success', `Шаблон успешно применен. Добавлено работ: ${result.addedWorksCount}`)
+      setShowTemplateModal(false)
+      setSelectedTemplateId('')
+    } catch (error: any) {
+      console.error('Ошибка применения шаблона:', error)
+      showToast('error', error.message || 'Ошибка применения шаблона')
+    } finally {
+      setApplyingTemplate(false)
+    }
+  }
+
+  const handleTemplateModalOpen = () => {
+    setShowTemplateModal(true)
+    loadTemplates()
+  }
+
+  const formatTemplatePrice = (price: number) => {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(price)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -2380,6 +2466,18 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                 </button>
               )}
               
+              {/* Кнопка "Заполнить из шаблона" - только для ADMIN и MANAGER, не на сводной странице */}
+              {session?.user && ['ADMIN', 'MANAGER'].includes(session.user.role) && !isSummaryView && (
+                <button 
+                  onClick={handleTemplateModalOpen}
+                  className="estimate-action-btn bg-indigo-50 text-indigo-800 border-indigo-200 hover:bg-indigo-100"
+                  title="Заполнить из шаблона"
+                >
+                  <Layout className="estimate-action-btn-icon" />
+                  Из шаблона
+                </button>
+              )}
+
               {/* Переключатель размера шрифта */}
               <button 
                 onClick={() => setFontSize(fontSize === 'small' ? 'normal' : 'small')}
@@ -4256,6 +4354,148 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Сохранить
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно выбора шаблона */}
+      {showTemplateModal && (
+        <div className="modal-overlay">
+          <div className="modal-content max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Выбрать шаблон для применения</h2>
+              
+              {availableTemplates.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-4xl mb-4">📋</div>
+                  <p className="text-gray-600">Нет доступных шаблонов</p>
+                </div>
+              ) : (
+                <div className="space-y-4 mb-6">
+                  {availableTemplates.map((template) => (
+                    <div 
+                      key={template.id} 
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        selectedTemplateId === template.id 
+                          ? 'border-indigo-500 bg-indigo-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedTemplateId(template.id)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <input
+                              type="radio"
+                              name="template"
+                              value={template.id}
+                              checked={selectedTemplateId === template.id}
+                              onChange={(e) => setSelectedTemplateId(e.target.value)}
+                              className="text-indigo-600"
+                            />
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {template.name}
+                            </h3>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              template.type === 'general' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {template.type === 'general' ? 'Общий' : 'Комната'}
+                            </span>
+                          </div>
+                          
+                          {template.description && (
+                            <p className="text-gray-600 text-sm mb-3">{template.description}</p>
+                          )}
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-500">Работ:</span>
+                              <span className="ml-2 font-medium">
+                                {template.rooms.reduce((total: number, room: any) => total + room.works.length, 0)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Стоимость:</span>
+                              <span className="ml-2 font-medium">
+                                {formatTemplatePrice(template.totalPrice)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Создан:</span>
+                              <span className="ml-2 font-medium">
+                                {new Date(template.createdAt).toLocaleDateString('ru-RU')}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Автор:</span>
+                              <span className="ml-2 font-medium">{template.creator.name}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="ml-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              window.open(`/templates/${template.id}/preview`, '_blank')
+                            }}
+                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                          >
+                            Просмотр
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Информация о применении */}
+              {estimate?.type === 'rooms' && currentRoomId && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center gap-2 text-blue-800">
+                    <Info className="h-5 w-5" />
+                    <span className="font-medium">Применение к помещению</span>
+                  </div>
+                  <p className="text-blue-700 mt-1">
+                    Работы из шаблона будут добавлены в текущее помещение: <strong>{rooms.find(r => r.id === currentRoomId)?.name}</strong>
+                  </p>
+                </div>
+              )}
+              
+              {estimate?.type === 'apartment' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center gap-2 text-green-800">
+                    <Info className="h-5 w-5" />
+                    <span className="font-medium">Применение к смете</span>
+                  </div>
+                  <p className="text-green-700 mt-1">
+                    Работы из шаблона будут добавлены к существующим работам в смете
+                  </p>
+                </div>
+              )}
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowTemplateModal(false)
+                    setSelectedTemplateId('')
+                  }}
+                  className="btn-secondary"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={handleApplyTemplate}
+                  disabled={!selectedTemplateId || applyingTemplate}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {applyingTemplate ? 'Применение...' : 'Применить шаблон'}
                 </button>
               </div>
             </div>

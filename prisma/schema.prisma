@@ -21,6 +21,7 @@ model User {
   createdClients   Client[]
   deletedEstimates DeletedEstimate[]
   createdEstimates Estimate[]
+  createdTemplates Template[]
   scheduleProjects ScheduleProject[]
 
   @@map("users")
@@ -214,20 +215,21 @@ model Receipt {
 }
 
 model WorkItem {
-  id          String         @id @default(cuid())
-  name        String
-  unit        String
-  price       Float
-  description String?
-  isActive    Boolean        @default(true)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  blockId     String
-  parameterId String?
-  actWorks    ActWork[]
-  works       EstimateWork[]
-  block       WorkBlock      @relation(fields: [blockId], references: [id])
-  parameter   RoomParameter? @relation(fields: [parameterId], references: [id])
+  id            String         @id @default(cuid())
+  name          String
+  unit          String
+  price         Float
+  description   String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  blockId       String
+  parameterId   String?
+  actWorks      ActWork[]
+  works         EstimateWork[]
+  templateWorks TemplateWork[]
+  block         WorkBlock      @relation(fields: [blockId], references: [id])
+  parameter     RoomParameter? @relation(fields: [parameterId], references: [id])
 
   @@map("work_items")
 }
@@ -597,4 +599,93 @@ model ActExport {
   act                 Act      @relation(fields: [actId], references: [id], onDelete: Cascade)
 
   @@map("act_exports")
+}
+
+model Template {
+  id                    String         @id @default(cuid())
+  name                  String
+  type                  String         // "general" или "room"
+  description           String?
+  totalWorksPrice       Float          @default(0)
+  totalMaterialsPrice   Float          @default(0)
+  totalPrice            Float          @default(0)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  createdBy             String
+  materialsBlock        String?
+  summaryMaterialsBlock String?
+  summaryWorksBlock     String?
+  worksBlock            String?
+  isActive              Boolean        @default(true)
+  rooms                 TemplateRoom[]
+  creator               User           @relation(fields: [createdBy], references: [id])
+
+  @@map("templates")
+}
+
+model TemplateRoom {
+  id                  String              @id @default(cuid())
+  name                String
+  totalWorksPrice     Float               @default(0)
+  totalMaterialsPrice Float               @default(0)
+  totalPrice          Float               @default(0)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  templateId          String
+  sortOrder           Int                 @default(0)
+  materials           TemplateMaterial[]
+  template            Template            @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  works               TemplateWork[]
+  workBlocks          TemplateWorkBlock[]
+
+  @@map("template_rooms")
+}
+
+model TemplateWork {
+  id             String             @id @default(cuid())
+  quantity       Float
+  price          Float
+  totalPrice     Float
+  description    String?
+  roomId         String
+  workItemId     String?
+  blockTitle     String?
+  manualWorkName String?
+  manualWorkUnit String?
+  workBlockId    String?
+  room           TemplateRoom       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  workItem       WorkItem?          @relation(fields: [workItemId], references: [id])
+  workBlock      TemplateWorkBlock? @relation(fields: [workBlockId], references: [id], onDelete: Cascade)
+
+  @@map("template_works")
+}
+
+model TemplateMaterial {
+  id          String       @id @default(cuid())
+  name        String
+  unit        String
+  quantity    Float
+  price       Float
+  totalPrice  Float
+  description String?
+  roomId      String
+  room        TemplateRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("template_materials")
+}
+
+model TemplateWorkBlock {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  totalPrice  Float          @default(0)
+  isCollapsed Boolean        @default(false)
+  sortOrder   Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  roomId      String
+  room        TemplateRoom   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  works       TemplateWork[]
+
+  @@map("template_work_blocks")
 }

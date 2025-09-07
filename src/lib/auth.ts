@@ -14,11 +14,76 @@ export async function getCurrentUser(request: Request): Promise<AuthSession | nu
     
     if (!authCookie) return null
     
-    const sessionData = authCookie.split('=')[1]
-    const user = JSON.parse(decodeURIComponent(sessionData))
+    const sessionValue = authCookie.split('=')[1]
+    
+    let session: any
+    try {
+      if (!sessionValue) {
+        console.error('Session value is empty')
+        return null
+      }
+
+      // Сначала пробуем URL decode (куки могут быть URL-кодированы)
+      let cleanSessionValue = sessionValue
+      try {
+        if (sessionValue.includes('%')) {
+          cleanSessionValue = decodeURIComponent(sessionValue)
+        }
+      } catch (urlDecodeError) {
+        // Если URL decode не работает, используем исходное значение
+        cleanSessionValue = sessionValue
+      }
+
+      // Теперь пробуем декодировать как обычный base64 (основной формат для auth-session)
+      try {
+        const decodedValue = Buffer.from(cleanSessionValue, 'base64').toString('utf-8')
+        session = JSON.parse(decodedValue)
+      } catch (base64Error) {
+        // Если не получается base64, проверяем на JWT (только если есть точки)
+        if (cleanSessionValue.includes('.')) {
+          try {
+            const parts = cleanSessionValue.split('.')
+            if (parts.length >= 2) {
+              const payload = parts[1]
+              if (payload) {
+                const decodedPayload = Buffer.from(payload, 'base64').toString('utf-8')
+                session = JSON.parse(decodedPayload)
+              } else {
+                throw new Error('JWT payload is empty')
+              }
+            } else {
+              throw new Error('Invalid JWT format')
+            }
+          } catch (jwtError) {
+            // Последняя попытка - прямой JSON parse
+            try {
+              session = JSON.parse(cleanSessionValue)
+            } catch (jsonError) {
+              console.error('Failed to parse session cookie in any format:', { base64Error, jwtError, jsonError })
+              return null
+            }
+          }
+        } else {
+          // Если нет точек, пробуем прямой JSON parse
+          try {
+            session = JSON.parse(cleanSessionValue)
+          } catch (jsonError) {
+            console.error('Failed to parse session cookie as base64 or JSON:', { base64Error, jsonError })
+            return null
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to parse session cookie:', error)
+      return null
+    }
+    
+    if (!session.id || !session.role || !session.username) {
+      return null
+    }
     
     return {
-      user,
+      user: session,
       isAuthenticated: true
     }
   } catch (error) {
@@ -76,20 +141,68 @@ export function checkAuth(request: NextRequest): Session | null {
       return null
     }
 
+    const sessionValue = sessionCookie.value
     let session: any
+    
     try {
-      // Сначала пробуем декодировать как base64
-      const decodedValue = Buffer.from(sessionCookie.value, 'base64').toString('utf-8')
-      session = JSON.parse(decodedValue)
-    } catch (base64Error) {
-      try {
-        // Если не получается, пробуем URL decode
-        const urlDecoded = decodeURIComponent(sessionCookie.value)
-        session = JSON.parse(urlDecoded)
-      } catch (urlError) {
-        console.error('Failed to parse session cookie as base64 or URL-encoded:', { base64Error, urlError })
+      if (!sessionValue) {
+        console.error('Session value is empty')
         return null
       }
+
+      // Сначала пробуем URL decode (куки могут быть URL-кодированы)
+      let cleanSessionValue = sessionValue
+      try {
+        if (sessionValue.includes('%')) {
+          cleanSessionValue = decodeURIComponent(sessionValue)
+        }
+      } catch (urlDecodeError) {
+        // Если URL decode не работает, используем исходное значение
+        cleanSessionValue = sessionValue
+      }
+
+      // Теперь пробуем декодировать как обычный base64 (основной формат для auth-session)
+      try {
+        const decodedValue = Buffer.from(cleanSessionValue, 'base64').toString('utf-8')
+        session = JSON.parse(decodedValue)
+      } catch (base64Error) {
+        // Если не получается base64, проверяем на JWT (только если есть точки)
+        if (cleanSessionValue.includes('.')) {
+          try {
+            const parts = cleanSessionValue.split('.')
+            if (parts.length >= 2) {
+              const payload = parts[1]
+              if (payload) {
+                const decodedPayload = Buffer.from(payload, 'base64').toString('utf-8')
+                session = JSON.parse(decodedPayload)
+              } else {
+                throw new Error('JWT payload is empty')
+              }
+            } else {
+              throw new Error('Invalid JWT format')
+            }
+          } catch (jwtError) {
+            // Последняя попытка - прямой JSON parse
+            try {
+              session = JSON.parse(cleanSessionValue)
+            } catch (jsonError) {
+              console.error('Failed to parse session cookie in any format:', { base64Error, jwtError, jsonError })
+              return null
+            }
+          }
+        } else {
+          // Если нет точек, пробуем прямой JSON parse
+          try {
+            session = JSON.parse(cleanSessionValue)
+          } catch (jsonError) {
+            console.error('Failed to parse session cookie as base64 or JSON:', { base64Error, jsonError })
+            return null
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to parse session cookie:', error)
+      return null
     }
     
     if (!session.id || !session.role || !session.username) {

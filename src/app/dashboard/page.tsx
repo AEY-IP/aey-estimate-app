@@ -12,7 +12,8 @@ import {
   LogOut,
   User,
   TrendingUp,
-  Clock
+  Clock,
+  Layout
 } from 'lucide-react'
 
 interface UserData {
@@ -105,6 +106,13 @@ export default function ProfessionalDashboard() {
           count: stats?.totalClients
         },
         {
+          title: 'Шаблоны',
+          description: 'Шаблоны для быстрого создания смет',
+          icon: Layout,
+          href: '/templates',
+          color: 'from-indigo-500 to-indigo-600'
+        },
+        {
           title: 'Справочник работ',
           description: 'Просмотр каталога работ (только чтение)',
           icon: FileText,
@@ -130,6 +138,13 @@ export default function ProfessionalDashboard() {
           href: '/dashboard/clients',
           color: 'from-blue-500 to-blue-600',
           count: stats?.totalClients
+        },
+        {
+          title: 'Шаблоны',
+          description: 'Создание и управление шаблонами смет',
+          icon: Layout,
+          href: '/templates',
+          color: 'from-indigo-500 to-indigo-600'
         },
         {
           title: 'Справочник работ',

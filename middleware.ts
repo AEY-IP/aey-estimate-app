@@ -75,6 +75,36 @@ export function middleware(request: NextRequest) {
           )
         }
       }
+      
+      // API шаблонов: просмотр и применение для ADMIN/MANAGER, создание/редактирование только для ADMIN
+      if (pathname.startsWith('/api/templates')) {
+        // Просмотр шаблонов доступен ADMIN и MANAGER
+        if (request.method === 'GET' || pathname.includes('/apply')) {
+          if (!['ADMIN', 'MANAGER'].includes(userRole)) {
+            return NextResponse.json(
+              { error: 'Доступ запрещен. Требуются права администратора или менеджера.' },
+              { status: 403 }
+            )
+          }
+        }
+        
+        // Создание, редактирование, удаление только для ADMIN
+        if (['POST', 'PUT', 'DELETE'].includes(request.method) && !pathname.includes('/apply')) {
+          if (userRole !== 'ADMIN') {
+            return NextResponse.json(
+              { error: 'Доступ запрещен. Требуются права администратора.' },
+              { status: 403 }
+            )
+          }
+        }
+      }
+    }
+    
+    // Проверяем доступ к страницам шаблонов
+    if (pathname.startsWith('/templates')) {
+      if (!['ADMIN', 'MANAGER'].includes(userRole)) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
     }
     
     return NextResponse.next()
