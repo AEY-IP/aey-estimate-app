@@ -17,7 +17,9 @@ import {
   ToggleRight,
   Calendar,
   User,
-  Package
+  Package,
+  ChevronDown,
+  Copy
 } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 import { useToast } from '@/components/Toast'
@@ -59,6 +61,7 @@ export default function ClientEstimatesPage() {
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showCreateDropdown, setShowCreateDropdown] = useState(false)
 
   const clientId = params.id as string
 
@@ -67,6 +70,21 @@ export default function ClientEstimatesPage() {
       loadData()
     }
   }, [clientId])
+
+  // Закрытие выпадающего меню при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showCreateDropdown) {
+        const target = event.target as Element
+        if (!target.closest('.relative')) {
+          setShowCreateDropdown(false)
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showCreateDropdown])
 
   const loadData = async () => {
     try {
@@ -221,13 +239,47 @@ export default function ClientEstimatesPage() {
             </div>
             
             <div className="flex gap-3">
-              <Link
-                href={`/estimates/new?clientId=${clientId}`}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Создать смету
-              </Link>
+              {/* Выпадающее меню создания сметы */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowCreateDropdown(!showCreateDropdown)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Создать смету
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+                
+                {showCreateDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border z-10">
+                    <div className="py-2">
+                      <Link
+                        href={`/estimates/new?clientId=${clientId}`}
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowCreateDropdown(false)}
+                      >
+                        <Plus className="h-4 w-4 text-blue-500" />
+                        <div>
+                          <div className="font-medium">Новая смета</div>
+                          <div className="text-sm text-gray-500">Создать смету с нуля</div>
+                        </div>
+                      </Link>
+                      
+                      <Link
+                        href={`/estimates/copy?clientId=${clientId}`}
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowCreateDropdown(false)}
+                      >
+                        <Copy className="h-4 w-4 text-green-500" />
+                        <div>
+                          <div className="font-medium">Копировать смету</div>
+                          <div className="text-sm text-gray-500">Создать на основе существующей</div>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
               
               <Link
                 href={`/acts/new?clientId=${clientId}`}
@@ -251,13 +303,47 @@ export default function ClientEstimatesPage() {
               У этого клиента пока нет созданных смет и актов
             </p>
             <div className="flex gap-3 justify-center">
-              <Link
-                href={`/estimates/new?clientId=${clientId}`}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Создать смету
-              </Link>
+              {/* Выпадающее меню создания сметы */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowCreateDropdown(!showCreateDropdown)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Создать смету
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+                
+                {showCreateDropdown && (
+                  <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-56 bg-white rounded-lg shadow-lg border z-10">
+                    <div className="py-2">
+                      <Link
+                        href={`/estimates/new?clientId=${clientId}`}
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowCreateDropdown(false)}
+                      >
+                        <Plus className="h-4 w-4 text-blue-500" />
+                        <div>
+                          <div className="font-medium">Новая смета</div>
+                          <div className="text-sm text-gray-500">Создать смету с нуля</div>
+                        </div>
+                      </Link>
+                      
+                      <Link
+                        href={`/estimates/copy?clientId=${clientId}`}
+                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowCreateDropdown(false)}
+                      >
+                        <Copy className="h-4 w-4 text-green-500" />
+                        <div>
+                          <div className="font-medium">Копировать смету</div>
+                          <div className="text-sm text-gray-500">Создать на основе существующей</div>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
               
               <Link
                 href={`/acts/new?clientId=${clientId}`}

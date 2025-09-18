@@ -8,6 +8,7 @@ import { Estimate, Coefficient, WorkBlock, WorkItem, RoomParameter, RoomParamete
 import RoomNavigation from '@/components/RoomNavigation'
 import { useAuth } from '@/components/AuthProvider'
 import { useToast } from '@/components/Toast'
+import NumericInput from '@/components/NumericInput'
 
 // Компонент для отображения названий работ с tooltip
 const WorkNameDisplay = ({ name, className = '' }: { name: string, className?: string }) => {
@@ -2631,17 +2632,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                             </div>
                           </div>
                           
-                          <input
-                            type="number"
-                            value={currentValue || ''}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value) || 0
-                              updateRoomParameterValue(parameter.id, value)
-                            }}
-                            className="input-field w-full text-lg font-semibold no-number-arrows"
+                          <NumericInput
+                            value={currentValue || 0}
+                            onChange={(value) => updateRoomParameterValue(parameter.id, value)}
+                            className="input-field w-full text-lg font-semibold"
                             placeholder="0"
-                            min="0"
-                            step="1"
+                            min={0}
+                            step={1}
+                            allowDecimals={true}
                           />
                           
                           {linkedWorksCount > 0 && (
@@ -3097,11 +3095,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                         <span className="text-sm text-gray-900 font-medium">{item.quantity}</span>
                                       ) : (
                                         <div className="relative">
-                                          <input
-                                            type="number"
+                                          <NumericInput
                                             value={item.quantity}
-                                            onChange={(e) => {
-                                              const newQuantity = parseFloat(e.target.value) || 0
+                                            onChange={(newQuantity) => {
                                               updateWorkInBlock(block.id, item.id, 'quantity', newQuantity)
                                               
                                               // Проверяем, отличается ли введенное значение от автоматического
@@ -3121,15 +3117,16 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                 }
                                               }
                                             }}
-                                            className={`input-field number-input w-16 no-number-arrows ${
+                                            className={`input-field number-input w-16 ${
                                               item.workId && (() => {
                                                 const workInCatalog = availableWorks.find(w => w.id === item.workId)
                                                 const isManuallyEdited = manuallyEditedQuantities.has(item.id)
                                                 return workInCatalog?.parameterId && !isManuallyEdited ? 'bg-pink-50 border-pink-200 pr-8' : ''
                                               })()
                                             }`}
-                                            min="0"
-                                            step="1"
+                                            min={0}
+                                            step={1}
+                                            allowDecimals={true}
                                           />
                                           {/* Иконка автоматического количества в правом верхнем углу */}
                                           {item.workId && (() => {
@@ -3177,11 +3174,9 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                         <span className="text-sm text-gray-900 font-medium">{item.unitPrice.toLocaleString('ru-RU')}</span>
                                       ) : (
                                         <div className="relative">
-                                          <input
-                                            type="number"
+                                          <NumericInput
                                             value={item.unitPrice}
-                                            onChange={(e) => {
-                                              const newPrice = parseFloat(e.target.value) || 0
+                                            onChange={(newPrice) => {
                                               updateWorkInBlock(block.id, item.id, 'unitPrice', newPrice)
                                               // Помечаем как ручную цену если цена отличается от справочника
                                               if (item.workId) {
@@ -3200,12 +3195,12 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                                                 setManuallyEditedPrices(prev => new Set([...Array.from(prev), item.id]))
                                               }
                                             }}
-                                            className={`input-field number-input w-24 no-number-arrows ${
+                                            className={`input-field number-input w-24 ${
                                               manuallyEditedPrices.has(item.id) ? 'bg-pink-50 border-pink-300' : ''
                                             }`}
-                                            min="0"
-                                            step="1"
-                                            title="Базовая цена за единицу"
+                                            min={0}
+                                            step={1}
+                                            allowDecimals={true}
                                           />
                                           {manuallyEditedPrices.has(item.id) && (
                                             <div className="absolute top-1 right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer group hover:bg-orange-600 transition-colors"
@@ -3441,13 +3436,13 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                             {isSummaryView ? (
                               <span className="text-sm text-gray-900 font-medium">{item.quantity}</span>
                             ) : (
-                              <input
-                                type="number"
+                              <NumericInput
                                 value={item.quantity}
-                                onChange={(e) => updateMaterialItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                                className="input-field number-input w-16 no-number-arrows"
-                                min="0"
-                                step="1"
+                                onChange={(value) => updateMaterialItem(item.id, 'quantity', value)}
+                                className="input-field number-input w-16"
+                                min={0}
+                                step={1}
+                                allowDecimals={true}
                               />
                             )}
                           </td>
@@ -3455,13 +3450,13 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                             {isSummaryView ? (
                               <span className="text-sm text-gray-900 font-medium">{item.unitPrice.toLocaleString('ru-RU')}</span>
                             ) : (
-                              <input
-                                type="number"
+                              <NumericInput
                                 value={item.unitPrice}
-                                onChange={(e) => updateMaterialItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                                className="input-field number-input w-24 no-number-arrows"
-                                min="0"
-                                step="1"
+                                onChange={(value) => updateMaterialItem(item.id, 'unitPrice', value)}
+                                className="input-field number-input w-24"
+                                min={0}
+                                step={1}
+                                allowDecimals={true}
                               />
                             )}
                           </td>
@@ -4117,14 +4112,14 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Срок выполнения работ (рабочих дней) *
                   </label>
-                  <input
-                    type="number"
-                    value={additionalAgreementSettings.workPeriod}
-                    onChange={(e) => setAdditionalAgreementSettings(prev => ({
+                  <NumericInput
+                    value={parseInt(additionalAgreementSettings.workPeriod) || 0}
+                    onChange={(value) => setAdditionalAgreementSettings(prev => ({
                       ...prev,
-                      workPeriod: e.target.value
+                      workPeriod: value.toString()
                     }))}
-                    min="1"
+                    min={1}
+                    allowDecimals={false}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>

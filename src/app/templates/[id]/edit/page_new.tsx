@@ -5,6 +5,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
 import { Template, TemplateWorkBlock } from '@/types/template'
+import NumericInput from '@/components/NumericInput'
 
 interface Props {
   params: { id: string }
@@ -618,14 +619,14 @@ export default function EditTemplatePage({ params }: Props) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Количество
                 </label>
-                <input
-                  type="number"
-                  value={workQuantity}
-                  onChange={(e) => setWorkQuantity(e.target.value)}
+                <NumericInput
+                  value={parseFloat(workQuantity) || 0}
+                  onChange={(value) => setWorkQuantity(value.toString())}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Введите количество"
-                  min="0"
-                  step="0.01"
+                  min={0}
+                  step={0.01}
+                  allowDecimals={true}
                 />
               </div>
 

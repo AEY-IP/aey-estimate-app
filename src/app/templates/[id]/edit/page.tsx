@@ -5,6 +5,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
 import { Template, TemplateWorkBlock } from '@/types/template'
+import NumericInput from '@/components/NumericInput'
 
 interface Props {
   params: { id: string }
@@ -700,13 +701,13 @@ export default function EditTemplatePage({ params }: Props) {
                                   </td>
                                   <td className="p-2">
                                     {isTemporary && (isManualWork || hasWorkItem) ? (
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
+                                      <NumericInput
                                         value={work.quantity}
-                                        onChange={(e) => updateWorkInBlock(block.id, work.id, 'quantity', parseFloat(e.target.value) || 0)}
+                                        onChange={(value) => updateWorkInBlock(block.id, work.id, 'quantity', value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                        min={0}
+                                        step={0.01}
+                                        allowDecimals={true}
                                       />
                                     ) : (
                                       work.quantity
@@ -714,14 +715,14 @@ export default function EditTemplatePage({ params }: Props) {
                                   </td>
                                   <td className="p-2">
                                     {isTemporary && isManualWork && !hasWorkItem ? (
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="Цена"
+                                      <NumericInput
                                         value={work.price}
-                                        onChange={(e) => updateWorkInBlock(block.id, work.id, 'price', parseFloat(e.target.value) || 0)}
+                                        onChange={(value) => updateWorkInBlock(block.id, work.id, 'price', value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                        placeholder="Цена"
+                                        min={0}
+                                        step={0.01}
+                                        allowDecimals={true}
                                       />
                                     ) : (
                                       formatPrice(work.price)

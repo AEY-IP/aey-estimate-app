@@ -5,6 +5,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
 import { Template } from '@/types/template'
+import NumericInput from '@/components/NumericInput'
 
 interface Props {
   params: { id: string }
@@ -331,18 +332,17 @@ export default function EditTemplatePage({ params }: Props) {
                                 <span>•</span>
                                 <div className="flex items-center gap-2">
                                   <span>Количество:</span>
-                                  <input
-                                    type="number"
+                                  <NumericInput
                                     value={work.quantity}
-                                    onChange={(e) => {
-                                      const newQuantity = parseFloat(e.target.value) || 0
+                                    onChange={(newQuantity) => {
                                       if (newQuantity > 0) {
                                         handleUpdateWorkQuantity(work.id, newQuantity)
                                       }
                                     }}
-                                    min="0"
-                                    step="0.1"
                                     className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    min={0}
+                                    step={0.1}
+                                    allowDecimals={true}
                                   />
                                   <span>{work.workItem?.unit || work.manualWorkUnit}</span>
                                 </div>
