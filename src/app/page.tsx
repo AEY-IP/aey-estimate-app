@@ -1,219 +1,174 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { Calculator, User, Loader2, ArrowRight, Building2, UserCheck, Calendar, Image, FileText } from 'lucide-react'
+import Header from '@/components/website/Header'
+import Footer from '@/components/website/Footer'
+import Link from 'next/link'
+import { ArrowRight, Sparkles, Ruler, Hammer, CheckCircle2 } from 'lucide-react'
 
 export default function HomePage() {
-  const router = useRouter()
-  const [isChecking, setIsChecking] = useState(true)
-  const [showAuthSelect, setShowAuthSelect] = useState(false)
-
-  useEffect(() => {
-    checkAuthStatus()
-  }, [router])
-
-  const checkAuthStatus = async () => {
-    try {
-      // Проверяем авторизацию профи
-      const adminResponse = await fetch('/api/auth/me', {
-        credentials: 'include'
-      })
-      const isAdminAuth = adminResponse.ok
-
-      // Проверяем авторизацию клиента
-      const clientResponse = await fetch('/api/auth/client-me', {
-        credentials: 'include'
-      })
-      const isClientAuth = clientResponse.ok
-
-      // Если пользователь уже авторизован, перенаправляем в соответствующую среду
-      if (isAdminAuth) {
-        console.log('👤 Admin already authenticated, redirecting to dashboard...')
-        router.replace('/dashboard')
-        return
-      }
-
-      if (isClientAuth) {
-        console.log('👤 Client already authenticated, redirecting to client dashboard...')
-        router.replace('/client-dashboard')
-        return
-      }
-
-      // Если никто не авторизован, показываем страницу выбора
-      setIsChecking(false)
-      setShowAuthSelect(true)
-
-    } catch (error) {
-      console.error('Error checking auth status:', error)
-      setIsChecking(false)
-      setShowAuthSelect(true)
-    }
-  }
-
-  // Показываем загрузку пока проверяем авторизацию
-  if (isChecking) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-600">Проверка авторизации...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Показываем страницу выбора авторизации
-  if (showAuthSelect) {
-    return (
-      <div className="min-h-screen flex flex-col md:flex-row">
-        {/* Шапка с логотипом для мобильных */}
-        <div className="md:hidden bg-white border-b border-gray-100 px-4 py-3 text-center">
-          <h1 className="text-lg font-bold text-pink-500 leading-tight">
-            Идеальный подрядчик
-          </h1>
-          <p className="text-gray-500 text-xs leading-tight">
-            Система управления проектами
-          </p>
-        </div>
-
-        {/* Профессиональная среда - верх/левая половина */}
-        <div 
-          onClick={() => router.push('/login')}
-          className="flex-1 relative overflow-hidden cursor-pointer group transition-all duration-700 ease-out min-h-[50vh] md:min-h-screen"
-        >
-          {/* Базовый фон */}
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 transition-all duration-700 ease-out group-hover:from-black group-hover:to-gray-900" />
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      
+      <main className="flex-1">
+        {/* Hero секция */}
+        <section className="relative bg-gradient-to-br from-black via-gray-900 to-black text-white overflow-hidden">
+          {/* Декоративные элементы */}
+          <div className="absolute top-20 left-10 w-72 h-72 bg-pink-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl" />
           
-          {/* Контент */}
-          <div className="relative h-full flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 text-center">
-            {/* Иконка */}
-            <div className="mb-3 sm:mb-4 md:mb-6 relative">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-18 md:h-18 lg:w-24 lg:h-24 bg-white rounded-3xl flex items-center justify-center shadow-xl transition-all duration-700 ease-out group-hover:bg-pink-500 group-hover:shadow-2xl group-hover:shadow-pink-500/30 group-hover:scale-110">
-                <Calculator className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 lg:h-10 lg:w-10 text-gray-700 transition-all duration-700 ease-out group-hover:text-white" />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+            <div className="text-center">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+                Идеальный подрядчик для
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-pink-600">
+                  вашего дома мечты
+                </span>
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+                Профессиональный дизайн интерьеров и качественный ремонт под ключ
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/design"
+                  className="px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl shadow-pink-500/50 flex items-center justify-center group"
+                >
+                  Дизайн проект
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  href="/renovation"
+                  className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white border-2 border-white/20 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm flex items-center justify-center"
+                >
+                  Ремонт под ключ
+                </Link>
               </div>
-              {/* Декоративные элементы */}
-              <div className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 bg-pink-500 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 delay-300 transform scale-0 group-hover:scale-100" />
-              <div className="absolute -bottom-1 -left-1 sm:-bottom-2 sm:-left-2 md:-bottom-3 md:-left-3 w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 lg:w-4 lg:h-4 bg-pink-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 delay-500 transform scale-0 group-hover:scale-100" />
-            </div>
-
-            {/* Заголовок */}
-            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-0.5 sm:mb-1 md:mb-2 transition-all duration-700 ease-out text-gray-900 group-hover:text-pink-400 leading-tight">
-              Профессиональная
-            </h2>
-            <h3 className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl font-bold mb-2 sm:mb-3 md:mb-4 transition-all duration-700 ease-out text-gray-900 group-hover:text-pink-300 leading-tight">
-              среда
-            </h3>
-
-            {/* Описание */}
-            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 group-hover:text-pink-200 transition-all duration-700 ease-out mb-2 sm:mb-3 md:mb-4 lg:mb-6 max-w-[280px] sm:max-w-xs md:max-w-md px-1 sm:px-2 leading-relaxed">
-              Управление проектами, сметами и клиентами для администраторов и менеджеров
-            </p>
-
-            {/* Особенности */}
-            <div className="space-y-1 sm:space-y-2 md:space-y-3 mb-2 sm:mb-3 md:mb-4 lg:mb-6 max-w-[280px] sm:max-w-xs md:max-w-md">
-              <div className="flex items-center justify-center text-gray-600 group-hover:text-pink-200 transition-all duration-700 text-xs sm:text-sm md:text-base">
-                <Building2 className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
-                <span>Полный контроль проектов</span>
-              </div>
-              <div className="flex items-center justify-center text-gray-600 group-hover:text-pink-200 transition-all duration-700 text-xs sm:text-sm md:text-base">
-                <Calculator className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
-                <span>Управление сметами</span>
-              </div>
-              <div className="flex items-center justify-center text-gray-600 group-hover:text-pink-200 transition-all duration-700 text-xs sm:text-sm md:text-base">
-                <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
-                <span>Клиентская база</span>
-              </div>
-            </div>
-
-            {/* Кнопка входа */}
-            <div className="flex items-center text-gray-700 group-hover:text-pink-300 transition-all duration-700 ease-out font-semibold text-xs sm:text-sm md:text-base lg:text-lg">
-              <span className="mr-1.5 sm:mr-2">Войти в систему</span>
-              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 transform group-hover:translate-x-2 transition-transform duration-700 flex-shrink-0" />
             </div>
           </div>
+        </section>
 
-          {/* Декоративные элементы фона */}
-          <div className="absolute top-5 left-3 sm:top-10 sm:left-5 md:top-20 md:left-10 w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24 lg:w-32 lg:h-32 bg-pink-500/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-1000 transform -translate-x-3 sm:-translate-x-5 md:-translate-x-10 group-hover:translate-x-0" />
-          <div className="absolute bottom-5 right-3 sm:bottom-10 sm:right-5 md:bottom-20 md:right-10 w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-24 lg:h-24 bg-pink-400/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-200 transform translate-x-3 sm:translate-x-5 md:translate-x-10 group-hover:translate-x-0" />
-        </div>
-
-        {/* Разделительная линия - только для мобильных */}
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent md:hidden" />
-
-        {/* Кабинет клиента - низ/правая половина */}
-        <div 
-          onClick={() => router.push('/client-login')}
-          className="flex-1 relative overflow-hidden cursor-pointer group transition-all duration-700 ease-out min-h-[50vh] md:min-h-screen"
-        >
-          {/* Базовый фон */}
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 transition-all duration-700 ease-out group-hover:from-teal-500 group-hover:to-teal-600" />
-          
-          {/* Контент */}
-          <div className="relative h-full flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 text-center">
-            {/* Иконка */}
-            <div className="mb-3 sm:mb-4 md:mb-6 relative">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-18 md:h-18 lg:w-24 lg:h-24 bg-white rounded-3xl flex items-center justify-center shadow-xl transition-all duration-700 ease-out group-hover:bg-black group-hover:shadow-2xl group-hover:shadow-black/30 group-hover:scale-110">
-                <User className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 lg:h-10 lg:w-10 text-gray-700 transition-all duration-700 ease-out group-hover:text-white" />
-              </div>
-              {/* Декоративные элементы */}
-              <div className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 bg-black rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 delay-300 transform scale-0 group-hover:scale-100" />
-              <div className="absolute -bottom-1 -left-1 sm:-bottom-2 sm:-left-2 md:-bottom-3 md:-left-3 w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 lg:w-4 lg:h-4 bg-gray-600 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 delay-500 transform scale-0 group-hover:scale-100" />
-            </div>
-
-            {/* Заголовок */}
-            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-0.5 sm:mb-1 md:mb-2 transition-all duration-700 ease-out text-gray-900 group-hover:text-white leading-tight">
-              Кабинет
+        {/* Преимущества */}
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-black">
+              Почему выбирают нас
             </h2>
-            <h3 className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl font-bold mb-2 sm:mb-3 md:mb-4 transition-all duration-700 ease-out text-gray-900 group-hover:text-gray-100 leading-tight">
-              клиента
-            </h3>
-
-            {/* Описание */}
-            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 group-hover:text-gray-200 transition-all duration-700 ease-out mb-2 sm:mb-3 md:mb-4 lg:mb-6 max-w-[280px] sm:max-w-xs md:max-w-md px-1 sm:px-2 leading-relaxed">
-              Отслеживание прогресса работ, документооборот и взаимодействие с подрядчиком
-            </p>
-
-            {/* Особенности */}
-            <div className="space-y-1 sm:space-y-2 md:space-y-3 mb-2 sm:mb-3 md:mb-4 lg:mb-6 max-w-[280px] sm:max-w-xs md:max-w-md">
-              <div className="flex items-center justify-center text-gray-600 group-hover:text-gray-200 transition-all duration-700 text-xs sm:text-sm md:text-base">
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
-                <span>График работ</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl hover:shadow-xl transition-shadow duration-300">
+                <div className="w-16 h-16 bg-pink-500 rounded-xl flex items-center justify-center mb-6">
+                  <Sparkles className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-black">Индивидуальный дизайн</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Создаем уникальные интерьеры, учитывая ваши пожелания и особенности помещения
+                </p>
               </div>
-              <div className="flex items-center justify-center text-gray-600 group-hover:text-gray-200 transition-all duration-700 text-xs sm:text-sm md:text-base">
-                <Image className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
-                <span>Фото с объекта</span>
-              </div>
-              <div className="flex items-center justify-center text-gray-600 group-hover:text-gray-200 transition-all duration-700 text-xs sm:text-sm md:text-base">
-                <FileText className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
-                <span>Документы проекта</span>
-              </div>
-            </div>
 
-            {/* Кнопка входа */}
-            <div className="flex items-center text-gray-700 group-hover:text-gray-100 transition-all duration-700 ease-out font-semibold text-xs sm:text-sm md:text-base lg:text-lg">
-              <span className="mr-1.5 sm:mr-2">Войти в кабинет</span>
-              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 transform group-hover:translate-x-2 transition-transform duration-700 flex-shrink-0" />
+              <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl hover:shadow-xl transition-shadow duration-300">
+                <div className="w-16 h-16 bg-pink-500 rounded-xl flex items-center justify-center mb-6">
+                  <Hammer className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-black">Качественный ремонт</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Выполняем работы любой сложности с использованием современных материалов
+                </p>
+              </div>
+
+              <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl hover:shadow-xl transition-shadow duration-300">
+                <div className="w-16 h-16 bg-pink-500 rounded-xl flex items-center justify-center mb-6">
+                  <CheckCircle2 className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-black">Гарантия качества</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Предоставляем гарантию на все виды работ и используем проверенные материалы
+                </p>
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Декоративные элементы фона */}
-          <div className="absolute top-5 right-3 sm:top-10 sm:right-5 md:top-20 md:right-10 w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24 lg:w-32 lg:h-32 bg-black/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-1000 transform translate-x-3 sm:translate-x-5 md:translate-x-10 group-hover:translate-x-0" />
-          <div className="absolute bottom-5 left-3 sm:bottom-10 sm:left-5 md:bottom-20 md:left-10 w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-24 lg:h-24 bg-gray-900/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-1000 delay-200 transform -translate-x-3 sm:-translate-x-5 md:-translate-x-10 group-hover:translate-x-0" />
-        </div>
+        {/* Услуги */}
+        <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-black">
+              Наши услуги
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Дизайн проект */}
+              <Link
+                href="/design"
+                className="group relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+              >
+                <div className="p-8">
+                  <div className="flex items-center mb-4">
+                    <Ruler className="h-10 w-10 text-pink-500 mr-4" />
+                    <h3 className="text-2xl font-bold text-black group-hover:text-pink-500 transition-colors">
+                      Дизайн проект
+                    </h3>
+                  </div>
+                  <p className="text-gray-600 mb-4 leading-relaxed">
+                    Разработка индивидуального дизайн-проекта с 3D визуализацией, подбором материалов и мебели
+                  </p>
+                  <div className="flex items-center text-pink-500 font-semibold group-hover:translate-x-2 transition-transform">
+                    Подробнее
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </div>
+                </div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500" />
+              </Link>
 
-        {/* Логотип компании внизу - только для десктопа */}
-        <div className="hidden md:block absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 text-center px-4">
-          <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-pink-500 mb-1 leading-tight">
-            Идеальный подрядчик
-          </h1>
-          <p className="text-gray-500 text-sm md:text-base leading-tight">
-            Система управления проектами
-          </p>
-        </div>
-      </div>
-    )
-  }
+              {/* Ремонт */}
+              <Link
+                href="/renovation"
+                className="group relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+              >
+                <div className="p-8">
+                  <div className="flex items-center mb-4">
+                    <Hammer className="h-10 w-10 text-pink-500 mr-4" />
+                    <h3 className="text-2xl font-bold text-black group-hover:text-pink-500 transition-colors">
+                      Ремонт под ключ
+                    </h3>
+                  </div>
+                  <p className="text-gray-600 mb-4 leading-relaxed">
+                    Полный спектр ремонтных работ: от косметического до капитального ремонта с авторским надзором
+                  </p>
+                  <div className="flex items-center text-pink-500 font-semibold group-hover:translate-x-2 transition-transform">
+                    Подробнее
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </div>
+                </div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500" />
+              </Link>
+            </div>
+          </div>
+        </section>
 
-  return null
-} 
+        {/* CTA секция */}
+        <section className="py-20 bg-gradient-to-br from-black via-gray-900 to-black text-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              Готовы начать свой проект?
+            </h2>
+            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+              Свяжитесь с нами для бесплатной консультации и расчета стоимости
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/pricing"
+                className="px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl shadow-pink-500/50"
+              >
+                Узнать стоимость
+              </Link>
+              <Link
+                href="/app"
+                className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white border-2 border-white/20 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm"
+              >
+                Личный кабинет
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
+  )
+}

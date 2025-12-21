@@ -21,10 +21,22 @@ module.exports = {
           500: '#64748b',
           600: '#475569',
           700: '#334155',
+        },
+        pink: {
+          50: '#fff0f7',
+          100: '#ffe0f0',
+          200: '#ffc0e0',
+          300: '#ff80c0',
+          400: '#ff40a0',
+          500: '#ff006f',
+          600: '#cc0059',
+          700: '#990043',
+          800: '#66002c',
+          900: '#330016',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Manrope', 'system-ui', 'sans-serif'],
       },
     },
   },

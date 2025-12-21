@@ -1,11 +1,10 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Manrope } from 'next/font/google'
 import './globals.css'
-import Navigation from '@/components/Navigation'
 import { ToastProvider } from '@/components/Toast'
 import { AuthProvider } from '@/components/AuthProvider'
 
-const inter = Inter({ subsets: ['latin'] })
+const manrope = Manrope({ subsets: ['latin', 'cyrillic'] })
 
 export const metadata: Metadata = {
   title: 'Идеальный подрядчик - Система управления сметами',
@@ -19,13 +18,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru">
-      <body className={inter.className}>
+      <body className={manrope.className}>
         <AuthProvider>
           <ToastProvider>
-            <Navigation />
-            <div className="min-h-screen bg-gray-50">
-              {children}
-            </div>
+            {children}
           </ToastProvider>
         </AuthProvider>
       </body>
