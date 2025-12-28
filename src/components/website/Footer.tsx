@@ -58,11 +58,15 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start space-x-3 text-gray-400">
                 <Phone className="h-5 w-5 text-pink-500 flex-shrink-0 mt-0.5" />
-                <span>+7 (XXX) XXX-XX-XX</span>
+                <a href="tel:+79932903098" className="hover:text-pink-500 transition-colors">
+                  +7 (993) 290-30-98
+                </a>
               </li>
               <li className="flex items-start space-x-3 text-gray-400">
                 <Mail className="h-5 w-5 text-pink-500 flex-shrink-0 mt-0.5" />
-                <span>info@idealcontractor.ru</span>
+                <a href="mailto:idealpodryad@gmail.com" className="hover:text-pink-500 transition-colors">
+                  idealpodryad@gmail.com
+                </a>
               </li>
               <li className="flex items-start space-x-3 text-gray-400">
                 <MapPin className="h-5 w-5 text-pink-500 flex-shrink-0 mt-0.5" />

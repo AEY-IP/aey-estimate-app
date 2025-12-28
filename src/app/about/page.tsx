@@ -1,6 +1,7 @@
 import Header from '@/components/website/Header'
 import Footer from '@/components/website/Footer'
-import { Users, Award, Target, Heart } from 'lucide-react'
+import CTASection from '@/components/website/CTASection'
+import { Shield, Target, Zap, Sparkles } from 'lucide-react'
 
 export default function AboutPage() {
   return (
@@ -155,70 +156,48 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <div className="text-center">
                 <div className="w-20 h-20 bg-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform duration-300">
-                  <Users className="h-10 w-10 text-white" />
+                  <Shield className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-black">Клиентоориентированность</h3>
+                <h3 className="text-xl font-bold mb-3 text-black">Честность</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Ваши желания и комфорт — наш главный приоритет
+                  Мы за прозрачную коммуникацию без скрытых условий и заведомых занижений стоимости. Считаем всё и сразу.
                 </p>
               </div>
 
               <div className="text-center">
                 <div className="w-20 h-20 bg-black rounded-2xl flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform duration-300">
-                  <Award className="h-10 w-10 text-white" />
+                  <Target className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-black">Профессионализм</h3>
+                <h3 className="text-xl font-bold mb-3 text-black">Точность</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Высокие стандарты качества на каждом этапе работы
+                  Мы очень любим грамотное планирование, потому разработали собственное решение, которое позволяет нам меньше ошибаться.
                 </p>
               </div>
 
               <div className="text-center">
                 <div className="w-20 h-20 bg-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform duration-300">
-                  <Target className="h-10 w-10 text-white" />
+                  <Zap className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-black">Точность</h3>
+                <h3 className="text-xl font-bold mb-3 text-black">Трудолюбие</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Соблюдение сроков и бюджета проекта
+                  Двигаемся только вперед, каждый день дорабатываем решения, улучшаем процессы и придумываем что-то новое.
                 </p>
               </div>
 
               <div className="text-center">
                 <div className="w-20 h-20 bg-black rounded-2xl flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform duration-300">
-                  <Heart className="h-10 w-10 text-white" />
+                  <Sparkles className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-black">Любовь к делу</h3>
+                <h3 className="text-xl font-bold mb-3 text-black">Революционность</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Каждый проект мы выполняем с душой и вниманием
+                  Существующие решения признаем доисторическими, направленными на «дойку» клиентов. Нам это очень не нравится.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Команда */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-6 text-black">
-              Наша команда
-            </h2>
-            <p className="text-xl text-gray-600 text-center mb-16 max-w-3xl mx-auto leading-relaxed">
-              Опытные специалисты с многолетним стажем работы в сфере дизайна и строительства
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 text-center hover:shadow-xl transition-shadow duration-300">
-                  <div className="w-32 h-32 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full mx-auto mb-6" />
-                  <h3 className="text-xl font-bold mb-2 text-black">Имя специалиста</h3>
-                  <p className="text-pink-500 font-semibold mb-3">Должность</p>
-                  <p className="text-gray-600 leading-relaxed">
-                    Опыт работы более 10 лет в сфере дизайна интерьеров и управления проектами
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <CTASection />
       </main>
 
       <Footer />

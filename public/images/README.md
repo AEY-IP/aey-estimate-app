@@ -68,3 +68,4 @@ team/
   └── manager-avatar.jpg
 ```
 
+

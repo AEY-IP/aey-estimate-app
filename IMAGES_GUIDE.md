@@ -128,3 +128,4 @@ public/images/team/designer-maria.jpg
    - `hero-desktop.jpg` (1920px)
    - `hero-mobile.jpg` (768px)
 
+

@@ -1,12 +1,20 @@
+'use client'
+
 import Header from '@/components/website/Header'
 import Footer from '@/components/website/Footer'
+import CTASection from '@/components/website/CTASection'
+import LeadRequestModal from '@/components/website/LeadRequestModal'
 import Link from 'next/link'
+import { useState } from 'react'
 import { Ruler, Palette, Eye, FileText, CheckCircle2, ArrowRight } from 'lucide-react'
 
 export default function DesignPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <LeadRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       
       <main className="flex-1">
         {/* Hero */}
@@ -17,13 +25,18 @@ export default function DesignPage() {
               <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
                 Создаем уникальные интерьеры, отражающие вашу индивидуальность
               </p>
-              <Link
-                href="/pricing"
-                className="inline-flex items-center px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl shadow-pink-500/50"
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl shadow-pink-500/50"
               >
-                Узнать стоимость
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-start">
+                    <span className="text-lg font-semibold">Давайте начнем работать!</span>
+                    <span className="text-sm font-normal opacity-80">(Оставить заявку)</span>
+                  </div>
+                  <ArrowRight className="h-5 w-5 flex-shrink-0" />
+                </div>
+              </button>
             </div>
           </div>
         </section>
@@ -127,28 +140,12 @@ export default function DesignPage() {
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="py-20 bg-gradient-to-br from-black via-gray-900 to-black text-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Готовы создать интерьер мечты?
-            </h2>
-            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Свяжитесь с нами для бесплатной консультации
-            </p>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl shadow-pink-500/50"
-            >
-              Узнать стоимость
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </div>
-        </section>
+        <CTASection />
       </main>
 
       <Footer />
     </div>
   )
 }
+
 

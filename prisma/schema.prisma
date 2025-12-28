@@ -689,3 +689,17 @@ model TemplateWorkBlock {
 
   @@map("template_work_blocks")
 }
+
+model LeadRequest {
+  id                 String   @id @default(cuid())
+  name               String
+  phone              String
+  services           String[] // Массив выбранных услуг
+  contactMethods     String[] // Массив выбранных способов связи
+  status             String   @default("new") // new, contacted, converted, closed
+  notes              String?  // Для внутренних заметок менеджера
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  @@map("lead_requests")
+}

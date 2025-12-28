@@ -1,13 +1,21 @@
+'use client'
+
 import Header from '@/components/website/Header'
 import Footer from '@/components/website/Footer'
+import CTASection from '@/components/website/CTASection'
+import LeadRequestModal from '@/components/website/LeadRequestModal'
 import ProjectCard from '@/components/website/ProjectCard'
 import Link from 'next/link'
+import { useState } from 'react'
 import { ArrowRight, User, FileText, Calculator, Megaphone, CalendarClock, Camera, Video, Receipt } from 'lucide-react'
 
 export default function RenovationPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <LeadRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       
       <main className="flex-1">
         {/* Hero */}
@@ -18,13 +26,18 @@ export default function RenovationPage() {
               <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
                 Качественный ремонт любой сложности с гарантией и в срок
               </p>
-              <Link
-                href="/pricing"
-                className="inline-flex items-center px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl shadow-pink-500/50"
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl shadow-pink-500/50"
               >
-                Рассчитать стоимость
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-start">
+                    <span className="text-lg font-semibold">Давайте начнем работать!</span>
+                    <span className="text-sm font-normal opacity-80">(Оставить заявку)</span>
+                  </div>
+                  <ArrowRight className="h-5 w-5 flex-shrink-0" />
+                </div>
+              </button>
             </div>
           </div>
         </section>
@@ -342,24 +355,7 @@ export default function RenovationPage() {
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="py-20 bg-gradient-to-br from-black via-gray-900 to-black text-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Начните ремонт прямо сейчас
-            </h2>
-            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Оставьте заявку и получите бесплатный расчет стоимости ремонта
-            </p>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl shadow-pink-500/50"
-            >
-              Рассчитать стоимость
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </div>
-        </section>
+        <CTASection />
       </main>
 
       <Footer />

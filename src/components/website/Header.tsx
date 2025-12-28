@@ -14,6 +14,7 @@ export default function Header() {
     { name: 'О нас', href: '/about' },
     { name: 'Дизайн проект', href: '/design' },
     { name: 'Ремонт', href: '/renovation' },
+    { name: 'Прочие услуги', href: '/other-services' },
     { name: 'Цены', href: '/pricing' },
   ]
 
