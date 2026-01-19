@@ -18,7 +18,9 @@ model User {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   createdActs      Act[]
-  createdClients   Client[]
+  createdClients   Client[]          @relation("ClientCreator")
+  managedClients   Client[]          @relation("ClientManager")
+  designedClients  Client[]          @relation("ClientDesigner")
   deletedEstimates DeletedEstimate[]
   createdEstimates Estimate[]
   createdTemplates Template[]
@@ -28,29 +30,34 @@ model User {
 }
 
 model Client {
-  id               String                @id @default(cuid())
-  name             String
-  phone            String?
-  email            String?
-  address          String?
-  contractNumber   String?
-  notes            String?
-  isActive         Boolean               @default(true)
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  createdBy        String
-  contractDate     String?
-  acts             Act[]
-  clientUser       ClientUser?
-  creator          User                  @relation(fields: [createdBy], references: [id])
-  documents        Document[]
-  documentBlocks   DocumentBlock[]
-  estimates        Estimate[]
-  photoBlocks      PhotoBlock[]
-  projectNews      ProjectNews[]
-  scheduleItems    ProjectScheduleItem[]
-  receiptBlocks    ReceiptBlock[]
-  scheduleProjects ScheduleProject[]
+  id                   String                 @id @default(cuid())
+  name                 String
+  phone                String?
+  email                String?
+  address              String?
+  contractNumber       String?
+  notes                String?
+  isActive             Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  createdBy            String
+  contractDate         String?
+  managerId            String?
+  designerId           String?
+  acts                 Act[]
+  clientUser           ClientUser?
+  creator              User                   @relation(fields: [createdBy], references: [id], name: "ClientCreator")
+  manager              User?                  @relation(fields: [managerId], references: [id], name: "ClientManager")
+  designer             User?                  @relation(fields: [designerId], references: [id], name: "ClientDesigner")
+  documents            Document[]
+  documentBlocks       DocumentBlock[]
+  designProjectBlocks  DesignProjectBlock[]
+  estimates            Estimate[]
+  photoBlocks          PhotoBlock[]
+  projectNews          ProjectNews[]
+  scheduleItems        ProjectScheduleItem[]
+  receiptBlocks        ReceiptBlock[]
+  scheduleProjects     ScheduleProject[]
 
   @@map("clients")
 }
@@ -702,4 +709,40 @@ model LeadRequest {
   updatedAt          DateTime @updatedAt
   
   @@map("lead_requests")
+}
+
+model DesignProjectBlock {
+  id          String              @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  clientId    String
+  createdBy   String?
+  eventDate   DateTime?
+  isVisible   Boolean             @default(true)
+  sortOrder   Int                 @default(0)
+  tags        String[]            @default([])
+  client      Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  files       DesignProjectFile[]
+
+  @@map("design_project_blocks")
+}
+
+model DesignProjectFile {
+  id          String             @id @default(cuid())
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  description String?
+  createdAt   DateTime           @default(now())
+  blockId     String
+  isVisible   Boolean            @default(true)
+  sortOrder   Int                @default(0)
+  tags        String[]           @default([])
+  uploadedBy  String?
+  block       DesignProjectBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@map("design_project_files")
 }

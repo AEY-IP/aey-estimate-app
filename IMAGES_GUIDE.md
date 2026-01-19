@@ -129,3 +129,4 @@ public/images/team/designer-maria.jpg
    - `hero-mobile.jpg` (768px)
 
 
+

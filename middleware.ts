@@ -98,11 +98,31 @@ export function middleware(request: NextRequest) {
           }
         }
       }
+      
+      // API дизайн-проектов: доступ для ADMIN и DESIGNER (только своих клиентов)
+      if (pathname.startsWith('/api/design-projects')) {
+        if (!['ADMIN', 'DESIGNER'].includes(userRole)) {
+          return NextResponse.json(
+            { error: 'Доступ запрещен. Требуются права администратора или дизайнера.' },
+            { status: 403 }
+          )
+        }
+      }
     }
     
     // Проверяем доступ к страницам шаблонов
     if (pathname.startsWith('/templates')) {
       if (!['ADMIN', 'MANAGER'].includes(userRole)) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+    }
+    
+    // Дизайнеры имеют доступ только к dashboard и своим клиентам
+    if (userRole === 'DESIGNER') {
+      const allowedPaths = ['/dashboard', '/clients', '/api/clients', '/api/design-projects', '/api/auth']
+      const isAllowed = allowedPaths.some(path => pathname.startsWith(path))
+      
+      if (!isAllowed && !pathname.startsWith('/api/client')) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }

@@ -2,7 +2,7 @@ export interface User {
   id: string
   username: string
   passwordHash: string
-  role: 'ADMIN' | 'MANAGER' | 'CLIENT'
+  role: 'ADMIN' | 'MANAGER' | 'DESIGNER' | 'CLIENT'
   name: string
   phone?: string
   createdAt: string
@@ -24,5 +24,5 @@ export interface CreateUserRequest {
   password: string
   name: string
   phone?: string
-  role: 'ADMIN' | 'MANAGER' // Админы могут создавать и админов и менеджеров
+  role: 'ADMIN' | 'MANAGER' | 'DESIGNER' // Админы могут создавать админов, менеджеров и дизайнеров
 } 

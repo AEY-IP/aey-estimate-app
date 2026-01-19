@@ -18,6 +18,8 @@ export default function EditClientPage() {
   const [client, setClient] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [managers, setManagers] = useState<any[]>([])
+  const [designers, setDesigners] = useState<any[]>([])
   
   const [formData, setFormData] = useState({
     name: '',
@@ -26,10 +28,27 @@ export default function EditClientPage() {
     address: '',
     contractNumber: '',
     notes: '',
-    contractDate: ''
+    contractDate: '',
+    managerId: '',
+    designerId: ''
   })
 
   const clientId = params.id as string
+
+  // Загрузка пользователей (менеджеров и дизайнеров)
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/admin/users')
+      if (response.ok) {
+        const data = await response.json()
+        const allUsers = data.users || []
+        setManagers(allUsers.filter((u: any) => u.role === 'MANAGER'))
+        setDesigners(allUsers.filter((u: any) => u.role === 'DESIGNER'))
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    }
+  }
 
   // Загрузка клиента
   const fetchClient = async () => {
@@ -45,7 +64,9 @@ export default function EditClientPage() {
           address: data.address || '',
           contractNumber: data.contractNumber || '',
           notes: data.notes || '',
-          contractDate: data.contractDate || ''
+          contractDate: data.contractDate || '',
+          managerId: data.managerId || '',
+          designerId: data.designerId || ''
         })
       } else if (response.status === 404) {
         showToast('error', 'Клиент не найден')
@@ -62,6 +83,7 @@ export default function EditClientPage() {
   }
 
   useEffect(() => {
+    fetchUsers()
     fetchClient()
   }, [clientId])
 
@@ -289,6 +311,52 @@ export default function EditClientPage() {
                 placeholder="Дополнительная информация о клиенте..."
               />
             </div>
+
+            {/* Менеджер (только для ADMIN) */}
+            {session?.role === 'ADMIN' && (
+              <div>
+                <label htmlFor="managerId" className="block text-sm font-medium text-gray-700 mb-2">
+                  <User className="h-4 w-4 inline mr-2" />
+                  Менеджер проекта
+                </label>
+                <select
+                  id="managerId"
+                  value={formData.managerId}
+                  onChange={(e) => handleInputChange('managerId', e.target.value)}
+                  className="input-field"
+                >
+                  <option value="">Не назначен</option>
+                  {managers.map(manager => (
+                    <option key={manager.id} value={manager.id}>
+                      {manager.name} ({manager.username})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Дизайнер (только для ADMIN) */}
+            {session?.role === 'ADMIN' && (
+              <div>
+                <label htmlFor="designerId" className="block text-sm font-medium text-gray-700 mb-2">
+                  <User className="h-4 w-4 inline mr-2" />
+                  Дизайнер проекта
+                </label>
+                <select
+                  id="designerId"
+                  value={formData.designerId}
+                  onChange={(e) => handleInputChange('designerId', e.target.value)}
+                  className="input-field"
+                >
+                  <option value="">Не назначен</option>
+                  {designers.map(designer => (
+                    <option key={designer.id} value={designer.id}>
+                      {designer.name} ({designer.username})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </form>
         </div>
       </div>

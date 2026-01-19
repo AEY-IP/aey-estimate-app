@@ -49,21 +49,21 @@ export default function PricingPage() {
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 hover:shadow-xl transition-all duration-300">
                 <h3 className="text-2xl font-bold mb-4 text-black">Базовый</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-pink-500">от 1500</span>
+                  <span className="text-4xl font-bold text-pink-500">2000</span>
                   <span className="text-gray-600 ml-2">₽/м²</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <Check className="h-5 w-5 text-pink-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600">Обмерный план</span>
+                    <span className="text-gray-600">Обмер помещения</span>
                   </li>
                   <li className="flex items-start">
                     <Check className="h-5 w-5 text-pink-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600">Планировочное решение</span>
+                    <span className="text-gray-600">Планировочные решения</span>
                   </li>
                   <li className="flex items-start">
                     <Check className="h-5 w-5 text-pink-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600">3-4 визуализации</span>
+                    <span className="text-gray-600">ИИ концепция помещения</span>
                   </li>
                 </ul>
                 <Link
@@ -81,7 +81,7 @@ export default function PricingPage() {
                 </div>
                 <h3 className="text-2xl font-bold mb-4 text-white">Стандарт</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">от 2500</span>
+                  <span className="text-4xl font-bold text-white">3500</span>
                   <span className="text-pink-100 ml-2">₽/м²</span>
                 </div>
                 <ul className="space-y-3 mb-8">
@@ -92,10 +92,6 @@ export default function PricingPage() {
                   <li className="flex items-start">
                     <Check className="h-5 w-5 text-white mr-3 flex-shrink-0 mt-0.5" />
                     <span className="text-white">Рабочая документация</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-white mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-white">6-8 визуализаций</span>
                   </li>
                   <li className="flex items-start">
                     <Check className="h-5 w-5 text-white mr-3 flex-shrink-0 mt-0.5" />
@@ -114,25 +110,17 @@ export default function PricingPage() {
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 hover:shadow-xl transition-all duration-300">
                 <h3 className="text-2xl font-bold mb-4 text-black">Премиум</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-pink-500">от 3500</span>
+                  <span className="text-4xl font-bold text-pink-500">4500</span>
                   <span className="text-gray-600 ml-2">₽/м²</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <Check className="h-5 w-5 text-pink-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600">Все из стандартного</span>
+                    <span className="text-gray-600">Все из стандарта</span>
                   </li>
                   <li className="flex items-start">
                     <Check className="h-5 w-5 text-pink-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600">10+ визуализаций</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-pink-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600">Комплектация</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-pink-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600">Авторский надзор</span>
+                    <span className="text-gray-600">Визуализации</span>
                   </li>
                 </ul>
                 <Link
@@ -171,7 +159,7 @@ export default function PricingPage() {
                   <ul className="space-y-2 text-gray-600 text-sm leading-relaxed">
                     <li className="flex items-start">
                       <span className="text-pink-500 mr-2 flex-shrink-0">•</span>
-                      <span>Полы из ламината или кварцвинила</span>
+                      <span>Полы ламинат или кварцвинил</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-pink-500 mr-2 flex-shrink-0">•</span>
@@ -205,7 +193,7 @@ export default function PricingPage() {
                   <ul className="space-y-2 text-gray-600 text-sm leading-relaxed">
                     <li className="flex items-start">
                       <span className="text-pink-500 mr-2 flex-shrink-0">•</span>
-                      <span>Полы из инженерной доски или паркет</span>
+                      <span>Полы инженерная доска или паркет</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-pink-500 mr-2 flex-shrink-0">•</span>
@@ -213,7 +201,7 @@ export default function PricingPage() {
                     </li>
                     <li className="flex items-start">
                       <span className="text-pink-500 mr-2 flex-shrink-0">•</span>
-                      <span>Стены под покраску (К4, проверка с лампой Ломова) или декоративная штукатурка</span>
+                      <span>Стены под покраску (К4, проверка с лампой Лосева) или декоративная штукатурка</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-pink-500 mr-2 flex-shrink-0">•</span>

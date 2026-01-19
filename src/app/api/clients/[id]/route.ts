@@ -43,9 +43,14 @@ export async function GET(
       return NextResponse.json({ error: 'Клиент деактивирован' }, { status: 404 })
     }
     
-    // Проверяем права доступа для менеджеров
-    if (session.role === 'MANAGER' && client.createdBy !== session.id) {
-      console.log('Access denied for manager. Session ID:', session.id, 'Client createdBy:', client.createdBy)
+    // Проверяем права доступа для менеджеров и дизайнеров
+    if (session.role === 'MANAGER' && client.createdBy !== session.id && (client as any).managerId !== session.id) {
+      console.log('Access denied for manager. Session ID:', session.id, 'Client createdBy:', client.createdBy, 'managerId:', (client as any).managerId)
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+    
+    if (session.role === 'DESIGNER' && (client as any).designerId !== session.id) {
+      console.log('Access denied for designer. Session ID:', session.id, 'Client designerId:', (client as any).designerId)
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -85,53 +90,77 @@ export async function PUT(
       return NextResponse.json({ error: 'Клиент деактивирован' }, { status: 404 })
     }
     
-    // Проверяем права доступа для менеджеров
-    if (session.role === 'MANAGER' && existingClient.createdBy !== session.id) {
+    // Проверяем права доступа для менеджеров и дизайнеров
+    if (session.role === 'MANAGER' && existingClient.createdBy !== session.id && (existingClient as any).managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+    
+    // Дизайнеры не могут редактировать клиентов
+    if (session.role === 'DESIGNER') {
+      return NextResponse.json({ error: 'Дизайнеры не могут редактировать клиентов' }, { status: 403 })
     }
 
     const body = await request.json()
-    const { name, phone, email, address, contractNumber, contractDate, notes } = body
-
-    // Валидация
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      return NextResponse.json({ error: 'Название клиента обязательно' }, { status: 400 })
-    }
-
-    if (phone && (typeof phone !== 'string' || phone.length === 0)) {
-      return NextResponse.json({ error: 'Некорректный телефон' }, { status: 400 })
-    }
-
-    if (email && (typeof email !== 'string' || !email.includes('@'))) {
-      return NextResponse.json({ error: 'Некорректный email' }, { status: 400 })
-    }
-
-    // Проверяем уникальность имени (исключая текущего клиента)
-    const existingClientWithName = await prisma.client.findFirst({
-      where: {
-        id: { not: params.id },
-        name: { equals: name.trim(), mode: 'insensitive' },
-        isActive: true
-      }
-    })
-    
-    if (existingClientWithName) {
-      return NextResponse.json({ error: 'Клиент с таким названием уже существует' }, { status: 400 })
-    }
+    const { name, phone, email, address, contractNumber, contractDate, notes, managerId, designerId } = body
 
     // Обновляем клиента
+    const updateData: any = {
+      updatedAt: new Date()
+    }
+    
+    // Если присылается только managerId или designerId (для быстрого назначения)
+    const isQuickAssignment = (managerId !== undefined || designerId !== undefined) && !name
+    
+    if (!isQuickAssignment) {
+      // Полное обновление - валидация обязательных полей
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return NextResponse.json({ error: 'Название клиента обязательно' }, { status: 400 })
+      }
+
+      if (phone && (typeof phone !== 'string' || phone.length === 0)) {
+        return NextResponse.json({ error: 'Некорректный телефон' }, { status: 400 })
+      }
+
+      if (email && (typeof email !== 'string' || !email.includes('@'))) {
+        return NextResponse.json({ error: 'Некорректный email' }, { status: 400 })
+      }
+
+      // Проверяем уникальность имени (исключая текущего клиента)
+      const existingClientWithName = await prisma.client.findFirst({
+        where: {
+          id: { not: params.id },
+          name: { equals: name.trim(), mode: 'insensitive' },
+          isActive: true
+        }
+      })
+      
+      if (existingClientWithName) {
+        return NextResponse.json({ error: 'Клиент с таким названием уже существует' }, { status: 400 })
+      }
+
+      // Добавляем основные поля
+      updateData.name = name.trim()
+      updateData.phone = phone?.trim() || null
+      updateData.email = email?.trim() || null
+      updateData.address = address?.trim() || null
+      updateData.contractNumber = contractNumber?.trim() || null
+      updateData.contractDate = contractDate?.trim() || null
+      updateData.notes = notes?.trim() || null
+    }
+    
+    // Только ADMIN может изменять managerId и designerId
+    if (session.role === 'ADMIN') {
+      if (managerId !== undefined) {
+        updateData.managerId = managerId || null
+      }
+      if (designerId !== undefined) {
+        updateData.designerId = designerId || null
+      }
+    }
+    
     const updatedClient = await prisma.client.update({
       where: { id: params.id },
-      data: {
-        name: name.trim(),
-        phone: phone?.trim() || null,
-        email: email?.trim() || null,
-        address: address?.trim() || null,
-        contractNumber: contractNumber?.trim() || null,
-        contractDate: contractDate?.trim() || null,
-        notes: notes?.trim() || null,
-        updatedAt: new Date()
-      }
+      data: updateData
     })
 
     return NextResponse.json(updatedClient)
@@ -172,8 +201,13 @@ export async function DELETE(
     }
     
     // Проверяем права доступа для менеджеров
-    if (session.role === 'MANAGER' && existingClient.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && existingClient.createdBy !== session.id && (existingClient as any).managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+    
+    // Дизайнеры не могут удалять клиентов
+    if (session.role === 'DESIGNER') {
+      return NextResponse.json({ error: 'Дизайнеры не могут удалять клиентов' }, { status: 403 })
     }
 
     // Проверяем, есть ли сметы (без фильтра по status)

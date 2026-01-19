@@ -13,7 +13,8 @@ import {
   User,
   TrendingUp,
   Clock,
-  Layout
+  Layout,
+  MessageSquare
 } from 'lucide-react'
 
 interface UserData {
@@ -94,8 +95,20 @@ export default function ProfessionalDashboard() {
   }
 
   const getMenuItems = () => {
-    if (userData?.role === 'MANAGER') {
-      // Для менеджеров - 3 специальные кнопки
+    if (userData?.role === 'DESIGNER') {
+      // Для дизайнеров - только клиенты
+      return [
+        {
+          title: 'Клиенты',
+          description: 'Мои клиенты и проекты',
+          icon: Users,
+          href: '/dashboard/clients',
+          color: 'from-blue-500 to-blue-600',
+          count: stats?.totalClients
+        }
+      ]
+    } else if (userData?.role === 'MANAGER') {
+      // Для менеджеров - 4 кнопки
       return [
         {
           title: 'Клиенты',
@@ -138,6 +151,13 @@ export default function ProfessionalDashboard() {
           href: '/dashboard/clients',
           color: 'from-blue-500 to-blue-600',
           count: stats?.totalClients
+        },
+        {
+          title: 'Заявки',
+          description: 'Заявки с сайта на консультацию',
+          icon: MessageSquare,
+          href: '/dashboard/leads',
+          color: 'from-green-500 to-green-600'
         },
         {
           title: 'Шаблоны',

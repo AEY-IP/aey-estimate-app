@@ -31,3 +31,6 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts 
+# Design project uploads
+public/uploads/design-projects/*
+!public/uploads/design-projects/.gitkeep

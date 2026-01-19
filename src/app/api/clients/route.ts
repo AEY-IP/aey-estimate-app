@@ -3,7 +3,7 @@ import { prisma } from '@/lib/database'
 import { CreateClientRequest } from '@/types/client'
 import { checkAuth } from '@/lib/auth'
 
-// GET - получить клиентов (менеджеры видят только своих, админы - всех)
+// GET - получить клиентов (менеджеры и дизайнеры видят только своих, админы - всех)
 export async function GET(request: NextRequest) {
   try {
     // Проверяем аутентификацию
@@ -16,13 +16,21 @@ export async function GET(request: NextRequest) {
       isActive: true
     }
     
-    // Менеджеры видят только своих клиентов
+    // Менеджеры видят клиентов, где они createdBy или managerId
     if (session.role === 'MANAGER') {
-      where.createdBy = session.id
+      where.OR = [
+        { createdBy: session.id },
+        { managerId: session.id }
+      ]
+    }
+    
+    // Дизайнеры видят только клиентов, где они designerId
+    if (session.role === 'DESIGNER') {
+      where.designerId = session.id
     }
     
     // Админы видят всех клиентов (where остается как есть)
-    if (session.role !== 'ADMIN' && session.role !== 'MANAGER') {
+    if (session.role !== 'ADMIN' && session.role !== 'MANAGER' && session.role !== 'DESIGNER') {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
 
@@ -31,26 +39,34 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    // Получаем информацию о создателях
-    const creatorIds = Array.from(new Set(clients.map(c => c.createdBy)))
-    const creators = await prisma.user.findMany({
+    // Получаем информацию о создателях, менеджерах и дизайнерах
+    const userIds = Array.from(new Set([
+      ...clients.map(c => c.createdBy),
+      ...clients.map(c => c.managerId).filter(Boolean),
+      ...clients.map(c => c.designerId).filter(Boolean)
+    ]))
+    
+    const users = await prisma.user.findMany({
       where: {
-        id: { in: creatorIds }
+        id: { in: userIds as string[] }
       },
       select: {
         id: true,
         name: true,
-        username: true
+        username: true,
+        role: true
       }
     })
 
-    // Добавляем информацию о создателях к клиентам
-    const clientsWithCreators = clients.map(client => ({
+    // Добавляем информацию о пользователях к клиентам
+    const clientsWithUsers = clients.map(client => ({
       ...client,
-      createdByUser: creators.find(creator => creator.id === client.createdBy)
+      createdByUser: users.find(user => user.id === client.createdBy),
+      managerUser: client.managerId ? users.find(user => user.id === client.managerId) : null,
+      designerUser: client.designerId ? users.find(user => user.id === client.designerId) : null
     }))
 
-    return NextResponse.json(clientsWithCreators)
+    return NextResponse.json(clientsWithUsers)
   } catch (error) {
     console.error('Error fetching clients:', error)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
@@ -66,12 +82,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const body: CreateClientRequest = await request.json()
-    const { name, phone, email, address, contractNumber, contractDate, notes } = body
+    const body: any = await request.json()
+    const { name, phone, email, address, contractNumber, contractDate, notes, managerId, designerId } = body
 
     // Валидация
     if (!name || name.trim() === '') {
       return NextResponse.json({ error: 'Название клиента обязательно' }, { status: 400 })
+    }
+
+    // Дизайнеры не могут создавать клиентов
+    if (session.role === 'DESIGNER') {
+      return NextResponse.json({ error: 'Дизайнеры не могут создавать клиентов' }, { status: 403 })
     }
 
     // Создаем нового клиента в базе данных
@@ -85,6 +106,8 @@ export async function POST(request: NextRequest) {
         contractDate: contractDate?.trim() || null,
         notes: notes?.trim() || null,
         createdBy: session.id,
+        managerId: managerId || null,
+        designerId: designerId || null,
         isActive: true
       }
     })

@@ -17,7 +17,10 @@ export async function GET(request: NextRequest) {
         prisma.client.count({ 
           where: { 
             isActive: true,
-            createdBy: session.id
+            OR: [
+              { createdBy: session.id },
+              { managerId: session.id }
+            ]
           } 
         }),
         prisma.workItem.count({ where: { isActive: true } }),
@@ -25,7 +28,10 @@ export async function GET(request: NextRequest) {
           where: { 
             isAct: false,
             client: {
-              createdBy: session.id
+              OR: [
+                { createdBy: session.id },
+                { managerId: session.id }
+              ]
             }
           } 
         })
@@ -34,6 +40,28 @@ export async function GET(request: NextRequest) {
       totalClients = managerClients
       totalWorks = allWorks  // Работы общие для всех
       totalEstimates = managerEstimates
+    } else if (session.role === 'DESIGNER') {
+      // Для дизайнеров считаем только клиентов привязанных к ним
+      const [designerClients, designerEstimates] = await Promise.all([
+        prisma.client.count({ 
+          where: { 
+            isActive: true,
+            designerId: session.id
+          } 
+        }),
+        prisma.estimate.count({ 
+          where: { 
+            isAct: false,
+            client: {
+              designerId: session.id
+            }
+          } 
+        })
+      ])
+      
+      totalClients = designerClients
+      totalWorks = 0  // Дизайнеры не работают с работами
+      totalEstimates = designerEstimates
     } else {
       // Для админов получаем всю статистику
       const [allClients, allWorks, allEstimates] = await Promise.all([

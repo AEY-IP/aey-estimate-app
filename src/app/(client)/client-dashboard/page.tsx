@@ -11,7 +11,8 @@ import {
   Calendar, 
   Camera, 
   Video, 
-  Receipt
+  Receipt,
+  Star
 } from 'lucide-react'
 
 interface ClientData {
@@ -66,6 +67,14 @@ export default function ClientDashboardPage() {
       icon: FileText,
       href: '/client-dashboard/documents',
       color: 'from-blue-500 to-blue-600'
+    },
+    {
+      title: 'Дизайн-проект',
+      description: 'Дизайнерские проекты и визуализации',
+      shortTitle: 'Дизайн',
+      icon: Star,
+      href: '/client-dashboard/design-project',
+      color: 'from-purple-500 to-purple-600'
     },
     {
       title: 'Сметы',

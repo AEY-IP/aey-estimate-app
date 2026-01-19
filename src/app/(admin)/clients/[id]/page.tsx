@@ -42,6 +42,7 @@ import { Client } from '@/types/client'
 
 interface Stats {
   documents: { total: number; recent: number };
+  designProjects: { total: number; recent: number };
   estimates: { 
     total: number; 
     visible: number; 
@@ -178,6 +179,7 @@ export default function ClientDetailPage() {
       // Загружаем статистику по всем разделам
       const [
         documentsRes,
+        designProjectsRes,
         estimatesRes,
         newsRes,
         scheduleRes,
@@ -185,6 +187,7 @@ export default function ClientDetailPage() {
         receiptsRes
       ] = await Promise.all([
         fetch(`/api/documents?clientId=${clientId}`).catch(() => null),
+        fetch(`/api/design-projects?clientId=${clientId}`).catch(() => null),
         fetch(`/api/estimates?clientId=${clientId}`).catch(() => null),
         fetch(`/api/clients/${clientId}/news`).catch(() => null),
         fetch(`/api/schedule?clientId=${clientId}`).catch(() => null),
@@ -192,8 +195,9 @@ export default function ClientDetailPage() {
         fetch(`/api/receipts?clientId=${clientId}`).catch(() => null)
       ])
 
-      const [documents, estimatesData, news, schedule, photos, receipts] = await Promise.all([
+      const [documents, designProjects, estimatesData, news, schedule, photos, receipts] = await Promise.all([
         documentsRes && documentsRes.ok ? documentsRes.json() : { documents: [] },
+        designProjectsRes && designProjectsRes.ok ? designProjectsRes.json() : { designProjectBlocks: [] },
         estimatesRes && estimatesRes.ok ? estimatesRes.json() : { estimates: [] },
         newsRes && newsRes.ok ? newsRes.json() : { news: [] },
         scheduleRes && scheduleRes.ok ? scheduleRes.json() : { projects: [] },
@@ -213,6 +217,16 @@ export default function ClientDetailPage() {
           recent: documents.documents?.filter((d: any) => 
             new Date(d.createdAt) > weekAgo
           ).length || 0
+        },
+        designProjects: {
+          total: designProjects.designProjectBlocks?.reduce((acc: number, block: any) => 
+            acc + (block.files?.length || 0), 0
+          ) || 0,
+          recent: designProjects.designProjectBlocks?.reduce((acc: number, block: any) => 
+            acc + (block.files?.filter((f: any) => 
+              new Date(f.createdAt) > weekAgo
+            ).length || 0), 0
+          ) || 0
         },
         estimates: {
           total: estimatesData.estimates?.length || 0,
@@ -340,6 +354,20 @@ export default function ClientDetailPage() {
         secondary: stats.documents.recent > 0 ? `${stats.documents.recent} за неделю` : 'Нет новых',
         badge: stats.documents.recent > 0 ? 'Новые' : null,
         status: stats.documents.total > 0 ? 'active' : 'inactive'
+      } : null,
+      priority: 'medium'
+    },
+    {
+      title: 'Дизайн-проект',
+      description: 'Дизайнерские проекты и визуализации',
+      icon: Star,
+      href: `/clients/${clientId}/design-project`,
+      color: 'from-purple-500 to-purple-600',
+      stats: stats?.designProjects ? {
+        primary: `${stats.designProjects.total} файл${stats.designProjects.total === 1 ? '' : 'ов'}`,
+        secondary: stats.designProjects.recent > 0 ? `${stats.designProjects.recent} за неделю` : 'Нет новых',
+        badge: stats.designProjects.recent > 0 ? 'Новые' : null,
+        status: stats.designProjects.total > 0 ? 'active' : 'inactive'
       } : null,
       priority: 'medium'
     },
