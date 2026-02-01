@@ -73,12 +73,12 @@ export default function OtherServicesPage() {
                 </ul>
               </div>
 
-              {/* Проект сантехники */}
+              {/* Проект водоснабжения отопления и канализации */}
               <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl hover:shadow-2xl transition-all duration-500 transform hover:scale-105">
                 <div className="w-16 h-16 bg-black rounded-xl flex items-center justify-center mb-6 transform transition-transform duration-500 hover:rotate-12 hover:scale-110">
                   <Droplet className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-black">Проект сантехники</h3>
+                <h3 className="text-2xl font-bold mb-4 text-black">Проект водоснабжения отопления и канализации</h3>
                 <p className="text-gray-600 leading-relaxed mb-6">
                   Проектирование систем водоснабжения и канализации с учетом всех норм и требований.
                 </p>
@@ -220,9 +220,9 @@ export default function OtherServicesPage() {
                 </div>
               </div>
 
-              {/* Проект водоснабжения и канализации */}
+              {/* Проект водоснабжения отопления и канализации */}
               <div className="bg-white rounded-2xl p-8 shadow-lg">
-                <h4 className="text-2xl font-bold text-pink-500 mb-6">Проект водоснабжения и канализации</h4>
+                <h4 className="text-2xl font-bold text-pink-500 mb-6">Проект водоснабжения отопления и канализации</h4>
                 
                 <div className="grid grid-cols-1 gap-6">
                   <div>
@@ -347,9 +347,9 @@ export default function OtherServicesPage() {
                 </div>
               </div>
 
-              {/* Проект водоснабжения - мобильная */}
+              {/* Проект водоснабжения отопления и канализации - мобильная */}
               <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h4 className="text-xl font-bold text-pink-500 mb-4">Проект водоснабжения и канализации</h4>
+                <h4 className="text-xl font-bold text-pink-500 mb-4">Проект водоснабжения отопления и канализации</h4>
                 
                 <div className="space-y-4">
                   <div>

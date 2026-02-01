@@ -265,7 +265,7 @@ export default function HomePage() {
                     </h3>
                   </div>
                   <p className="text-gray-600 mb-4 leading-relaxed">
-                    Поможем с разработкой проектов электрики, сантехники, вентиляции для согласований с УК или для повышения качества реализации объекта.
+                    Поможем с разработкой проектов электрики, водоснабжения отопления и канализации, вентиляции для согласований с УК или для повышения качества реализации объекта.
                   </p>
                   <div className="flex items-center text-pink-500 font-semibold group-hover:translate-x-2 transition-transform duration-300">
                     Подробнее
