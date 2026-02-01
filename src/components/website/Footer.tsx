@@ -31,7 +31,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/design" className="text-gray-400 hover:text-pink-500 transition-colors">
-                  Дизайн проект
+                  Дизайн-проект
                 </Link>
               </li>
               <li>

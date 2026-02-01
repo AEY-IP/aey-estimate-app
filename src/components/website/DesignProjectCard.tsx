@@ -4,12 +4,13 @@ import { useState } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface DesignProjectCardProps {
-  title: string           // Название проекта
-  description: string     // Описание проекта
-  photos: string[]        // Массив путей к фото
+  title: string              // Название проекта
+  concept: string            // Концепция проекта (одно слово)
+  description: string[]      // Описание проекта (массив параграфов)
+  photos: string[]           // Массив путей к фото
 }
 
-export default function DesignProjectCard({ title, description, photos }: DesignProjectCardProps) {
+export default function DesignProjectCard({ title, concept, description, photos }: DesignProjectCardProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null)
 
   const handlePhotoClick = (index: number) => {
@@ -35,12 +36,25 @@ export default function DesignProjectCard({ title, description, photos }: Design
       <div className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300">
         {/* Заголовок и описание */}
         <div className="p-8 bg-gradient-to-br from-gray-50 to-white">
-          <h3 className="text-3xl font-bold text-black mb-4">
+          {/* Концепция */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-pink-600 rounded-full mb-6">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span className="text-white font-bold text-sm uppercase tracking-wider">
+              Концепция: {concept}
+            </span>
+          </div>
+          
+          <h3 className="text-3xl font-bold text-black mb-6">
             {title}
           </h3>
-          <p className="text-gray-600 text-lg leading-relaxed">
-            {description}
-          </p>
+          
+          <div className="space-y-4">
+            {description.map((paragraph, index) => (
+              <p key={index} className="text-gray-700 text-base leading-relaxed">
+                {paragraph}
+              </p>
+            ))}
+          </div>
         </div>
 
         {/* Галерея фотографий */}

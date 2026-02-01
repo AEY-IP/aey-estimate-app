@@ -7,7 +7,7 @@ import LeadRequestModal from '@/components/website/LeadRequestModal'
 import DesignProjectCard from '@/components/website/DesignProjectCard'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Ruler, Palette, Eye, FileText, CheckCircle2, ArrowRight } from 'lucide-react'
+import { Ruler, Palette, Eye, FileText, CheckCircle2, ArrowRight, Download } from 'lucide-react'
 
 export default function DesignPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -22,7 +22,7 @@ export default function DesignPage() {
         <section className="bg-gradient-to-br from-black via-gray-900 to-black text-white py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">Дизайн проект</h1>
+              <h1 className="text-4xl md:text-6xl font-bold mb-6">Дизайн-проект</h1>
               <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
                 Создаем уникальные интерьеры, отражающие вашу индивидуальность
               </p>
@@ -86,9 +86,9 @@ export default function DesignPage() {
                 <div className="w-16 h-16 bg-black rounded-xl flex items-center justify-center mb-6">
                   <Palette className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-4 text-black">Планировочное решение</h3>
+                <h3 className="text-xl font-bold mb-4 text-black">Планировочное решение и концепция</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Оптимальное размещение функциональных зон и мебели. Разработка концепции с помощью AI по брифу от вас.
+                  Оптимальное размещение функциональных зон и мебели. Разработка концепции с помощью референсов и создание AI картинок по брифу от вас
                 </p>
               </div>
 
@@ -98,7 +98,7 @@ export default function DesignPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-4 text-black">3D визуализация</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Фотореалистичные изображения будущего интерьера
+                  Создание фотореалистичных изображений будущего интерьера с использованием настоящей мебели и других предметов
                 </p>
               </div>
 
@@ -108,7 +108,7 @@ export default function DesignPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-4 text-black">Рабочая документация</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Чертежи для строителей: планы полов, потолков, электрики, сантехники
+                  Чертежи для строителей: планы полов, потолков, электрики, сантехники, монтажа перегородок, демонтажа, отделки, кондиционеров, развертки стен
                 </p>
               </div>
 
@@ -118,7 +118,7 @@ export default function DesignPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-4 text-black">Разработка сметы проекта</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Спецификация всех отделочных материалов, мебели освещение и прочих элементов с артикулами
+                  Спецификация всех отделочных материалов, мебели, освещения и прочих элементов с артикулами, ссылками и расчетами необходимого количества
                 </p>
               </div>
 
@@ -142,10 +142,16 @@ export default function DesignPage() {
               Примеры выполненных работ
             </h2>
             <div className="space-y-12">
-              {/* Проект 1 - Knot */}
+              {/* Проект 1 - ЖК Level Нагатинская */}
               <DesignProjectCard
-                title="Название 1"
-                description="Здесь будет размещено описание проекта. Расскажите о концепции, стиле, особенностях реализации и используемых решениях."
+                title="ЖК Level Нагатинская"
+                concept="SINGLE"
+                description={[
+                  "Квартира для девушки, которая мало времени проводит дома и ей необходимо функциональное пространство, где она будет отдыхать и набираться сил перед следующим днем.",
+                  "Квартира для одинокой девушки, которая увлечена карьерой и развитием. Ей необходимо пространство, в котором она быстро сможет сделать свои дела и уйти дальше покорять этот мир.",
+                  "Поэтому квартира в темных оттенках и небольшими акцентами, чтобы ничего не отвлекало от главной цели и голова могла отдохнуть и наполниться новыми мыслями.",
+                  "Функционал пространства — скрытые хранения, встроенные ниши для техники — то, что не заметно человеческому глазу, но так важно в быту."
+                ]}
                 photos={[
                   '/images/portfolio/knot_1.1.jpeg',
                   '/images/portfolio/knot_1.2.jpeg',
@@ -163,10 +169,18 @@ export default function DesignPage() {
                 ]}
               />
 
-              {/* Проект 2 */}
+              {/* Проект 2 - ЖК Нахимов */}
               <DesignProjectCard
-                title="Название 2"
-                description="Здесь будет размещено описание второго проекта. Расскажите о концепции, стиле, особенностях реализации и используемых решениях."
+                title="ЖК Нахимов (Nakhimov)"
+                concept="LOVE"
+                description={[
+                  "Квартира для сдачи в аренду, поэтому вся мебель и отделка выполнены в таком стиле и ценовом диапазоне, чтобы арендодатель смог выгодно сдать квартиру и получить дивиденды.",
+                  "Важно было учесть, что квартира должна быть построена за короткий срок, поэтому все материалы выбраны с быстрой доставкой и небольшим бюджетом, но отвечающие своему качеству.",
+                  "Мы использовали цветовые акценты для запоминающейся картинки и у арендатора явно выстраивался образ своей жизни в этом пространстве.",
+                  "Важно было создать пространство как для пары, так и для одинокого человека. Поэтому выбрана спокойная гамма мебели, которая создает уютное пространство и стиль.",
+                  "Квартира небольшая, но продуманная планировка делает ее функциональной и удобной. На 40 кв м нам удалось разместить гостиную, гардеробную, спальню, кухню и 2 санузла.",
+                  "Цвета играют не малую важную роль в помещении. Они создают необходимую атмосферу и уют."
+                ]}
                 photos={[
                   '/images/portfolio/проект 2/photo_2026-01-19 16.57.36.jpeg',
                   '/images/portfolio/проект 2/photo_2026-01-19 16.57.39.jpeg',
@@ -189,10 +203,17 @@ export default function DesignPage() {
                 ]}
               />
 
-              {/* Проект 3 */}
+              {/* Проект 3 - ЖК ПИК Румянцево */}
               <DesignProjectCard
-                title="Название 3"
-                description="Здесь будет размещено описание третьего проекта. Расскажите о концепции, стиле, особенностях реализации и используемых решениях."
+                title="ЖК ПИК Румянцево"
+                concept="ЭХО"
+                description={[
+                  "Квартира для творческой пары с ребенком. Для людей, которые ценят моменты и создают воспоминания, звучащие в самом сердце долгим эхом.",
+                  "Дом как коллекция жизни. Нам было важно предусмотреть зоны, где семья сможет оставить след от своих путешествий и увлечений: места для картин, книг и памятных предметов.",
+                  "Интерьер наполнен яркими акцентами. Это отражение насыщенной жизни героев, где пространство подчеркивает «краски жизни» и вдохновляет на новые свершения.",
+                  "Центр притяжения — большая и светлая гостиная. Пространство для времени вместе, чтения или занятий спортом. Место, которое дарит свободу движений и мысли.",
+                  "Функционал — обилие закрытых систем хранения. Мы спрятали всё лишнее, включая детские игрушки, чтобы в доме всегда сохранялась атмосфера чистого и безупречного уюта."
+                ]}
                 photos={[
                   '/images/portfolio/проект 3/1_Post.jpg',
                   '/images/portfolio/проект 3/2_Post.jpg',
@@ -218,6 +239,18 @@ export default function DesignPage() {
                   '/images/portfolio/проект 3/photo_2026-01-19 17.13.36.jpeg'
                 ]}
               />
+            </div>
+            
+            {/* Кнопка скачивания примера чертежей */}
+            <div className="text-center mt-16">
+              <a
+                href="/uploads/design-projects/Пример_чертежи.pdf"
+                download
+                className="inline-flex items-center px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl shadow-pink-500/50"
+              >
+                <Download className="mr-2 h-5 w-5" />
+                <span>Посмотреть пример чертежей</span>
+              </a>
             </div>
           </div>
         </section>

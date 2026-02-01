@@ -11,7 +11,7 @@ interface LeadRequestModalProps {
 
 const services = [
   { id: 'consultation', label: 'Консультация' },
-  { id: 'design', label: 'Дизайн проект' },
+  { id: 'design', label: 'Дизайн-проект' },
   { id: 'renovation', label: 'Ремонт' },
   { id: 'engineering', label: 'Инженерные проекты' }
 ]

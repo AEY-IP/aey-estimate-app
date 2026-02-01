@@ -101,7 +101,7 @@ export default function HomePage() {
                   href="/design"
                   className="px-8 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-xl shadow-pink-500/50 flex items-center justify-center group"
                 >
-                  Дизайн проект
+                  Дизайн-проект
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link
@@ -201,7 +201,7 @@ export default function HomePage() {
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-pink-600/5 rounded-full -ml-12 -mb-12 group-hover:scale-[3] transition-transform duration-700" />
               </Link>
 
-              {/* Дизайн проект */}
+              {/* Дизайн-проект */}
               <Link
                 href="/design"
                 className={`group relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:scale-105 hover:rotate-1 ${servicesVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
@@ -211,7 +211,7 @@ export default function HomePage() {
                   <div className="flex items-center mb-4">
                     <Ruler className="h-10 w-10 text-pink-500 mr-4 transform group-hover:-rotate-12 group-hover:scale-110 transition-transform duration-500" />
                     <h3 className="text-2xl font-bold text-black group-hover:text-pink-500 transition-colors duration-300">
-                      Дизайн проект
+                      Дизайн-проект
                     </h3>
                   </div>
                   <p className="text-gray-600 mb-4 leading-relaxed">

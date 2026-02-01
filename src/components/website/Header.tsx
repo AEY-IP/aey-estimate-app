@@ -12,7 +12,7 @@ export default function Header() {
   const navigation = [
     { name: 'Главная', href: '/' },
     { name: 'О нас', href: '/about' },
-    { name: 'Дизайн проект', href: '/design' },
+    { name: 'Дизайн-проект', href: '/design' },
     { name: 'Ремонт', href: '/renovation' },
     { name: 'Прочие услуги', href: '/other-services' },
     { name: 'Цены', href: '/pricing' },
