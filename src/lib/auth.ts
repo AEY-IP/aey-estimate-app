@@ -119,7 +119,7 @@ export async function fetchCurrentUser(): Promise<AuthSession | null> {
 
 export interface Session {
   id: string
-  role: 'ADMIN' | 'MANAGER'
+  role: 'ADMIN' | 'MANAGER' | 'DESIGNER'
   username: string
   name?: string
   phone?: string

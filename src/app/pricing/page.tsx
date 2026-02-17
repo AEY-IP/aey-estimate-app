@@ -77,11 +77,11 @@ export default function PricingPage() {
                         <div className="text-sm text-gray-500 mt-1">Точные замеры квартиры для начала проекта.</div>
                       </td>
                       <td className="text-center py-5 px-6">
-                        <div className="text-2xl font-bold text-black">600</div>
+                        <div className="text-2xl font-bold text-black">670</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6 bg-pink-50 rounded-lg">
-                        <div className="text-2xl font-bold text-pink-500">500</div>
+                        <div className="text-2xl font-bold text-pink-500">560</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6">
@@ -96,11 +96,11 @@ export default function PricingPage() {
                         <div className="text-sm text-gray-500 mt-1">Варианты удобной планировки квартиры.</div>
                       </td>
                       <td className="text-center py-5 px-6">
-                        <div className="text-2xl font-bold text-black">600</div>
+                        <div className="text-2xl font-bold text-black">670</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6 bg-pink-50 rounded-lg">
-                        <div className="text-2xl font-bold text-pink-500">500</div>
+                        <div className="text-2xl font-bold text-pink-500">560</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6">
@@ -115,11 +115,11 @@ export default function PricingPage() {
                         <div className="text-sm text-gray-500 mt-1">Идея и стиль будущего интерьера.</div>
                       </td>
                       <td className="text-center py-5 px-6">
-                        <div className="text-2xl font-bold text-black">500</div>
+                        <div className="text-2xl font-bold text-black">560</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6 bg-pink-50 rounded-lg">
-                        <div className="text-2xl font-bold text-pink-500">400</div>
+                        <div className="text-2xl font-bold text-pink-500">450</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6">
@@ -134,11 +134,11 @@ export default function PricingPage() {
                         <div className="text-sm text-gray-500 mt-1">Как будет выглядеть квартира после ремонта.</div>
                       </td>
                       <td className="text-center py-5 px-6">
-                        <div className="text-2xl font-bold text-black">1750</div>
+                        <div className="text-2xl font-bold text-black">1950</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6 bg-pink-50 rounded-lg">
-                        <div className="text-2xl font-bold text-pink-500">1600</div>
+                        <div className="text-2xl font-bold text-pink-500">1780</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6">
@@ -153,11 +153,11 @@ export default function PricingPage() {
                         <div className="text-sm text-gray-500 mt-1">Чертежи для строителей.</div>
                       </td>
                       <td className="text-center py-5 px-6">
-                        <div className="text-2xl font-bold text-black">1600</div>
+                        <div className="text-2xl font-bold text-black">1780</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6 bg-pink-50 rounded-lg">
-                        <div className="text-2xl font-bold text-pink-500">1500</div>
+                        <div className="text-2xl font-bold text-pink-500">1670</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6">
@@ -172,11 +172,11 @@ export default function PricingPage() {
                         <div className="text-sm text-gray-500 mt-1">Расчёт стоимости ремонта.</div>
                       </td>
                       <td className="text-center py-5 px-6">
-                        <div className="text-2xl font-bold text-black">800</div>
+                        <div className="text-2xl font-bold text-black">890</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6 bg-pink-50 rounded-lg">
-                        <div className="text-2xl font-bold text-pink-500">600</div>
+                        <div className="text-2xl font-bold text-pink-500">670</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6">
@@ -191,11 +191,11 @@ export default function PricingPage() {
                         <div className="text-gray-400">—</div>
                       </td>
                       <td className="text-center py-5 px-6 bg-pink-50 rounded-lg">
-                        <div className="text-2xl font-bold text-pink-500">4500</div>
+                        <div className="text-2xl font-bold text-pink-500">5000</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                       <td className="text-center py-5 px-6 bg-black/5 rounded-lg">
-                        <div className="text-2xl font-bold text-black">4000</div>
+                        <div className="text-2xl font-bold text-black">4450</div>
                         <div className="text-sm text-gray-500">₽/м²</div>
                       </td>
                     </tr>
@@ -207,7 +207,8 @@ export default function PricingPage() {
                         <div className="text-sm text-gray-500 mt-1">Контроль выполнения ремонта в соответствии с дизайн-проектом.</div>
                       </td>
                       <td className="text-center py-5 px-6">
-                        <div className="text-gray-400">—</div>
+                        <div className="text-2xl font-bold text-black">50 000</div>
+                        <div className="text-sm text-gray-500">₽/месяц</div>
                       </td>
                       <td className="text-center py-5 px-6 bg-pink-50 rounded-lg">
                         <div className="text-2xl font-bold text-pink-500">45 000</div>
@@ -233,13 +234,13 @@ export default function PricingPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Отдельно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-black">600 ₽/м²</div>
+                      <div className="text-xl font-bold text-black">670 ₽/м²</div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center bg-pink-50 rounded-lg p-3">
                     <span className="text-gray-600 font-semibold">Комплексно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-pink-500">500 ₽/м²</div>
+                      <div className="text-xl font-bold text-pink-500">560 ₽/м²</div>
                     </div>
                   </div>
                 </div>
@@ -253,13 +254,13 @@ export default function PricingPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Отдельно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-black">600 ₽/м²</div>
+                      <div className="text-xl font-bold text-black">670 ₽/м²</div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center bg-pink-50 rounded-lg p-3">
                     <span className="text-gray-600 font-semibold">Комплексно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-pink-500">500 ₽/м²</div>
+                      <div className="text-xl font-bold text-pink-500">560 ₽/м²</div>
                     </div>
                   </div>
                 </div>
@@ -273,13 +274,13 @@ export default function PricingPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Отдельно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-black">500 ₽/м²</div>
+                      <div className="text-xl font-bold text-black">560 ₽/м²</div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center bg-pink-50 rounded-lg p-3">
                     <span className="text-gray-600 font-semibold">Комплексно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-pink-500">400 ₽/м²</div>
+                      <div className="text-xl font-bold text-pink-500">450 ₽/м²</div>
                     </div>
                   </div>
                 </div>
@@ -293,13 +294,13 @@ export default function PricingPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Отдельно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-black">1750 ₽/м²</div>
+                      <div className="text-xl font-bold text-black">1950 ₽/м²</div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center bg-pink-50 rounded-lg p-3">
                     <span className="text-gray-600 font-semibold">Комплексно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-pink-500">1600 ₽/м²</div>
+                      <div className="text-xl font-bold text-pink-500">1780 ₽/м²</div>
                     </div>
                   </div>
                 </div>
@@ -313,13 +314,13 @@ export default function PricingPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Отдельно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-black">1600 ₽/м²</div>
+                      <div className="text-xl font-bold text-black">1780 ₽/м²</div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center bg-pink-50 rounded-lg p-3">
                     <span className="text-gray-600 font-semibold">Комплексно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-pink-500">1500 ₽/м²</div>
+                      <div className="text-xl font-bold text-pink-500">1670 ₽/м²</div>
                     </div>
                   </div>
                 </div>
@@ -333,13 +334,13 @@ export default function PricingPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Отдельно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-black">800 ₽/м²</div>
+                      <div className="text-xl font-bold text-black">890 ₽/м²</div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center bg-pink-50 rounded-lg p-3">
                     <span className="text-gray-600 font-semibold">Комплексно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-pink-500">600 ₽/м²</div>
+                      <div className="text-xl font-bold text-pink-500">670 ₽/м²</div>
                     </div>
                   </div>
                 </div>
@@ -353,13 +354,13 @@ export default function PricingPage() {
                   <div className="flex justify-between items-center bg-pink-50 rounded-lg p-3">
                     <span className="text-gray-600 font-semibold">Комплексно</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-pink-500">4500 ₽/м²</div>
+                      <div className="text-xl font-bold text-pink-500">5000 ₽/м²</div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center bg-black/5 rounded-lg p-3">
                     <span className="text-gray-600 font-semibold">С ремонтом</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-black">4000 ₽/м²</div>
+                      <div className="text-xl font-bold text-black">4450 ₽/м²</div>
                     </div>
                   </div>
                 </div>
@@ -370,6 +371,12 @@ export default function PricingPage() {
                 <h3 className="font-bold text-lg text-black mb-1">Авторский надзор</h3>
                 <p className="text-sm text-gray-500 mb-4">Контроль выполнения ремонта в соответствии с дизайн-проектом.</p>
                 <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Отдельно</span>
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-black">50 000 ₽/мес</div>
+                    </div>
+                  </div>
                   <div className="flex justify-between items-center bg-pink-50 rounded-lg p-3">
                     <span className="text-gray-600 font-semibold">Комплексно</span>
                     <div className="text-right">

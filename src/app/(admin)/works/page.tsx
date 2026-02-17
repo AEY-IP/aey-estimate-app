@@ -216,7 +216,6 @@ export default function WorksPage() {
           unit: editingWork.unit.trim(),
           basePrice: editingWork.basePrice,
           description: editingWork.description?.trim() || undefined,
-          isActive: editingWork.isActive,
           parameterId: editingWork.parameterId || undefined
         }),
       })
@@ -757,22 +756,25 @@ export default function WorksPage() {
                             </td>
                             <td>
                               {isReadonly ? (
-                                <span className={`status-badge whitespace-nowrap ${
+                                <span className={`status-badge whitespace-nowrap inline-flex items-center gap-1 ${
                                   work.isActive 
                                     ? 'bg-teal-100 text-teal-700' 
                                     : 'bg-gray-100 text-gray-700'
                                 }`}>
+                                  {work.isActive ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                                   {work.isActive ? 'Активна' : 'Неактивна'}
                                 </span>
                               ) : (
                                 <button
                                   onClick={() => toggleWorkStatus(work.id, work.isActive)}
-                                  className={`status-badge whitespace-nowrap ${
+                                  className={`status-badge whitespace-nowrap inline-flex items-center gap-1 ${
                                     work.isActive 
                                       ? 'bg-teal-100 text-teal-700 hover:bg-teal-200' 
                                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                   } transition-colors cursor-pointer`}
+                                  title={work.isActive ? 'Нажмите, чтобы деактивировать' : 'Нажмите, чтобы активировать'}
                                 >
+                                  {work.isActive ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                                   {work.isActive ? 'Активна' : 'Неактивна'}
                                 </button>
                               )}
@@ -1222,18 +1224,6 @@ export default function WorksPage() {
                       </option>
                     ))}
                   </select>
-                </div>
-
-                <div>
-                  <label className="flex items-center p-3 bg-white rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={editingWork.isActive}
-                      onChange={(e) => setEditingWork({ ...editingWork, isActive: e.target.checked })}
-                      className="mr-3"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Активна</span>
-                  </label>
                 </div>
               </div>
 

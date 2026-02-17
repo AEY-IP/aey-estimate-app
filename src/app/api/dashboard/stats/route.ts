@@ -9,76 +9,88 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    let totalClients, totalWorks, totalEstimates
+    let totalClients, totalWorks, totalEstimates, newLeads = 0
 
-    if (session.role === 'MANAGER') {
-      // Для менеджеров считаем только их данные
-      const [managerClients, allWorks, managerEstimates] = await Promise.all([
-        prisma.client.count({ 
-          where: { 
-            isActive: true,
-            OR: [
-              { createdBy: session.id },
-              { managerId: session.id }
-            ]
-          } 
-        }),
-        prisma.workItem.count({ where: { isActive: true } }),
-        prisma.estimate.count({ 
-          where: { 
-            isAct: false,
-            client: {
+    switch (session.role) {
+      case 'MANAGER': {
+        // Для менеджеров считаем только их данные
+        const [managerClients, allWorks, managerEstimates] = await Promise.all([
+          prisma.client.count({ 
+            where: { 
+              isActive: true,
               OR: [
                 { createdBy: session.id },
                 { managerId: session.id }
               ]
-            }
-          } 
-        })
-      ])
-      
-      totalClients = managerClients
-      totalWorks = allWorks  // Работы общие для всех
-      totalEstimates = managerEstimates
-    } else if (session.role === 'DESIGNER') {
-      // Для дизайнеров считаем только клиентов привязанных к ним
-      const [designerClients, designerEstimates] = await Promise.all([
-        prisma.client.count({ 
-          where: { 
-            isActive: true,
-            designerId: session.id
-          } 
-        }),
-        prisma.estimate.count({ 
-          where: { 
-            isAct: false,
-            client: {
+            } 
+          }),
+          prisma.workItem.count({ where: { isActive: true } }),
+          prisma.estimate.count({ 
+            where: { 
+              isAct: false,
+              client: {
+                OR: [
+                  { createdBy: session.id },
+                  { managerId: session.id }
+                ]
+              }
+            } 
+          })
+        ])
+        
+        totalClients = managerClients
+        totalWorks = allWorks  // Работы общие для всех
+        totalEstimates = managerEstimates
+        break
+      }
+
+      case 'DESIGNER': {
+        // Для дизайнеров считаем только клиентов привязанных к ним
+        const [designerClients, designerEstimates] = await Promise.all([
+          prisma.client.count({ 
+            where: { 
+              isActive: true,
               designerId: session.id
-            }
-          } 
-        })
-      ])
-      
-      totalClients = designerClients
-      totalWorks = 0  // Дизайнеры не работают с работами
-      totalEstimates = designerEstimates
-    } else {
-      // Для админов получаем всю статистику
-      const [allClients, allWorks, allEstimates] = await Promise.all([
-        prisma.client.count({ where: { isActive: true } }),
-        prisma.workItem.count({ where: { isActive: true } }),
-        prisma.estimate.count({ where: { isAct: false } })
-      ])
-      
-      totalClients = allClients
-      totalWorks = allWorks
-      totalEstimates = allEstimates
+            } 
+          }),
+          prisma.estimate.count({ 
+            where: { 
+              isAct: false,
+              client: {
+                designerId: session.id
+              }
+            } 
+          })
+        ])
+        
+        totalClients = designerClients
+        totalWorks = 0  // Дизайнеры не работают с работами
+        totalEstimates = designerEstimates
+        break
+      }
+
+      default: {
+        // Для админов получаем всю статистику
+        const [allClients, allWorks, allEstimates, newLeadsCount] = await Promise.all([
+          prisma.client.count({ where: { isActive: true } }),
+          prisma.workItem.count({ where: { isActive: true } }),
+          prisma.estimate.count({ where: { isAct: false } }),
+          prisma.leadRequest.count({ where: { status: 'new' } })
+        ])
+        
+        totalClients = allClients
+        totalWorks = allWorks
+        totalEstimates = allEstimates
+        newLeads = newLeadsCount
+        break
+      }
     }
 
     const stats = {
       totalClients,
       totalWorks,
-      activeProjects: totalEstimates
+      activeProjects: totalEstimates,
+      newLeads
     }
 
     return NextResponse.json({

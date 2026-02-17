@@ -119,6 +119,51 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json()
+    const { isActive } = body
+    
+    if (isActive === undefined) {
+      return NextResponse.json({ error: 'Не указан статус' }, { status: 400 })
+    }
+
+    const work = await prisma.workItem.update({
+      where: { id: params.id },
+      data: { isActive },
+      include: {
+        parameter: true,
+        block: true
+      }
+    })
+
+    const transformedWork = {
+      id: work.id,
+      name: work.name,
+      unit: work.unit,
+      basePrice: work.price,
+      category: work.block.title,
+      description: work.description,
+      parameterId: work.parameterId,
+      isActive: work.isActive,
+      createdAt: work.createdAt,
+      updatedAt: work.updatedAt,
+      parameter: work.parameter
+    }
+    
+    return NextResponse.json({ work: transformedWork })
+  } catch (error) {
+    console.error('Ошибка изменения статуса работы:', error)
+    return NextResponse.json(
+      { error: 'Ошибка изменения статуса работы' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }

@@ -28,6 +28,7 @@ interface DashboardStats {
   totalClients: number
   totalWorks: number
   activeProjects: number
+  newLeads?: number
 }
 
 export default function ProfessionalDashboard() {
@@ -157,7 +158,9 @@ export default function ProfessionalDashboard() {
           description: 'Заявки с сайта на консультацию',
           icon: MessageSquare,
           href: '/dashboard/leads',
-          color: 'from-green-500 to-green-600'
+          color: 'from-green-500 to-green-600',
+          count: stats?.newLeads,
+          showBadge: (stats?.newLeads ?? 0) > 0
         },
         {
           title: 'Шаблоны',
@@ -230,8 +233,13 @@ export default function ProfessionalDashboard() {
                   <Link 
                     key={index}
                     href={item.href} 
-                    className="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    className="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100 relative"
                   >
+                    {item.showBadge && item.count !== undefined && item.count > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">{item.count}</span>
+                      </span>
+                    )}
                     <Icon className="h-4 w-4 inline mr-2" />
                     {item.title}
                   </Link>
@@ -327,9 +335,16 @@ export default function ProfessionalDashboard() {
               <Link
                 key={index}
                 href={item.href}
-                className="group card hover:scale-105 transition-all duration-300 p-6 h-full"
+                className="group card hover:scale-105 transition-all duration-300 p-6 h-full relative"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
+                {/* Notification Badge */}
+                {item.showBadge && item.count !== undefined && item.count > 0 && (
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                    <span className="text-white text-sm font-bold">{item.count}</span>
+                  </div>
+                )}
+                
                 <div className={`w-12 h-12 bg-gradient-to-br ${item.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
                   <Icon className="h-6 w-6 text-white" />
                 </div>
@@ -339,7 +354,7 @@ export default function ProfessionalDashboard() {
                 <p className="text-gray-600 text-sm leading-relaxed mb-4">
                   {item.description}
                 </p>
-                {item.count !== undefined && (
+                {item.count !== undefined && !item.showBadge && (
                   <div className="flex items-center text-blue-500 font-medium text-sm">
                     {item.count} записей
                   </div>
