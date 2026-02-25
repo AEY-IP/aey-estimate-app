@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { CreateClientRequest } from '@/types/client'
-import { checkAuth } from '@/lib/auth'
+import { checkAuth, canAccessMainSystem } from '@/lib/auth'
 
 // GET - получить клиентов (менеджеры и дизайнеры видят только своих, админы - всех)
 export async function GET(request: NextRequest) {
@@ -24,8 +24,11 @@ export async function GET(request: NextRequest) {
       ]
     }
     
-    // Дизайнеры видят только клиентов, где они designerId
+    // Дизайнеры видят только клиентов, где они designerId (только INTERNAL)
     if (session.role === 'DESIGNER') {
+      if (session.designerType !== 'INTERNAL') {
+        return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
+      }
       where.designerId = session.id
     }
     
@@ -80,6 +83,11 @@ export async function POST(request: NextRequest) {
     const session = checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к основным клиентам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     const body: any = await request.json()

@@ -14,6 +14,7 @@ export async function GET() {
         id: true,
         username: true,
         role: true,
+        designerType: true,
         name: true,
         phone: true,
         isActive: true,
@@ -35,7 +36,7 @@ export async function GET() {
 // POST - создать нового пользователя (только для админов)
 export async function POST(request: NextRequest) {
   try {
-    const { username, password, role, name, phone } = await request.json()
+    const { username, password, role, designerType, name, phone } = await request.json()
     
     if (!username || !password || !role || !name) {
       return NextResponse.json(
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
         username,
         passwordHash: hashedPassword,
         role,
+        designerType: role === 'DESIGNER' ? (designerType || 'EXTERNAL') : null,
         name,
         phone: phone || null,
         isActive: true
@@ -72,6 +74,7 @@ export async function POST(request: NextRequest) {
         id: true,
         username: true,
         role: true,
+        designerType: true,
         name: true,
         phone: true,
         isActive: true,

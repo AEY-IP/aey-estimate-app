@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
-import { checkAuth, checkClientAuth } from '@/lib/auth'
+import { checkAuth, checkClientAuth, canAccessMainSystem } from '@/lib/auth'
 
 function formatRoomForFrontend(room: any): any {
   return {
@@ -20,6 +20,12 @@ export async function GET(
     console.log('🔍 GET /api/estimates/[id] called with ID:', params.id)
     // Проверяем авторизацию (админ или клиент)
     const session = checkAuth(request)
+    
+    // Внешние дизайнеры не имеют доступа к основным сметам
+    if (session && !canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+    
     const clientSession = checkClientAuth(request)
     
     let userId: string
@@ -297,6 +303,11 @@ export async function PUT(
         { error: 'Не авторизован' },
         { status: 401 }
       )
+    }
+    
+    // Внешние дизайнеры не имеют доступа к основным сметам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     console.log('✅ User authorized:', session.username)
@@ -834,6 +845,11 @@ export async function PATCH(
         { status: 401 }
       )
     }
+    
+    // Внешние дизайнеры не имеют доступа к основным сметам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
 
     const body = await request.json()
     const { title } = body
@@ -902,6 +918,11 @@ export async function DELETE(
         { error: 'Не авторизован' },
         { status: 401 }
       )
+    }
+    
+    // Внешние дизайнеры не имеют доступа к основным сметам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     // Получаем смету с полными данными перед удалением

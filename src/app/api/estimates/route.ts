@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import { checkAuth, checkClientAuth } from '@/lib/auth'
+import { checkAuth, checkClientAuth, canAccessMainSystem } from '@/lib/auth'
 
 const prisma = new PrismaClient()
 
@@ -8,6 +8,12 @@ export async function GET(request: NextRequest) {
   try {
     // Сначала пробуем cookie-авторизацию для админов
     const session = checkAuth(request)
+    
+    // Внешние дизайнеры не имеют доступа к основным сметам
+    if (session && !canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+    
     // Затем пробуем клиентскую авторизацию через cookie
     const clientSession = checkClientAuth(request)
     
@@ -207,6 +213,11 @@ export async function POST(request: NextRequest) {
     const session = checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+
+    // Внешние дизайнеры не имеют доступа к основным сметам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     const body = await request.json()

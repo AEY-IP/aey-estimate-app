@@ -57,8 +57,15 @@ export default function ActsPage() {
   const [showOnlyVisible, setShowOnlyVisible] = useState(false)
 
   useEffect(() => {
+    // Внешние дизайнеры не имеют доступа к актам
+    if (session?.user?.role === 'DESIGNER' && session?.user?.designerType === 'EXTERNAL') {
+      showToast('error', 'Доступ запрещен')
+      router.push('/dashboard')
+      return
+    }
+    
     fetchActs()
-  }, [])
+  }, [session])
 
   useEffect(() => {
     filterActs()

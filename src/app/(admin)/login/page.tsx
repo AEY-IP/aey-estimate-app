@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { LogIn, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
@@ -182,7 +183,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Вы дизайнер?{' '}
+              <Link href="/register/designer" className="text-purple-600 hover:text-purple-700 font-medium">
+                Зарегистрироваться
+              </Link>
+            </p>
+          </div>
         </div>
 
         {/* Футер */}

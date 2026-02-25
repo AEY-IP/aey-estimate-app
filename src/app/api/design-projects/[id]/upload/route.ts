@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { uploadFile } from '@/lib/storage'
 import { PrismaClient } from '@prisma/client'
 import { checkAuth } from '@/lib/auth'
 
@@ -48,12 +48,11 @@ export async function POST(
     // Генерируем уникальное имя файла
     const timestamp = Date.now()
     const fileName = `${timestamp}-${file.name}`
-    const filePath = `design-projects/${designProjectBlock.clientId}/${fileName}`
+    const key = `design-projects/${designProjectBlock.clientId}/${fileName}`
 
-    // Загружаем файл в Vercel Blob
-    const blob = await put(filePath, file, {
-      access: 'public',
-    })
+    // Загружаем файл в Yandex Cloud
+    const buffer = Buffer.from(await file.arrayBuffer())
+    await uploadFile(buffer, key, file.type, false)
 
     // Получаем максимальный sortOrder
     const maxSortOrder = await (prisma as any).designProjectFile.findFirst({
@@ -69,7 +68,7 @@ export async function POST(
         fileName: file.name,
         fileSize: file.size,
         mimeType: file.type,
-        filePath: blob.url,
+        filePath: key,
         description: description || null,
         uploadedBy: session.id,
         sortOrder: (maxSortOrder?.sortOrder || 0) + 1

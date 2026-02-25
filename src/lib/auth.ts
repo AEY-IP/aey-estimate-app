@@ -120,6 +120,7 @@ export async function fetchCurrentUser(): Promise<AuthSession | null> {
 export interface Session {
   id: string
   role: 'ADMIN' | 'MANAGER' | 'DESIGNER'
+  designerType?: 'EXTERNAL' | 'INTERNAL' | null
   username: string
   name?: string
   phone?: string
@@ -239,4 +240,16 @@ export function checkClientAuth(request: NextRequest): ClientSession | null {
     console.error('Failed to parse client token:', error)
     return null
   }
+}
+
+// Проверка доступа внешних дизайнеров к основным системам
+export function canAccessMainSystem(session: Session | null): boolean {
+  if (!session) return false
+  
+  // Внешние дизайнеры не имеют доступа к основным клиентам и сметам
+  if (session.role === 'DESIGNER' && session.designerType === 'EXTERNAL') {
+    return false
+  }
+  
+  return true
 } 

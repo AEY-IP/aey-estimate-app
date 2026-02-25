@@ -97,17 +97,30 @@ export default function ProfessionalDashboard() {
 
   const getMenuItems = () => {
     if (userData?.role === 'DESIGNER') {
-      // Для дизайнеров - только клиенты
-      return [
-        {
+      const items = []
+      
+      // Внутренний дизайнер - доступ к основным клиентам
+      if (userData.designerType === 'INTERNAL') {
+        items.push({
           title: 'Клиенты',
           description: 'Мои клиенты и проекты',
           icon: Users,
           href: '/dashboard/clients',
           color: 'from-blue-500 to-blue-600',
           count: stats?.totalClients
-        }
-      ]
+        })
+      }
+      
+      // Все дизайнеры имеют доступ к подборкам
+      items.push({
+        title: 'Сметы дизайнера',
+        description: 'Комплектации и подборки для клиентов',
+        icon: Calculator,
+        href: '/designer/clients',
+        color: 'from-purple-500 to-purple-600'
+      })
+      
+      return items
     } else if (userData?.role === 'MANAGER') {
       // Для менеджеров - 4 кнопки
       return [
@@ -254,7 +267,12 @@ export default function ProfessionalDashboard() {
               </div>
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-gray-900">{userData?.name}</p>
-                <p className="text-xs text-gray-600">{userData?.role === 'ADMIN' ? 'Администратор' : 'Менеджер'}</p>
+                <p className="text-xs text-gray-600">
+                  {userData?.role === 'ADMIN' ? 'Администратор' : 
+                   userData?.role === 'DESIGNER' ? 'Дизайнер' : 
+                   userData?.role === 'MANAGER' ? 'Менеджер' : 
+                   'Клиент'}
+                </p>
               </div>
               <button
                 onClick={handleLogout}

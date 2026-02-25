@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { uploadFile } from '@/lib/storage';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
 
@@ -147,32 +147,27 @@ export async function POST(request: NextRequest) {
       console.log('📁 Using existing photo block:', photoBlock.id);
     }
 
-    // Генерируем уникальное имя файла для Vercel Blob
+    // Генерируем уникальное имя файла для Yandex Cloud
     const fileExtension = file.name.split('.').pop();
-    const uniqueFileName = `photos/${clientId}/${blockId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
+    const key = `photos/${clientId}/${blockId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
 
-    console.log('🚀 Uploading to Vercel Blob (SDK with File object - legacy):', uniqueFileName);
-    console.log('🔑 Blob token available:', !!process.env.BLOB_READ_WRITE_TOKEN);
-    console.log('🔑 Token length:', process.env.BLOB_READ_WRITE_TOKEN?.length);
+    console.log('🚀 Uploading to Yandex Cloud:', key);
 
-    // Загружаем в Vercel Blob с retry механизмом, используя File объект напрямую
-    const blob = await retryWithBackoff(async () => {
-      console.log('🚀 Attempting SDK upload with File object (legacy)...');
-      return await put(uniqueFileName, file, {
-      access: 'public',
-        addRandomSuffix: false,
-        token: process.env.BLOB_READ_WRITE_TOKEN
-    });
+    // Загружаем в Yandex Cloud с retry механизмом
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await retryWithBackoff(async () => {
+      console.log('🚀 Attempting upload to Yandex Cloud...');
+      return await uploadFile(buffer, key, file.type, false);
     }, 3, 2000);
 
-    console.log('✅ Blob uploaded via SDK (legacy):', blob.url);
+    console.log('✅ File uploaded to Yandex Cloud:', key);
 
     console.log('💾 Saving to database...');
     // Сохраняем в базу данных
     const photo = await prisma.photo.create({
       data: {
         fileName: file.name,
-        filePath: blob.url,
+        filePath: key,
         fileSize: file.size,
         mimeType: file.type,
         description: description || null,
@@ -186,8 +181,8 @@ export async function POST(request: NextRequest) {
     // Возвращаем JSON для AJAX запросов
     const response = {
       photo,
-      url: blob.url,
-      message: 'Фотография успешно загружена в Vercel Blob (legacy endpoint)'
+      url: key,
+      message: 'Фотография успешно загружена в Yandex Cloud'
     };
     
     console.log('✅ Success response:', response);

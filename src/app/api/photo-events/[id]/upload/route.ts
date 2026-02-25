@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { uploadFile } from '@/lib/storage';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
 
@@ -121,35 +121,13 @@ export async function POST(
     // Конвертируем файл в Buffer для стабильности
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    let fileUrl: string;
+    console.log('📦 Загружаем в Yandex Cloud...');
+    await retryWithBackoff(async () => {
+      return await uploadFile(buffer, uniqueFileName, file.type, false);
+    }, 3, 2000);
 
-    try {
-      // Сначала пробуем стандартный SDK
-      console.log('📦 Пробуем Vercel Blob SDK...');
-      const blob = await retryWithBackoff(async () => {
-        return await put(uniqueFileName, buffer, {
-          access: 'public',
-          addRandomSuffix: false,
-          contentType: file.type,
-          token: process.env.BLOB_READ_WRITE_TOKEN,
-          cacheControlMaxAge: 31536000
-        });
-      }, 1, 2000); // Только 1 попытка
-
-      fileUrl = blob.url;
-      console.log('✅ SDK успешно:', fileUrl);
-
-    } catch (sdkError) {
-      console.log('❌ SDK не сработал, пробуем прямой API...');
-      console.error('SDK error:', sdkError);
-
-      // Fallback на прямой fetch
-      fileUrl = await retryWithBackoff(async () => {
-        return await uploadToVercelBlobDirect(uniqueFileName, buffer, file.type);
-      }, 2, 3000); // 2 попытки с прямым API
-
-      console.log('✅ Прямой API успешно:', fileUrl);
-    }
+    const fileUrl = uniqueFileName;
+    console.log('✅ Загрузка успешна:', fileUrl);
 
     // Сохраняем в базу данных
     const photo = await prisma.photo.create({

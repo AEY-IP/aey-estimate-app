@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Eye, Edit2, Trash2, Building2, User, Phone, Mail, MapPin, FileText, Check, X, ArrowLeft, Users, ChevronRight, Calendar } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { useToast } from '@/components/Toast'
 import { Client, CreateClientRequest } from '@/types/client'
@@ -19,6 +20,7 @@ interface ManagerGroup {
 export default function DashboardClientsPage() {
   const { session } = useAuth()
   const { showToast } = useToast()
+  const router = useRouter()
   
   const [clients, setClients] = useState<Client[]>([])
   const [managerGroups, setManagerGroups] = useState<ManagerGroup[]>([])
@@ -57,8 +59,15 @@ export default function DashboardClientsPage() {
   }
 
   useEffect(() => {
+    // Внешние дизайнеры не имеют доступа к основным клиентам
+    if (session?.user?.role === 'DESIGNER' && session?.user?.designerType === 'EXTERNAL') {
+      showToast('error', 'Доступ запрещен')
+      router.push('/dashboard')
+      return
+    }
+    
     fetchClients()
-  }, [])
+  }, [session])
 
   // Группировка клиентов по менеджерам
   const groupClientsByManager = (clientsList: Client[]) => {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { checkAuth } from '@/lib/auth'
 import jwt from 'jsonwebtoken'
+import { getSignedDownloadUrl } from '@/lib/storage'
 
 const prisma = new PrismaClient()
 
@@ -84,7 +85,23 @@ export async function GET(request: NextRequest) {
       orderBy: { sortOrder: 'asc' }
     })
 
-    return NextResponse.json({ designProjectBlocks })
+    // Генерируем signed URLs для всех файлов
+    const blocksWithSignedUrls = await Promise.all(
+      designProjectBlocks.map(async (block: any) => {
+        const filesWithUrls = await Promise.all(
+          block.files.map(async (file: any) => {
+            let filePath = file.filePath;
+            if (filePath && !filePath.startsWith('http')) {
+              filePath = await getSignedDownloadUrl(filePath, 3600);
+            }
+            return { ...file, filePath };
+          })
+        );
+        return { ...block, files: filesWithUrls };
+      })
+    );
+
+    return NextResponse.json({ designProjectBlocks: blocksWithSignedUrls })
   } catch (error) {
     console.error('Error fetching design project blocks:', error)
     return NextResponse.json({ error: 'Ошибка загрузки блоков дизайн-проекта' }, { status: 500 })

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { uploadFile } from '@/lib/storage';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { checkAuth, checkClientAuth } from '@/lib/auth';
@@ -107,19 +107,18 @@ export async function POST(request: NextRequest) {
     // Генерируем уникальное имя файла
     const timestamp = Date.now();
     const fileName = `${timestamp}-${file.name}`;
-    const filePath = `receipts/${clientId}/${fileName}`;
+    const key = `receipts/${clientId}/${fileName}`;
 
-    // Загружаем файл в Vercel Blob
-    const blob = await put(filePath, file, {
-      access: 'public',
-    });
+    // Загружаем файл в Yandex Cloud
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await uploadFile(buffer, key, file.type, false);
 
     // Сохраняем информацию о чеке в БД
     const receipt = await prisma.receipt.create({
       data: {
         blockId: blockId,
         fileName: file.name,
-        filePath: blob.url,
+        filePath: key,
         fileSize: file.size,
         mimeType: file.type,
         description: description || ''

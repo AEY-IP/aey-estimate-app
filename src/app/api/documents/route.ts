@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { checkAuth, checkClientAuth } from '@/lib/auth';
+import { getSignedDownloadUrl } from '@/lib/storage';
 
 const prisma = new PrismaClient();
 
@@ -98,19 +99,30 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Генерируем signed URLs для всех документов
+    const documentsWithSignedUrls = await Promise.all(
+      documents.map(async (doc: any) => {
+        let filePath = doc.filePath;
+        if (filePath && !filePath.startsWith('http')) {
+          filePath = await getSignedDownloadUrl(filePath, 3600);
+        }
+        return {
+          id: doc.id,
+          name: doc.name,
+          description: doc.description,
+          category: doc.category || 'document',
+          fileName: doc.fileName,
+          fileSize: doc.fileSize,
+          mimeType: doc.mimeType,
+          filePath,
+          createdAt: doc.createdAt
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      documents: documents.map((doc: any) => ({
-        id: doc.id,
-        name: doc.name,
-        description: doc.description,
-        category: doc.category || 'document',
-        fileName: doc.fileName,
-        fileSize: doc.fileSize,
-        mimeType: doc.mimeType,
-        filePath: doc.filePath,
-        createdAt: doc.createdAt
-      }))
+      documents: documentsWithSignedUrls
     });
 
   } catch (error) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { checkAuth, checkClientAuth } from '@/lib/auth';
+import { getSignedDownloadUrl } from '@/lib/storage';
 
 const prisma = new PrismaClient();
 
@@ -76,24 +77,41 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Генерируем signed URLs для всех фотографий
+    const photoBlocksWithSignedUrls = await Promise.all(
+      photoBlocks.map(async (block: any) => {
+        const photosWithUrls = await Promise.all(
+          block.photos.map(async (photo: any) => {
+            let filePath = photo.filePath;
+            // Если это ключ (не начинается с http), генерируем signed URL
+            if (filePath && !filePath.startsWith('http')) {
+              filePath = await getSignedDownloadUrl(filePath, 3600);
+            }
+            return {
+              id: photo.id,
+              fileName: photo.fileName,
+              filePath,
+              fileSize: photo.fileSize,
+              mimeType: photo.mimeType,
+              description: photo.description,
+              createdAt: photo.createdAt
+            };
+          })
+        );
+        return {
+          id: block.id,
+          title: block.title,
+          description: block.description,
+          createdAt: block.createdAt,
+          updatedAt: block.updatedAt,
+          photos: photosWithUrls
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      photoBlocks: photoBlocks.map((block: any) => ({
-        id: block.id,
-        title: block.title,
-        description: block.description,
-        createdAt: block.createdAt,
-        updatedAt: block.updatedAt,
-        photos: block.photos.map((photo: any) => ({
-          id: photo.id,
-          fileName: photo.fileName,
-          filePath: photo.filePath,
-          fileSize: photo.fileSize,
-          mimeType: photo.mimeType,
-          description: photo.description,
-          createdAt: photo.createdAt
-        }))
-      }))
+      photoBlocks: photoBlocksWithSignedUrls
     });
 
   } catch (error) {

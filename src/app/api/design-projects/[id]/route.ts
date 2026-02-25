@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { checkAuth } from '@/lib/auth'
-import { del } from '@vercel/blob'
+import { deleteFile } from '@/lib/storage'
 
 const prisma = new PrismaClient()
 
@@ -142,10 +142,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Менеджеры не могут удалять блоки дизайн-проектов' }, { status: 403 })
     }
 
-    // Удаляем все файлы из Vercel Blob
+    // Удаляем все файлы из Yandex Cloud
     for (const file of designProjectBlock.files) {
       try {
-        await del(file.filePath)
+        await deleteFile(file.filePath)
       } catch (error) {
         console.error(`Ошибка удаления файла ${file.filePath}:`, error)
         // Продолжаем даже если не удалось удалить файл

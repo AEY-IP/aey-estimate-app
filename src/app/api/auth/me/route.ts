@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
         id: session.id,
         name: session.name || session.username, // Используем name если есть, иначе username
         username: session.username,
-        role: session.role
+        role: session.role,
+        designerType: session.designerType
       },
       isAuthenticated: true
     })

@@ -41,7 +41,7 @@ const Navigation = () => {
     if (isClientEnvironment) {
       return '/client-dashboard'
     }
-    if (session?.user?.role === 'ADMIN' || session?.user?.role === 'MANAGER') {
+    if (session?.user?.role === 'ADMIN' || session?.user?.role === 'MANAGER' || session?.user?.role === 'DESIGNER') {
       return '/dashboard'
     }
     return '/'
@@ -121,26 +121,33 @@ const Navigation = () => {
       ]
     } else if (isProfessionalEnvironment) {
       // Профессиональное меню
-      const items = [
-        {
-          title: 'Клиенты',
-          href: '/dashboard/clients',
-          icon: Users,
-          color: 'bg-pink-100 text-pink-700'
-        },
-        {
-          title: 'Акты',
-          href: '/acts',
-          icon: FileText,
-          color: 'bg-green-100 text-green-700'
-        },
-        {
-          title: 'Параметры помещений',
-          href: '/room-parameters',
-          icon: Settings,
-          color: 'bg-gray-100 text-gray-700'
-        }
-      ]
+      const items = []
+      
+      // Внешние дизайнеры не имеют доступа к основным разделам
+      const isExternalDesigner = session?.user?.role === 'DESIGNER' && session?.user?.designerType === 'EXTERNAL'
+      
+      if (!isExternalDesigner) {
+        items.push(
+          {
+            title: 'Клиенты',
+            href: '/dashboard/clients',
+            icon: Users,
+            color: 'bg-pink-100 text-pink-700'
+          },
+          {
+            title: 'Акты',
+            href: '/acts',
+            icon: FileText,
+            color: 'bg-green-100 text-green-700'
+          },
+          {
+            title: 'Параметры помещений',
+            href: '/room-parameters',
+            icon: Settings,
+            color: 'bg-gray-100 text-gray-700'
+          }
+        )
+      }
 
       // Добавляем пункты только для админов
       if (isAdmin) {
@@ -175,13 +182,25 @@ const Navigation = () => {
   // Генерируем breadcrumbs
   const generateBreadcrumbs = () => {
     const pathSegments = pathname.split('/').filter(Boolean)
-    const breadcrumbs: Array<{ name: string; href: string; icon?: any }> = [{ name: 'Главная', href: getHomeUrl(), icon: Home }]
+    
+    // Для профессиональной среды начинаем с Dashboard
+    const breadcrumbs: Array<{ name: string; href: string; icon?: any }> = [{ 
+      name: isProfessionalEnvironment ? 'Dashboard' : 'Главная', 
+      href: getHomeUrl(), 
+      icon: Home 
+    }]
 
     // Получаем параметр returnTo из URL
     const returnTo = searchParams.get('returnTo')
 
     let currentPath = ''
     pathSegments.forEach((segment, index) => {
+      // Пропускаем технический сегмент "designer" из breadcrumbs
+      if (segment === 'designer') {
+        currentPath += `/${segment}`
+        return
+      }
+      
       currentPath += `/${segment}`
       
       let name = segment
@@ -195,7 +214,12 @@ const Navigation = () => {
           icon = Settings
           break
         case 'clients':
-          name = 'Клиенты'
+          // Если это путь /designer/clients, показываем "Клиенты дизайнера"
+          if (pathname.startsWith('/designer/clients')) {
+            name = 'Клиенты дизайнера'
+          } else {
+            name = 'Клиенты'
+          }
           icon = Users
           break
         case 'works':
@@ -268,8 +292,14 @@ const Navigation = () => {
           icon = Receipt
           break
         default:
-          if (pathSegments[index - 1] === 'clients' && segment !== 'new') {
+          // Если это ID клиента в пути /clients/[id] или /designer/clients/[id]
+          const prevSegment = pathSegments[index - 1]
+          if (prevSegment === 'clients' && segment !== 'new') {
             name = 'Клиент'
+          }
+          // Если это ID сметы
+          if (prevSegment === 'estimates' && segment !== 'new') {
+            name = 'Смета'
           }
       }
 
@@ -333,12 +363,17 @@ const Navigation = () => {
                     <p className="text-sm font-medium text-gray-900 truncate max-w-32 lg:max-w-none">{session.user.name}</p>
                     <p className="text-xs text-gray-500">
                       {isClientEnvironment ? 'Клиент' : 
-                       session.user.role === 'ADMIN' ? 'Администратор' : 'Менеджер'}
+                       session.user.role === 'ADMIN' ? 'Администратор' : 
+                       session.user.role === 'DESIGNER' ? 'Дизайнер' :
+                       session.user.role === 'MANAGER' ? 'Менеджер' : 
+                       'Пользователь'}
                     </p>
                   </div>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold ${
                     isClientEnvironment ? 'bg-teal-500' :
-                    session.user.role === 'ADMIN' ? 'bg-red-500' : 'bg-pink-500'
+                    session.user.role === 'ADMIN' ? 'bg-red-500' : 
+                    session.user.role === 'DESIGNER' ? 'bg-purple-500' :
+                    'bg-pink-500'
                   }`}>
                     {session.user.name.charAt(0).toUpperCase()}
                   </div>
@@ -393,7 +428,10 @@ const Navigation = () => {
                     <p className="font-medium text-gray-900">{session.user.name}</p>
                     <p className="text-gray-500">
                       {isClientEnvironment ? 'Клиент' : 
-                       session.user.role === 'ADMIN' ? 'Администратор' : 'Менеджер'}
+                       session.user.role === 'ADMIN' ? 'Администратор' : 
+                       session.user.role === 'DESIGNER' ? 'Дизайнер' :
+                       session.user.role === 'MANAGER' ? 'Менеджер' : 
+                       'Пользователь'}
                     </p>
                   </div>
                 )}

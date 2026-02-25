@@ -28,6 +28,7 @@ interface UserAccount {
   name: string
   phone: string
   role: 'ADMIN' | 'MANAGER' | 'DESIGNER'
+  designerType?: 'EXTERNAL' | 'INTERNAL' | null
   isActive: boolean
   createdAt: string
 }
@@ -56,6 +57,7 @@ export default function AdminUsersPage() {
     name: '',
     phone: '',
     role: 'MANAGER' as 'ADMIN' | 'MANAGER' | 'DESIGNER',
+    designerType: 'EXTERNAL' as 'EXTERNAL' | 'INTERNAL',
     isActive: true
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -95,7 +97,7 @@ export default function AdminUsersPage() {
       if (response.ok) {
         showToast('success', 'Пользователь создан')
         setIsCreating(false)
-        setFormData({ username: '', password: '', name: '', phone: '', role: 'MANAGER', isActive: true })
+        setFormData({ username: '', password: '', name: '', phone: '', role: 'MANAGER', designerType: 'EXTERNAL', isActive: true })
         fetchUsers()
       } else {
         const error = await response.json()
@@ -121,7 +123,7 @@ export default function AdminUsersPage() {
       if (response.ok) {
         showToast('success', 'Пользователь обновлен')
         setEditingUser(null)
-        setFormData({ username: '', password: '', name: '', phone: '', role: 'MANAGER', isActive: true })
+        setFormData({ username: '', password: '', name: '', phone: '', role: 'MANAGER', designerType: 'EXTERNAL', isActive: true })
         fetchUsers()
       } else {
         const error = await response.json()
@@ -162,6 +164,7 @@ export default function AdminUsersPage() {
       name: user.name,
       phone: user.phone || '',
       role: user.role,
+      designerType: user.designerType || 'EXTERNAL',
       isActive: user.isActive
     })
     setIsCreating(false)
@@ -171,7 +174,7 @@ export default function AdminUsersPage() {
   const cancelEdit = () => {
     setEditingUser(null)
     setIsCreating(false)
-    setFormData({ username: '', password: '', name: '', phone: '', role: 'MANAGER', isActive: true })
+    setFormData({ username: '', password: '', name: '', phone: '', role: 'MANAGER', designerType: 'EXTERNAL', isActive: true })
     setShowPassword(false)
   }
 
@@ -449,6 +452,41 @@ export default function AdminUsersPage() {
                   </select>
                 </div>
 
+                {/* Тип дизайнера */}
+                {formData.role === 'DESIGNER' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Тип дизайнера *
+                    </label>
+                    <div className="space-y-2">
+                      <label className="flex items-center p-3 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          checked={formData.designerType === 'EXTERNAL'}
+                          onChange={() => setFormData({ ...formData, designerType: 'EXTERNAL' })}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                        />
+                        <div className="ml-3">
+                          <span className="font-medium text-gray-900">Внешний</span>
+                          <p className="text-sm text-gray-500">Только подборки</p>
+                        </div>
+                      </label>
+                      <label className="flex items-center p-3 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          checked={formData.designerType === 'INTERNAL'}
+                          onChange={() => setFormData({ ...formData, designerType: 'INTERNAL' })}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                        />
+                        <div className="ml-3">
+                          <span className="font-medium text-gray-900">Внутренний</span>
+                          <p className="text-sm text-gray-500">Подборки + основные клиенты</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
                 {/* Статус */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -554,6 +592,15 @@ export default function AdminUsersPage() {
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                       {getRoleName(user.role)}
                     </span>
+                    {user.role === 'DESIGNER' && user.designerType && (
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        user.designerType === 'INTERNAL'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-orange-100 text-orange-800'
+                      }`}>
+                        {user.designerType === 'INTERNAL' ? 'Внутренний' : 'Внешний'}
+                      </span>
+                    )}
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       user.isActive 
                         ? 'bg-green-100 text-green-800' 

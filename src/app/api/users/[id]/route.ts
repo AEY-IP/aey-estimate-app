@@ -17,6 +17,7 @@ export async function GET(
         id: true,
         username: true,
         role: true,
+        designerType: true,
         name: true,
         phone: true,
         isActive: true,
@@ -45,7 +46,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { username, password, role, name, phone, isActive } = await request.json()
+    const { username, password, role, designerType, name, phone, isActive } = await request.json()
     
     // Проверяем существование пользователя
     const existingUser = await prisma.user.findUnique({
@@ -70,6 +71,16 @@ export async function PUT(
       }
     }
     
+    // Если дизайнер переводится с INTERNAL на EXTERNAL - отвязываем клиентов
+    if (existingUser.role === 'DESIGNER' && 
+        existingUser.designerType === 'INTERNAL' && 
+        designerType === 'EXTERNAL') {
+      await prisma.client.updateMany({
+        where: { designerId: params.id },
+        data: { designerId: null }
+      })
+    }
+    
     // Хешируем новый пароль если он предоставлен
     let hashedPassword;
     if (password && password.trim()) {
@@ -82,6 +93,8 @@ export async function PUT(
         ...(username && { username }),
         ...(hashedPassword && { passwordHash: hashedPassword }),
         ...(role && { role }),
+        ...(role === 'DESIGNER' && designerType && { designerType }),
+        ...(role !== 'DESIGNER' && { designerType: null }),
         ...(name && { name }),
         ...(phone !== undefined && { phone }),
         ...(isActive !== undefined && { isActive })
@@ -90,6 +103,7 @@ export async function PUT(
         id: true,
         username: true,
         role: true,
+        designerType: true,
         name: true,
         phone: true,
         isActive: true,
@@ -122,6 +136,7 @@ export async function DELETE(
         id: true,
         username: true,
         role: true,
+        designerType: true,
         name: true,
         phone: true,
         isActive: true,

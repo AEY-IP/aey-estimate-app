@@ -3,6 +3,7 @@ export interface User {
   username: string
   passwordHash: string
   role: 'ADMIN' | 'MANAGER' | 'DESIGNER' | 'CLIENT'
+  designerType?: 'EXTERNAL' | 'INTERNAL' | null
   name: string
   phone?: string
   createdAt: string

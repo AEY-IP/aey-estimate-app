@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Edit2, Trash2, Settings, Save, X } from 'lucide-react'
+import { useAuth } from '@/components/AuthProvider'
+import { useToast } from '@/components/Toast'
 
 interface RoomParameter {
   id: string
@@ -14,6 +17,10 @@ interface RoomParameter {
 }
 
 export default function RoomParametersPage() {
+  const { session } = useAuth()
+  const { showToast } = useToast()
+  const router = useRouter()
+  
   const [parameters, setParameters] = useState<RoomParameter[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -40,8 +47,15 @@ export default function RoomParametersPage() {
   }
 
   useEffect(() => {
+    // Внешние дизайнеры не имеют доступа к параметрам помещений
+    if (session?.user?.role === 'DESIGNER' && session?.user?.designerType === 'EXTERNAL') {
+      showToast('error', 'Доступ запрещен')
+      router.push('/dashboard')
+      return
+    }
+    
     fetchParameters()
-  }, [])
+  }, [session])
 
   // Добавление нового параметра
   const handleAdd = async () => {

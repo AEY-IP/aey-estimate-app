@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { uploadFile } from '@/lib/storage';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
 
@@ -64,21 +64,19 @@ export async function POST(request: NextRequest) {
       const fileExtension = filename.split('.').pop();
       const uniqueFileName = `photos/direct-upload/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
       
-      console.log('🚀 Uploading to Vercel Blob (direct body):', uniqueFileName);
+      console.log('🚀 Uploading to Yandex Cloud (direct body):', uniqueFileName);
       
-      // Загружаем напрямую из request.body как в документации
-      const blob = await retryWithBackoff(async () => {
-        console.log('🚀 Attempting direct body upload to Vercel Blob...');
-        return await put(uniqueFileName, request.body!, {
-          access: 'public',
-          addRandomSuffix: false
-        });
+      // Загружаем в Yandex Cloud
+      const buffer = Buffer.from(await request.arrayBuffer());
+      await retryWithBackoff(async () => {
+        console.log('🚀 Attempting direct body upload to Yandex Cloud...');
+        return await uploadFile(buffer, uniqueFileName, 'image/jpeg', false);
       }, 3, 2000);
 
-      console.log('✅ Blob uploaded via direct body:', blob.url);
+      console.log('✅ File uploaded to Yandex Cloud:', uniqueFileName);
       console.log('=== PHOTOS UPLOAD API END (SUCCESS - direct body) ===');
       
-      return NextResponse.json(blob);
+      return NextResponse.json({ url: uniqueFileName });
     }
 
     // Основной путь с FormData
@@ -186,28 +184,23 @@ export async function POST(request: NextRequest) {
     const fileExtension = file.name.split('.').pop();
     const uniqueFileName = `photos/${clientId}/${blockId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
 
-    console.log('🚀 Uploading to Vercel Blob (SDK with File object):', uniqueFileName);
-    console.log('🔑 Blob token available:', !!process.env.BLOB_READ_WRITE_TOKEN);
-    console.log('🔑 Token length:', process.env.BLOB_READ_WRITE_TOKEN?.length);
+    console.log('🚀 Uploading to Yandex Cloud:', uniqueFileName);
 
-    // Загружаем в Vercel Blob с retry механизмом, используя File объект напрямую
-    const blob = await retryWithBackoff(async () => {
-      console.log('🚀 Attempting SDK upload with File object...');
-      return await put(uniqueFileName, file, {
-        access: 'public',
-        addRandomSuffix: false,
-        token: process.env.BLOB_READ_WRITE_TOKEN
-      });
+    // Загружаем в Yandex Cloud с retry механизмом
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await retryWithBackoff(async () => {
+      console.log('🚀 Attempting upload to Yandex Cloud...');
+      return await uploadFile(buffer, uniqueFileName, file.type, false);
     }, 3, 2000);
 
-    console.log('✅ Blob uploaded via SDK:', blob.url);
+    console.log('✅ File uploaded to Yandex Cloud:', uniqueFileName);
 
     console.log('💾 Saving to database...');
     // Сохраняем в базу данных
     const photo = await prisma.photo.create({
       data: {
         fileName: file.name,
-        filePath: blob.url,
+        filePath: uniqueFileName,
         fileSize: file.size,
         mimeType: file.type,
         description: description || null,
@@ -289,7 +282,7 @@ export async function POST(request: NextRequest) {
             📸 Имя: ${photo.fileName}<br>
             📏 Размер: ${Math.round(photo.fileSize / 1024)} КБ<br>
             🆔 ID: ${photo.id}<br>
-            🌐 URL: ${blob.url}
+            🌐 URL: ${uniqueFileName}
           </div>
           
                           <a href="/dashboard/clients/${clientId}/photos" class="back-btn">
@@ -316,8 +309,8 @@ export async function POST(request: NextRequest) {
     // Возвращаем JSON для AJAX запросов
     const response = {
       photo,
-      url: blob.url,
-      message: 'Фотография успешно загружена в Vercel Blob'
+      url: uniqueFileName,
+      message: 'Фотография успешно загружена в Yandex Cloud'
     };
     
     console.log('✅ Success response:', response);

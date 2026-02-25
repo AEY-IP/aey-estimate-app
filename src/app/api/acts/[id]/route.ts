@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
-import { checkAuth } from '@/lib/auth'
+import { checkAuth, canAccessMainSystem } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
@@ -10,6 +10,11 @@ export async function GET(
     const session = checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к актам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     const act = await prisma.estimate.findUnique({
@@ -83,6 +88,11 @@ export async function PUT(
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
+    
+    // Внешние дизайнеры не имеют доступа к актам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
 
     const data = await request.json()
 
@@ -143,6 +153,11 @@ export async function DELETE(
     const session = checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к актам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     await prisma.estimate.delete({

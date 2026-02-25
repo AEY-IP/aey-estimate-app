@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { checkAuth } from '@/lib/auth'
-import { del } from '@vercel/blob'
+import { deleteFile } from '@/lib/storage'
 
 const prisma = new PrismaClient()
 
@@ -131,7 +131,7 @@ export async function DELETE(
     // Удаляем все фото из Vercel Blob
     for (const photo of photoBlock.photos) {
       try {
-        await del(photo.filePath)
+        await deleteFile(photo.filePath)
       } catch (error) {
         console.error(`Ошибка удаления файла ${photo.filePath}:`, error)
         // Продолжаем даже если не удалось удалить файл

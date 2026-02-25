@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { checkAuth, checkClientAuth } from '@/lib/auth';
+import { getSignedDownloadUrl } from '@/lib/storage';
 
 const prisma = new PrismaClient();
 
@@ -76,24 +77,40 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Генерируем signed URLs для всех чеков
+    const blocksWithSignedUrls = await Promise.all(
+      receiptBlocks.map(async (block: any) => {
+        const receiptsWithUrls = await Promise.all(
+          block.receipts.map(async (receipt: any) => {
+            let filePath = receipt.filePath;
+            if (filePath && !filePath.startsWith('http')) {
+              filePath = await getSignedDownloadUrl(filePath, 3600);
+            }
+            return {
+              id: receipt.id,
+              fileName: receipt.fileName,
+              filePath,
+              fileSize: receipt.fileSize,
+              mimeType: receipt.mimeType,
+              description: receipt.description,
+              createdAt: receipt.createdAt
+            };
+          })
+        );
+        return {
+          id: block.id,
+          title: block.title,
+          description: block.description,
+          createdAt: block.createdAt,
+          updatedAt: block.updatedAt,
+          receipts: receiptsWithUrls
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      receiptBlocks: receiptBlocks.map((block: any) => ({
-        id: block.id,
-        title: block.title,
-        description: block.description,
-        createdAt: block.createdAt,
-        updatedAt: block.updatedAt,
-        receipts: block.receipts.map((receipt: any) => ({
-          id: receipt.id,
-          fileName: receipt.fileName,
-          filePath: receipt.filePath,
-          fileSize: receipt.fileSize,
-          mimeType: receipt.mimeType,
-          description: receipt.description,
-          createdAt: receipt.createdAt
-        }))
-      }))
+      receiptBlocks: blocksWithSignedUrls
     });
 
   } catch (error) {

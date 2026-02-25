@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { uploadFile } from '@/lib/storage';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
 
@@ -83,21 +83,20 @@ export async function POST(request: NextRequest) {
     const fileExtension = file.name.split('.').pop();
     const uniqueFileName = `documents/${clientId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
 
-    console.log('🚀 Uploading to Vercel Blob:', uniqueFileName);
+    console.log('🚀 Uploading to Yandex Cloud:', uniqueFileName);
 
-    // Загружаем в Vercel Blob
-    const blob = await put(uniqueFileName, file, {
-      access: 'public',
-    });
+    // Загружаем в Yandex Cloud
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await uploadFile(buffer, uniqueFileName, file.type, false);
 
-    console.log('✅ Blob uploaded:', blob.url);
+    console.log('✅ File uploaded:', uniqueFileName);
 
     // Сохраняем в базу данных
     const document = await prisma.document.create({
       data: {
         name: title,
         fileName: file.name,
-        filePath: blob.url,
+        filePath: uniqueFileName,
         fileSize: file.size,
         mimeType: file.type,
         clientId: clientId
@@ -108,8 +107,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       document,
-      url: blob.url,
-      message: 'Документ успешно загружен в Vercel Blob'
+      url: uniqueFileName,
+      message: 'Документ успешно загружен в Yandex Cloud'
     });
 
   } catch (error) {

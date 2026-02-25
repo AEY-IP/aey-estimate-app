@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
+import { checkAuth, canAccessMainSystem } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = checkAuth(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к параметрам помещений
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+    
     const parameter = await prisma.roomParameter.findUnique({
       where: { id: params.id }
     })
@@ -32,6 +43,16 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = checkAuth(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к параметрам помещений
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+    
     const { name, unit, description, isActive } = await request.json()
     
     const updatedParameter = await prisma.roomParameter.update({
@@ -59,6 +80,16 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = checkAuth(request)
+    if (!session) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к параметрам помещений
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
+    }
+    
     await prisma.roomParameter.delete({
       where: { id: params.id }
     })

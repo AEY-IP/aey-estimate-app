@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
-import { checkAuth } from '@/lib/auth'
+import { checkAuth, canAccessMainSystem } from '@/lib/auth'
 
 // GET - получить клиента по ID
 export async function GET(
@@ -19,6 +19,11 @@ export async function GET(
     if (!session) {
       console.log('No session found')
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к основным клиентам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     console.log('Session data:', { id: session.id, role: session.role, username: session.username })
@@ -73,6 +78,11 @@ export async function PUT(
     const session = checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к основным клиентам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
     
     // Сначала найдём клиента по ID
@@ -180,6 +190,11 @@ export async function DELETE(
     const session = checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к основным клиентам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
     
     // Сначала найдём клиента по ID

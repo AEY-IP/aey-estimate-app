@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
-import { checkAuth } from '@/lib/auth'
+import { checkAuth, canAccessMainSystem } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
     const session = checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к актам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -100,6 +105,11 @@ export async function POST(request: NextRequest) {
     if (!session) {
       console.log('No session found')
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+    }
+    
+    // Внешние дизайнеры не имеют доступа к актам
+    if (!canAccessMainSystem(session)) {
+      return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     const body = await request.json()
