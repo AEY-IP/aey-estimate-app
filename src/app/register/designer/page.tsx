@@ -291,21 +291,25 @@ export default function DesignerRegisterPage() {
                   required
                   autoComplete="username"
                 />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  {usernameCheck.checking && (
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-purple-500"></div>
-                  )}
-                  {!usernameCheck.checking && usernameCheck.available === true && (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  )}
-                  {!usernameCheck.checking && usernameCheck.available === false && (
-                    <AlertCircle className="h-5 w-5 text-red-500" />
-                  )}
-                </div>
+                {(usernameCheck.checking || usernameCheck.available !== null) && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {usernameCheck.checking && (
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-purple-500"></div>
+                    )}
+                    {!usernameCheck.checking && usernameCheck.available === true && (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    )}
+                    {!usernameCheck.checking && usernameCheck.available === false && (
+                      <AlertCircle className="h-5 w-5 text-red-500" />
+                    )}
+                  </div>
+                )}
               </div>
               {usernameCheck.message && (
                 <p className={`text-xs mt-1 font-medium ${
-                  usernameCheck.available === false ? 'text-red-600' : 'text-green-600'
+                  usernameCheck.available === false ? 'text-red-600' : 
+                  usernameCheck.available === true ? 'text-green-600' : 
+                  'text-gray-500'
                 }`}>
                   {usernameCheck.message}
                 </p>

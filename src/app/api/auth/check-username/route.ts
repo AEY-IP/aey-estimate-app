@@ -9,7 +9,10 @@ export async function GET(request: NextRequest) {
     const username = searchParams.get('username')
 
     if (!username || username.length < 3) {
-      return NextResponse.json({ available: false })
+      return NextResponse.json({ 
+        available: null, 
+        message: 'Минимум 3 символа' 
+      })
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -22,6 +25,9 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error checking username:', error)
-    return NextResponse.json({ available: false }, { status: 500 })
+    return NextResponse.json({ 
+      available: null, 
+      message: 'Ошибка проверки' 
+    }, { status: 500 })
   }
 }
