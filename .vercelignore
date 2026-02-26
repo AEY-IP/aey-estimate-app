@@ -1,0 +1,17 @@
+# Exclude mobile app from deployment
+mobile/
+
+# Exclude backup files
+backups/
+
+# Exclude migration scripts
+scripts/migrate-to-yandex-cloud.ts
+scripts/add-designer.ts
+
+# Exclude log files
+*.log
+npm-install-output.log
+
+# Exclude documentation
+BACKEND_INTEGRATION_TODO.md
+YANDEX_CLOUD_MIGRATION.md
