@@ -85,7 +85,7 @@ export default function DesignerRegisterPage() {
     }
 
     // Проверка на английские символы
-    const englishOnlyRegex = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/
+    const englishOnlyRegex = /^[a-zA-Z0-9!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?-]*$/
     if (!englishOnlyRegex.test(formData.password)) {
       alert('Пароль должен содержать только английские буквы, цифры и специальные символы')
       return
@@ -278,7 +278,7 @@ export default function DesignerRegisterPage() {
                   value={formData.username}
                   onChange={(e) => {
                     const value = e.target.value
-                    const englishOnlyRegex = /^[a-zA-Z0-9_\-]*$/
+                    const englishOnlyRegex = /^[a-zA-Z0-9_-]*$/
                     if (englishOnlyRegex.test(value) || value === '') {
                       setFormData({ ...formData, username: value })
                     }
@@ -324,7 +324,7 @@ export default function DesignerRegisterPage() {
                 value={formData.password}
                 onChange={(e) => {
                   const value = e.target.value
-                  const englishOnlyRegex = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/
+                  const englishOnlyRegex = /^[a-zA-Z0-9!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?-]*$/
                   if (englishOnlyRegex.test(value) || value === '') {
                     setFormData({ ...formData, password: value })
                   }
@@ -350,7 +350,7 @@ export default function DesignerRegisterPage() {
                 value={formData.confirmPassword}
                 onChange={(e) => {
                   const value = e.target.value
-                  const englishOnlyRegex = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/
+                  const englishOnlyRegex = /^[a-zA-Z0-9!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?-]*$/
                   if (englishOnlyRegex.test(value) || value === '') {
                     setFormData({ ...formData, confirmPassword: value })
                   }
