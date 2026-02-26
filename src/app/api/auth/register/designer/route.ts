@@ -101,9 +101,17 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error registering designer:', error)
+    console.error('=== DESIGNER REGISTRATION ERROR ===')
+    console.error('Username:', body?.username)
+    console.error('Error:', error)
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+    console.error('===================================')
+    
     return NextResponse.json(
-      { error: 'Ошибка регистрации' },
+      { error: error instanceof Error ? error.message : 'Ошибка регистрации' },
       { status: 500 }
     )
   }
