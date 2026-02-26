@@ -1,0 +1,7 @@
+node_modules/**
+backups/**
+scripts/**
+.git/**
+.next/**
+*.md
+*.log
