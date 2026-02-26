@@ -39,14 +39,22 @@ export default function DesignerRegisterPage() {
     const timeoutId = setTimeout(async () => {
       try {
         const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(formData.username)}`)
+        
+        if (!response.ok) {
+          // Если сервер вернул ошибку, просто скрываем результат
+          setUsernameCheck({ checking: false, available: null, message: '' })
+          return
+        }
+        
         const data = await response.json()
         setUsernameCheck({
           checking: false,
           available: data.available,
-          message: data.message
+          message: data.message || ''
         })
       } catch (error) {
         console.error('Error checking username:', error)
+        // При ошибке просто скрываем результат без показа сообщения
         setUsernameCheck({ checking: false, available: null, message: '' })
       }
     }, 500)

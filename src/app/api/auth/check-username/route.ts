@@ -8,11 +8,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const username = searchParams.get('username')
 
+    // Валидация входных данных
     if (!username) {
       return NextResponse.json({ 
         available: null, 
         message: 'Логин не указан' 
-      }, { status: 400 })
+      })
     }
 
     if (username.length < 3) {
@@ -22,29 +23,41 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Проверка что логин содержит только допустимые символы
+    // Проверка допустимых символов
     const validUsernameRegex = /^[a-zA-Z0-9_-]+$/
     if (!validUsernameRegex.test(username)) {
       return NextResponse.json({ 
         available: null, 
         message: 'Недопустимые символы' 
-      }, { status: 400 })
+      })
     }
 
+    // Проверка существования пользователя - запрашиваем только username
     const existingUser = await prisma.user.findUnique({
-      where: { username }
+      where: { username },
+      select: { id: true } // Запрашиваем только id для минимизации нагрузки
     })
 
+    // Возвращаем результат
     return NextResponse.json({ 
       available: !existingUser,
       message: existingUser ? 'Логин уже занят' : 'Логин доступен'
     })
   } catch (error) {
-    console.error('Error checking username:', error)
-    console.error('Error details:', error instanceof Error ? error.message : String(error))
+    // Подробное логирование ошибки
+    console.error('=== USERNAME CHECK ERROR ===')
+    console.error('Username:', request.nextUrl.searchParams.get('username'))
+    console.error('Error:', error)
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+    console.error('===========================')
+    
+    // Возвращаем нейтральный результат вместо ошибки
     return NextResponse.json({ 
       available: null, 
-      message: 'Ошибка проверки. Попробуйте позже.' 
-    }, { status: 500 })
+      message: '' 
+    })
   }
 }
