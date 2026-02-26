@@ -7,12 +7,8 @@ const nextConfig = {
     // Отключаем проверку TypeScript при сборке для быстрого деплоя
     ignoreBuildErrors: true,
   },
-  // Используем standalone output чтобы избежать проблем с file tracing
-  output: 'standalone',
-  experimental: {
-    // Отключаем турбо режим если есть проблемы
-    turbo: undefined,
-  },
+  // Полностью отключаем output file tracing чтобы избежать stack overflow
+  outputFileTracing: false,
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig
