@@ -303,15 +303,18 @@ export default function DesignerRegisterPage() {
                   )}
                 </div>
               </div>
-              <p className={`text-xs mt-1 ${
-                usernameCheck.available === false ? 'text-red-600 font-medium' : 
-                usernameCheck.available === true ? 'text-green-600 font-medium' : 
-                'text-gray-500'
-              }`}>
-                {formData.username.length > 0 && formData.username.length < 3 
-                  ? 'Минимум 3 символа' 
-                  : usernameCheck.message || 'Только английские буквы, цифры, дефис и подчеркивание'}
-              </p>
+              {usernameCheck.message && (
+                <p className={`text-xs mt-1 font-medium ${
+                  usernameCheck.available === false ? 'text-red-600' : 'text-green-600'
+                }`}>
+                  {usernameCheck.message}
+                </p>
+              )}
+              {!usernameCheck.message && formData.username.length > 0 && formData.username.length < 3 && (
+                <p className="text-xs mt-1 text-gray-500">
+                  Минимум 3 символа
+                </p>
+              )}
             </div>
 
             <div>
