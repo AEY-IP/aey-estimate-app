@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client'
 import { checkAuth } from '@/lib/auth'
 import { deleteFile } from '@/lib/storage'
 
+
+export const dynamic = 'force-dynamic'
 const prisma = new PrismaClient()
 
 // GET - получить блок дизайн-проекта

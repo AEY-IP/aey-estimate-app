@@ -3,6 +3,8 @@ import { checkAuth } from '@/lib/auth'
 import { prisma } from '@/lib/database'
 import ExcelJS from 'exceljs'
 
+
+export const dynamic = 'force-dynamic'
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

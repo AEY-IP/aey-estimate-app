@@ -3,6 +3,8 @@ import { uploadFile } from '@/lib/storage';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
 
+
+export const dynamic = 'force-dynamic'
 // Функция для retry с экспоненциальной задержкой
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,

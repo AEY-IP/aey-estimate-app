@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 
+
+export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     // Получаем реальных пользователей из базы данных

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { checkAuth } from '@/lib/auth'
 
+
+export const dynamic = 'force-dynamic'
 const prisma = new PrismaClient()
 
 // PATCH - обновить заявку (статус или заметки)

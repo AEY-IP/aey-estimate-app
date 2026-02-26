@@ -3,6 +3,8 @@ import { uploadFile } from '@/lib/storage';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
 
+
+export const dynamic = 'force-dynamic'
 // Альтернативная функция загрузки через прямой fetch
 async function uploadToVercelBlobDirect(fileName: string, buffer: Buffer, contentType: string): Promise<string> {
   const token = process.env.BLOB_READ_WRITE_TOKEN;

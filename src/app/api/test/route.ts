@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+
+export const dynamic = 'force-dynamic'
 export async function GET() {
   console.log('TEST API: GET request received')
   return NextResponse.json({ status: 'OK', message: 'API работает' })

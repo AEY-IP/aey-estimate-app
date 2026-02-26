@@ -3,6 +3,8 @@ import { prisma } from '@/lib/database'
 import bcrypt from 'bcryptjs'
 import { LoginRequest } from '@/types/auth'
 
+
+export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body: LoginRequest = await request.json()

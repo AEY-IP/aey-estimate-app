@@ -3,6 +3,8 @@ import { prisma } from '@/lib/database'
 import bcrypt from 'bcryptjs'
 import { User, CreateUserRequest } from '@/types/auth'
 
+
+export const dynamic = 'force-dynamic'
 // GET - получить всех пользователей (только для админов)
 export async function GET() {
   try {

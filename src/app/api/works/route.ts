@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 
+
+export const dynamic = 'force-dynamic'
 // GET /api/works - получение всех работ из БД
 export async function GET(request: NextRequest) {
   try {

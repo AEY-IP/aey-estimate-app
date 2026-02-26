@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth'
 import { prisma } from '@/lib/database'
 
+
+export const dynamic = 'force-dynamic'
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
 
+
+export const dynamic = 'force-dynamic'
 // GET - получить все события фотографий для клиента
 export async function GET(request: NextRequest) {
   try {

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/database'
 
+
+export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     console.log('=== CLIENT-ME API START ===')

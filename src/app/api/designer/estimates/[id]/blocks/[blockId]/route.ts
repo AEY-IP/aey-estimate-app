@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 
+
+export const dynamic = 'force-dynamic'
 async function checkBlockAccess(blockId: string, sessionId: string, role: string) {
   const block = await prisma.designerEstimateBlock.findUnique({
     where: { id: blockId },

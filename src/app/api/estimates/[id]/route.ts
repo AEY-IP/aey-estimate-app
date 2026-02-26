@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth, checkClientAuth, canAccessMainSystem } from '@/lib/auth'
 
+
+export const dynamic = 'force-dynamic'
 function formatRoomForFrontend(room: any): any {
   return {
     ...room,

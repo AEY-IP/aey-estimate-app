@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth, checkClientAuth } from '@/lib/auth'
 import { prisma } from '@/lib/database'
+
+export const dynamic = 'force-dynamic'
 // import { getServerSession } from 'next-auth'
 
 // GET - получить кеш экспорта (временная заглушка)

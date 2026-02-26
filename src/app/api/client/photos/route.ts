@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/database'
 import { cookies } from 'next/headers'
 
+
+export const dynamic = 'force-dynamic'
 // GET - получить все события фотографий для текущего клиента
 export async function GET(request: NextRequest) {
   console.log('=== CLIENT PHOTOS API START ===');

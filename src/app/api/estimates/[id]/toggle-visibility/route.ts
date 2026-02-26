@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAuth } from '@/lib/auth';
 import { prisma } from '@/lib/database';
 
+
+export const dynamic = 'force-dynamic'
 // Функция calculateEstimatePricesServer удалена - логика перенесена в export-cache API
 
 // Создание кеша экспорта для смет типа "rooms"

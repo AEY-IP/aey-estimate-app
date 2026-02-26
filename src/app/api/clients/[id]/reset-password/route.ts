@@ -3,6 +3,8 @@ import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
 
+
+export const dynamic = 'force-dynamic'
 // Функция генерации случайного пароля
 function generatePassword(length: number = 6): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'

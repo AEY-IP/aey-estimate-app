@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client';
 import { checkAuth, checkClientAuth } from '@/lib/auth';
 import { getSignedDownloadUrl } from '@/lib/storage';
 
+
+export const dynamic = 'force-dynamic'
 const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {

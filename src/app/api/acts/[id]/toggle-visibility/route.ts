@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 
+
+export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = checkAuth(request)

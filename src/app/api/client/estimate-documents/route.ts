@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { checkClientAuth } from '@/lib/auth';
 
+
+export const dynamic = 'force-dynamic'
 const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {

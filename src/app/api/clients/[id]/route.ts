@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth, canAccessMainSystem } from '@/lib/auth'
 
+
+export const dynamic = 'force-dynamic'
 // GET - получить клиента по ID
 export async function GET(
   request: NextRequest,

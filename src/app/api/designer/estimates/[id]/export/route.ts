@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 import { getSignedDownloadUrl } from '@/lib/storage'
+
+export const dynamic = 'force-dynamic'
 // import puppeteer from 'puppeteer'
 
 export async function GET(

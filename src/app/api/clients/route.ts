@@ -3,6 +3,8 @@ import { prisma } from '@/lib/database'
 import { CreateClientRequest } from '@/types/client'
 import { checkAuth, canAccessMainSystem } from '@/lib/auth'
 
+
+export const dynamic = 'force-dynamic'
 // GET - получить клиентов (менеджеры и дизайнеры видят только своих, админы - всех)
 export async function GET(request: NextRequest) {
   try {

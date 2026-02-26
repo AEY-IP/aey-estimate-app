@@ -3,6 +3,8 @@ import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
 
+
+export const dynamic = 'force-dynamic'
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }

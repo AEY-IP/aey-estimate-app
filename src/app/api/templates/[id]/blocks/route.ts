@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
 
+
+export const dynamic = 'force-dynamic'
 const prisma = new PrismaClient()
 
 // GET /api/templates/[id]/blocks - Получить блоки работ шаблона

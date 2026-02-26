@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import bcrypt from 'bcryptjs'
 
+
+export const dynamic = 'force-dynamic'
 // GET - получить пользователя по ID
 export async function GET(
   request: NextRequest,

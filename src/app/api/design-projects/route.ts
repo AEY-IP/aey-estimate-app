@@ -4,6 +4,8 @@ import { checkAuth } from '@/lib/auth'
 import jwt from 'jsonwebtoken'
 import { getSignedDownloadUrl } from '@/lib/storage'
 
+
+export const dynamic = 'force-dynamic'
 const prisma = new PrismaClient()
 
 // GET - получить все блоки дизайн-проектов клиента

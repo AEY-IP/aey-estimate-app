@@ -4,6 +4,8 @@ import { checkAuth } from '@/lib/auth'
 import { uploadFile, getSignedDownloadUrl } from '@/lib/storage'
 import sharp from 'sharp'
 
+
+export const dynamic = 'force-dynamic'
 async function checkEstimateAccess(estimateId: string, sessionId: string, role: string) {
   const estimate = await prisma.designerEstimate.findUnique({
     where: { id: estimateId }
