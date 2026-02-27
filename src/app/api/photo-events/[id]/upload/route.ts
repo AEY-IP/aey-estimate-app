@@ -132,7 +132,7 @@ export async function POST(
     console.log('✅ Загрузка успешна:', fileUrl);
 
     // Сохраняем в базу данных
-    const photo = await prisma.photo.create({
+    const photo = await prisma.photos.create({
       data: {
         fileName: file.name,
         filePath: fileUrl,

@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ File uploaded:', uniqueFileName);
 
     // Сохраняем в базу данных
-    const receipt = await prisma.receipt.create({
+    const receipt = await prisma.receipts.create({
       data: {
         fileName: file.name,
         filePath: uniqueFileName,

@@ -19,7 +19,7 @@ export async function DELETE(
     }
 
     // Получаем чек с блоком и клиентом
-    const receipt = await prisma.receipt.findUnique({
+    const receipt = await prisma.receipts.findUnique({
       where: { id: params.id },
       include: {
         block: {
@@ -47,7 +47,7 @@ export async function DELETE(
     }
 
     // Удаляем запись из БД
-    await prisma.receipt.delete({
+    await prisma.receipts.delete({
       where: { id: params.id }
     })
 

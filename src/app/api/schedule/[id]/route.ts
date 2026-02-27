@@ -17,7 +17,7 @@ export async function PATCH(
     const { id } = params
     const updates = await request.json()
 
-    const project = await prisma.scheduleProject.update({
+    const project = await prisma.schedule_projects.update({
       where: { id },
       data: updates,
       include: {
@@ -55,7 +55,7 @@ export async function DELETE(
     })
 
     // Затем удаляем проект
-    await prisma.scheduleProject.delete({
+    await prisma.schedule_projects.delete({
       where: { id }
     })
 

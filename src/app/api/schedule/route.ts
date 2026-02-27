@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       whereCondition.showToClient = true;
     }
 
-    const projects = await prisma.scheduleProject.findMany({
+    const projects = await prisma.schedule_projects.findMany({
       where: whereCondition,
       include: {
         tasks: {
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем проект графика
-    const project = await prisma.scheduleProject.create({
+    const project = await prisma.schedule_projects.create({
       data: {
         clientId,
         title,

@@ -19,7 +19,7 @@ export async function DELETE(
     }
 
     // Получаем фото с блоком и клиентом
-    const photo = await prisma.photo.findUnique({
+    const photo = await prisma.photos.findUnique({
       where: { id: params.id },
       include: {
         block: {
@@ -47,7 +47,7 @@ export async function DELETE(
     }
 
     // Удаляем запись из БД
-    await prisma.photo.delete({
+    await prisma.photos.delete({
       where: { id: params.id }
     })
 

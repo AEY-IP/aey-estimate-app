@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     await uploadFile(buffer, key, file.type, false);
 
     // Сохраняем информацию о чеке в БД
-    const receipt = await prisma.receipt.create({
+    const receipt = await prisma.receipts.create({
       data: {
         blockId: blockId,
         fileName: file.name,

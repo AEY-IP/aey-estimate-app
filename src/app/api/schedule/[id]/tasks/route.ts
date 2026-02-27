@@ -22,7 +22,7 @@ export async function GET(
     const projectId = params.id;
 
     // Получаем проект с задачами
-    const project = await prisma.scheduleProject.findUnique({
+    const project = await prisma.schedule_projects.findUnique({
       where: { id: projectId },
       include: {
         tasks: {
@@ -117,7 +117,7 @@ export async function POST(
     console.log('Looking for project:', projectId);
     
     // Проверяем существование проекта
-    const project = await prisma.scheduleProject.findUnique({
+    const project = await prisma.schedule_projects.findUnique({
       where: { id: projectId },
       include: { client: true }
     });
