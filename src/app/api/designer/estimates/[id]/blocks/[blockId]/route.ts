@@ -5,7 +5,7 @@ import { checkAuth } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 async function checkBlockAccess(blockId: string, sessionId: string, role: string) {
-  const block = await prisma.designerEstimateBlock.findUnique({
+  const block = await prisma.designer_estimate_blocks.findUnique({
     where: { id: blockId },
     include: {
       estimate: true
@@ -50,7 +50,7 @@ export async function PUT(
     }
 
     if (parentId && parentId !== accessCheck.block!.parentId) {
-      const parentBlock = await prisma.designerEstimateBlock.findUnique({
+      const parentBlock = await prisma.designer_estimate_blocks.findUnique({
         where: { id: parentId }
       })
 
@@ -59,7 +59,7 @@ export async function PUT(
       }
     }
 
-    const block = await prisma.designerEstimateBlock.update({
+    const block = await prisma.designer_estimate_blocks.update({
       where: { id: params.blockId },
       data: {
         name: name.trim(),
@@ -103,7 +103,7 @@ export async function PATCH(
     if (sortOrder !== undefined) updateData.sortOrder = sortOrder
     if (parentId !== undefined) updateData.parentId = parentId || null
 
-    const block = await prisma.designerEstimateBlock.update({
+    const block = await prisma.designer_estimate_blocks.update({
       where: { id: params.blockId },
       data: updateData
     })
@@ -130,7 +130,7 @@ export async function DELETE(
       return NextResponse.json({ error: accessCheck.error }, { status: accessCheck.status })
     }
 
-    await prisma.designerEstimateBlock.update({
+    await prisma.designer_estimate_blocks.update({
       where: { id: params.blockId },
       data: { isActive: false }
     })

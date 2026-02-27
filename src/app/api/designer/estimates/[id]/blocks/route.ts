@@ -6,7 +6,7 @@ import { getSignedDownloadUrl } from '@/lib/storage'
 
 export const dynamic = 'force-dynamic'
 async function checkEstimateAccess(estimateId: string, sessionId: string, role: string) {
-  const estimate = await prisma.designerEstimate.findUnique({
+  const estimate = await prisma.designer_estimates.findUnique({
     where: { id: estimateId }
   })
 
@@ -40,7 +40,7 @@ export async function GET(
       return NextResponse.json({ error: accessCheck.error }, { status: accessCheck.status })
     }
 
-    const blocks = await prisma.designerEstimateBlock.findMany({
+    const blocks = await prisma.designer_estimate_blocks.findMany({
       where: {
         estimateId: params.id,
         isActive: true
@@ -136,7 +136,7 @@ export async function POST(
     }
 
     if (parentId) {
-      const parentBlock = await prisma.designerEstimateBlock.findUnique({
+      const parentBlock = await prisma.designer_estimate_blocks.findUnique({
         where: { id: parentId }
       })
 
@@ -145,7 +145,7 @@ export async function POST(
       }
     }
 
-    const maxSortOrder = await prisma.designerEstimateBlock.findFirst({
+    const maxSortOrder = await prisma.designer_estimate_blocks.findFirst({
       where: {
         estimateId: params.id,
         parentId: parentId || null,
@@ -155,7 +155,7 @@ export async function POST(
       select: { sortOrder: true }
     })
 
-    const block = await prisma.designerEstimateBlock.create({
+    const block = await prisma.designer_estimate_blocks.create({
       data: {
         name: name.trim(),
         description: description?.trim() || null,

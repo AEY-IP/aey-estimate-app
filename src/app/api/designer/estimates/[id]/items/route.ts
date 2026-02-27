@@ -7,7 +7,7 @@ import sharp from 'sharp'
 
 export const dynamic = 'force-dynamic'
 async function checkEstimateAccess(estimateId: string, sessionId: string, role: string) {
-  const estimate = await prisma.designerEstimate.findUnique({
+  const estimate = await prisma.designer_estimates.findUnique({
     where: { id: estimateId }
   })
 
@@ -55,7 +55,7 @@ export async function GET(
       where.blockId = blockId
     }
 
-    const items = await prisma.designerEstimateItem.findMany({
+    const items = await prisma.designer_estimate_items.findMany({
       where,
       include: {
         block: true
@@ -118,7 +118,7 @@ export async function POST(
       return NextResponse.json({ error: 'Единица измерения обязательна' }, { status: 400 })
     }
 
-    const block = await prisma.designerEstimateBlock.findUnique({
+    const block = await prisma.designer_estimate_blocks.findUnique({
       where: { id: blockId }
     })
 
@@ -161,7 +161,7 @@ export async function POST(
       imageUrl = key
     }
 
-    const maxSortOrder = await prisma.designerEstimateItem.findFirst({
+    const maxSortOrder = await prisma.designer_estimate_items.findFirst({
       where: { blockId, },
       orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true }
@@ -169,7 +169,7 @@ export async function POST(
 
     const totalPrice = pricePerUnit * quantity
 
-    const item = await prisma.designerEstimateItem.create({
+    const item = await prisma.designer_estimate_items.create({
       data: {
         name: name.trim(),
         manufacturer: manufacturer?.trim() || null,

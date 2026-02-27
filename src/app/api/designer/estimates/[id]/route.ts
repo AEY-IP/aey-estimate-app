@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const estimate = await prisma.designerEstimate.findUnique({
+    const estimate = await prisma.designer_estimates.findUnique({
       where: { id: params.id },
       include: {
         client: true,
@@ -126,7 +126,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const existingEstimate = await prisma.designerEstimate.findUnique({
+    const existingEstimate = await prisma.designer_estimates.findUnique({
       where: { id: params.id }
     })
 
@@ -149,7 +149,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Название сметы обязательно' }, { status: 400 })
     }
 
-    const estimate = await prisma.designerEstimate.update({
+    const estimate = await prisma.designer_estimates.update({
       where: { id: params.id },
       data: {
         name: name.trim(),
@@ -184,7 +184,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const existingEstimate = await prisma.designerEstimate.findUnique({
+    const existingEstimate = await prisma.designer_estimates.findUnique({
       where: { id: params.id }
     })
 
@@ -200,7 +200,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
 
-    await prisma.designerEstimate.update({
+    await prisma.designer_estimates.update({
       where: { id: params.id },
       data: { isActive: false }
     })

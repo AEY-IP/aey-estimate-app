@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const client = await prisma.designerClient.findUnique({
+    const client = await prisma.designer_clients.findUnique({
       where: { id: params.id },
       include: {
         designer: {
@@ -60,7 +60,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const existingClient = await prisma.designerClient.findUnique({
+    const existingClient = await prisma.designer_clients.findUnique({
       where: { id: params.id }
     })
 
@@ -83,7 +83,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Название клиента обязательно' }, { status: 400 })
     }
 
-    const client = await prisma.designerClient.update({
+    const client = await prisma.designer_clients.update({
       where: { id: params.id },
       data: {
         name: name.trim(),
@@ -120,7 +120,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const existingClient = await prisma.designerClient.findUnique({
+    const existingClient = await prisma.designer_clients.findUnique({
       where: { id: params.id }
     })
 
@@ -136,7 +136,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
 
-    await prisma.designerClient.update({
+    await prisma.designer_clients.update({
       where: { id: params.id },
       data: { isActive: false }
     })

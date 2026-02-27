@@ -16,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const estimate = await prisma.designerEstimate.findUnique({
+    const estimate = await prisma.designer_estimates.findUnique({
       where: { id: params.id },
       include: {
         client: true,

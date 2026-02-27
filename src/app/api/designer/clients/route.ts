@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
 
-    const clients = await prisma.designerClient.findMany({
+    const clients = await prisma.designer_clients.findMany({
       where,
       include: {
         designer: {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Не указан дизайнер' }, { status: 400 })
     }
 
-    const client = await prisma.designerClient.create({
+    const client = await prisma.designer_clients.create({
       data: {
         name: name.trim(),
         phone: phone?.trim() || null,

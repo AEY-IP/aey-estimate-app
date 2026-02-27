@@ -7,7 +7,7 @@ import sharp from 'sharp'
 
 export const dynamic = 'force-dynamic'
 async function checkItemAccess(itemId: string, sessionId: string, role: string) {
-  const item = await prisma.designerEstimateItem.findUnique({
+  const item = await prisma.designer_estimate_items.findUnique({
     where: { id: itemId },
     include: {
       block: {
@@ -121,7 +121,7 @@ export async function PUT(
 
     const totalPrice = pricePerUnit * quantity
 
-    const item = await prisma.designerEstimateItem.update({
+    const item = await prisma.designer_estimate_items.update({
       where: { id: params.itemId },
       data: {
         name: name.trim(),
@@ -173,7 +173,7 @@ export async function PATCH(
     const updateData: any = {}
     if (sortOrder !== undefined) updateData.sortOrder = sortOrder
     if (blockId !== undefined) {
-      const newBlock = await prisma.designerEstimateBlock.findUnique({
+      const newBlock = await prisma.designer_estimate_blocks.findUnique({
         where: { id: blockId }
       })
       if (!newBlock || newBlock.estimateId !== params.id) {
@@ -182,7 +182,7 @@ export async function PATCH(
       updateData.blockId = blockId
     }
 
-    const item = await prisma.designerEstimateItem.update({
+    const item = await prisma.designer_estimate_items.update({
       where: { id: params.itemId },
       data: updateData
     })
@@ -217,7 +217,7 @@ export async function DELETE(
       }
     }
 
-    await prisma.designerEstimateItem.delete({
+    await prisma.designer_estimate_items.delete({
       where: { id: params.itemId }
     })
 

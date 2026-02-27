@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Не указан ID клиента' }, { status: 400 })
     }
 
-    const client = await prisma.designerClient.findUnique({
+    const client = await prisma.designer_clients.findUnique({
       where: { id: clientId }
     })
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
 
-    const estimates = await prisma.designerEstimate.findMany({
+    const estimates = await prisma.designer_estimates.findMany({
       where: {
         clientId,
         isActive: true
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Не указан клиент' }, { status: 400 })
     }
 
-    const client = await prisma.designerClient.findUnique({
+    const client = await prisma.designer_clients.findUnique({
       where: { id: clientId }
     })
 
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
-    const estimate = await prisma.designerEstimate.create({
+    const estimate = await prisma.designer_estimates.create({
       data: {
         name: name.trim(),
         description: description?.trim() || null,
