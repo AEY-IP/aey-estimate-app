@@ -1,5 +1,5 @@
 {
-  "buildCommand": "rm -rf .next && prisma generate && next build",
+  "buildCommand": "rm -rf .next && npx prisma generate && node --stack_size=8192 ./node_modules/next/dist/bin/next build",
   "installCommand": "npm install",
   "framework": "nextjs"
 }
