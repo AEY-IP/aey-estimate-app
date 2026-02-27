@@ -5,8 +5,10 @@ import bcrypt from 'bcryptjs'
 
 export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
+  let body: any = {}
+  
   try {
-    const body = await request.json()
+    body = await request.json()
     const { 
       name, 
       username, 
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Валидация логина
-    const usernameRegex = /^[a-zA-Z0-9_\-]+$/
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/
     if (!usernameRegex.test(username)) {
       return NextResponse.json(
         { error: 'Логин должен содержать только английские буквы, цифры, дефис и подчеркивание' },

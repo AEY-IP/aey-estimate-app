@@ -121,6 +121,14 @@ export default function DesignerRegisterPage() {
         })
       })
 
+      // Проверяем content-type перед парсингом
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Server returned non-JSON response:', response.status)
+        alert('Ошибка сервера. Попробуйте позже.')
+        return
+      }
+
       const data = await response.json()
 
       if (response.ok) {
@@ -133,7 +141,7 @@ export default function DesignerRegisterPage() {
       }
     } catch (error) {
       console.error('Registration error:', error)
-      alert('Ошибка регистрации')
+      alert('Ошибка регистрации. Проверьте введенные данные.')
     } finally {
       setLoading(false)
     }
