@@ -145,7 +145,7 @@ export async function POST(
     });
 
     // Создаем задачу
-    const task = await prisma.scheduleTask.create({
+    const task = await prisma.schedule_tasks.create({
       data: {
         projectId,
         parentId: parentId || null,

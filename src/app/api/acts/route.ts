@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
     // Копируем параметры комнат на уровне сметы (акта)
     if (estimate.roomParameterValues.length > 0) {
       console.log('Copying room parameter values...')
-      await prisma.estimateRoomParameterValue.createMany({
+      await prisma.estimate_room_parameter_values.createMany({
         data: estimate.roomParameterValues.map(param => ({
           parameterId: param.parameterId,
           value: param.value,

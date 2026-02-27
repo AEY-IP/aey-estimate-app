@@ -27,7 +27,7 @@ export async function PATCH(
     const body = await request.json();
 
     // Проверяем существование задачи и права доступа
-    const task = await prisma.scheduleTask.findUnique({
+    const task = await prisma.schedule_tasks.findUnique({
       where: { id: taskId },
       include: {
         project: {
@@ -48,7 +48,7 @@ export async function PATCH(
     }
 
     // Обновляем задачу
-    const updatedTask = await prisma.scheduleTask.update({
+    const updatedTask = await prisma.schedule_tasks.update({
       where: { id: taskId },
       data: {
         ...(body.title && { title: body.title }),
@@ -108,7 +108,7 @@ export async function DELETE(
     const taskId = params.taskId;
 
     // Проверяем существование задачи и права доступа
-    const task = await prisma.scheduleTask.findUnique({
+    const task = await prisma.schedule_tasks.findUnique({
       where: { id: taskId },
       include: {
         project: {
@@ -130,7 +130,7 @@ export async function DELETE(
 
     // Получаем все дочерние задачи для удаления
     const getAllChildrenIds = async (parentId: string): Promise<string[]> => {
-      const children = await prisma.scheduleTask.findMany({
+      const children = await prisma.schedule_tasks.findMany({
         where: { parentId },
         select: { id: true }
       });
@@ -150,7 +150,7 @@ export async function DELETE(
     const allTasksToDelete = [taskId, ...childrenIds];
 
     // Удаляем все задачи (сначала дочерние, потом родительскую)
-    await prisma.scheduleTask.deleteMany({
+    await prisma.schedule_tasks.deleteMany({
       where: {
         id: {
           in: allTasksToDelete

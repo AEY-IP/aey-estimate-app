@@ -90,13 +90,13 @@ export async function POST(request: NextRequest) {
     const categoryName = category?.trim() || 'Разное'
     
     // Пытаемся найти существующий блок
-    let block = await prisma.workBlock.findFirst({
+    let block = await prisma.work_blocks.findFirst({
       where: { title: categoryName }
     })
     
     // Если блок не найден, создаем новый
     if (!block) {
-      block = await prisma.workBlock.create({
+      block = await prisma.work_blocks.create({
         data: { title: categoryName }
       })
     }

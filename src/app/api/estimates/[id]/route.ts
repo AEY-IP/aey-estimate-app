@@ -520,7 +520,7 @@ export async function PUT(
               console.log('Updating materials for room:', savedRoom.id)
               
               // Удаляем старые материалы ТОЛЬКО из этого помещения
-              await prisma.estimateMaterial.deleteMany({
+              await prisma.estimate_materials.deleteMany({
                 where: { roomId: savedRoom.id }
               })
               
@@ -535,7 +535,7 @@ export async function PUT(
               }))
               
               if (materials.length > 0) {
-                await prisma.estimateMaterial.createMany({
+                await prisma.estimate_materials.createMany({
                   data: materials
                 })
                 console.log('✅ Created', materials.length, 'materials for room')
@@ -554,7 +554,7 @@ export async function PUT(
               
               // Удаляем старые параметры ТОЛЬКО для этого помещения
               // @ts-ignore
-              await prisma.estimateRoomParameterValue.deleteMany({
+              await prisma.estimate_room_parameter_values.deleteMany({
                 where: { 
                   estimateId: params.id,
                   roomId: savedRoom.id 
@@ -573,7 +573,7 @@ export async function PUT(
               
               if (roomParams.length > 0) {
                 // @ts-ignore
-                await prisma.estimateRoomParameterValue.createMany({
+                await prisma.estimate_room_parameter_values.createMany({
                   data: roomParams
                 })
                 console.log('✅ Created', roomParams.length, 'room parameters')
@@ -597,7 +597,7 @@ export async function PUT(
       
       // Удаляем старые глобальные параметры
       // @ts-ignore
-      await prisma.estimateRoomParameterValue.deleteMany({
+      await prisma.estimate_room_parameter_values.deleteMany({
         where: { 
           estimateId: params.id,
           roomId: null 
@@ -613,7 +613,7 @@ export async function PUT(
       
       if (globalParams.length > 0) {
         // @ts-ignore
-        await prisma.estimateRoomParameterValue.createMany({
+        await prisma.estimate_room_parameter_values.createMany({
           data: globalParams
         })
       }
@@ -965,7 +965,7 @@ export async function DELETE(
     }
 
     // Сохраняем удаленную смету в таблицу deleted_estimates
-    await prisma.deletedEstimate.create({
+    await prisma.deleted_estimates.create({
       data: {
         originalId: estimate.id,
         title: estimate.title,

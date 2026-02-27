@@ -64,13 +64,13 @@ export async function PUT(
     let finalBlockId = blockId
     if (!finalBlockId && category) {
       // Пытаемся найти существующий блок
-      let block = await prisma.workBlock.findFirst({
+      let block = await prisma.work_blocks.findFirst({
         where: { title: category }
       })
       
       // Если блок не найден, создаем новый
       if (!block) {
-        block = await prisma.workBlock.create({
+        block = await prisma.work_blocks.create({
           data: { title: category }
         })
       }

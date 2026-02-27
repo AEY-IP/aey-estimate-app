@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
     // Создаем задачи в базе данных
     const createdTasks = [];
     for (let i = 0; i < standardTasks.length; i++) {
-      const task = await prisma.scheduleTask.create({
+      const task = await prisma.schedule_tasks.create({
         data: {
           projectId: project.id,
           title: standardTasks[i],

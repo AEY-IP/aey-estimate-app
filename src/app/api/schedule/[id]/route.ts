@@ -50,7 +50,7 @@ export async function DELETE(
     const { id } = params
 
     // Сначала удаляем все задачи
-    await prisma.scheduleTask.deleteMany({
+    await prisma.schedule_tasks.deleteMany({
       where: { projectId: id }
     })
 
