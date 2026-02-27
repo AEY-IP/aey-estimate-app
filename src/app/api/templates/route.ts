@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const templates = await prisma.template.findMany({
+    const templates = await prisma.templates.findMany({
       where: {
         isActive: true
       },
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем шаблон с одним помещением по умолчанию
-    const template = await prisma.template.create({
+    const template = await prisma.templates.create({
       data: {
         name,
         type,

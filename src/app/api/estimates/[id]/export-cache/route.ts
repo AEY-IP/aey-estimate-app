@@ -52,7 +52,7 @@ export async function GET(
     }
 
     // Читаем кеш экспорта из таблицы EstimateExport
-    const exportCache = await prisma.estimateExport.findUnique({
+    const exportCache = await prisma.estimate_exports.findUnique({
       where: { estimateId }
     })
 
@@ -172,7 +172,7 @@ export async function POST(
       coefficientsInfo: JSON.stringify(body.coefficientsInfo || null)
     }
 
-    const exportCache = await prisma.estimateExport.upsert({
+    const exportCache = await prisma.estimate_exports.upsert({
       where: { estimateId },
       update: exportCacheData,
       create: {

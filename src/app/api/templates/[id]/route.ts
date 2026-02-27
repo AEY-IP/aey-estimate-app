@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const template = await prisma.template.findUnique({
+    const template = await prisma.templates.findUnique({
       where: {
         id: params.id,
         isActive: true
@@ -99,7 +99,7 @@ export async function PUT(
     const { name, type, description, isActive } = body
 
     // Проверяем существование шаблона
-    const existingTemplate = await prisma.template.findUnique({
+    const existingTemplate = await prisma.templates.findUnique({
       where: { id: params.id }
     })
 
@@ -111,7 +111,7 @@ export async function PUT(
     }
 
     // Обновляем шаблон
-    const template = await prisma.template.update({
+    const template = await prisma.templates.update({
       where: { id: params.id },
       data: {
         ...(name && { name }),
@@ -171,7 +171,7 @@ export async function DELETE(
     }
 
     // Проверяем существование шаблона
-    const existingTemplate = await prisma.template.findUnique({
+    const existingTemplate = await prisma.templates.findUnique({
       where: { id: params.id }
     })
 
@@ -183,7 +183,7 @@ export async function DELETE(
     }
 
     // Мягкое удаление - помечаем как неактивный
-    await prisma.template.update({
+    await prisma.templates.update({
       where: { id: params.id },
       data: { isActive: false }
     })

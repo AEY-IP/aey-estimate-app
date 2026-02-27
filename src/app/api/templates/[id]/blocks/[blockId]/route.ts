@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const block = await prisma.templateWorkBlock.findFirst({
+    const block = await prisma.template_work_blocks.findFirst({
       where: {
         id: params.blockId,
         room: {
@@ -81,7 +81,7 @@ export async function PUT(
     const { title, description, isCollapsed } = body
 
     // Проверяем существование блока
-    const existingBlock = await prisma.templateWorkBlock.findFirst({
+    const existingBlock = await prisma.template_work_blocks.findFirst({
       where: {
         id: params.blockId,
         room: {
@@ -100,7 +100,7 @@ export async function PUT(
 
     // Если изменяется название, проверяем уникальность
     if (title && title.trim() !== existingBlock.title) {
-      const duplicateBlock = await prisma.templateWorkBlock.findFirst({
+      const duplicateBlock = await prisma.template_work_blocks.findFirst({
         where: {
           roomId: existingBlock.roomId,
           title: title.trim(),
@@ -121,7 +121,7 @@ export async function PUT(
     if (description !== undefined) updateData.description = description?.trim()
     if (isCollapsed !== undefined) updateData.isCollapsed = isCollapsed
 
-    const updatedBlock = await prisma.templateWorkBlock.update({
+    const updatedBlock = await prisma.template_work_blocks.update({
       where: { id: params.blockId },
       data: updateData,
       include: {
@@ -164,7 +164,7 @@ export async function DELETE(
     }
 
     // Проверяем существование блока
-    const existingBlock = await prisma.templateWorkBlock.findFirst({
+    const existingBlock = await prisma.template_work_blocks.findFirst({
       where: {
         id: params.blockId,
         room: {
@@ -185,12 +185,12 @@ export async function DELETE(
     }
 
     // Удаляем блок (работы удалятся автоматически через CASCADE)
-    await prisma.templateWorkBlock.delete({
+    await prisma.template_work_blocks.delete({
       where: { id: params.blockId }
     })
 
     // Обновляем общую стоимость помещения
-    const room = await prisma.templateRoom.findUnique({
+    const room = await prisma.template_rooms.findUnique({
       where: { id: existingBlock.roomId },
       include: {
         works: true,
@@ -202,7 +202,7 @@ export async function DELETE(
       const totalWorksPrice = room.works.reduce((sum, work) => sum + work.totalPrice, 0)
       const totalMaterialsPrice = room.materials.reduce((sum, material) => sum + material.totalPrice, 0)
 
-      await prisma.templateRoom.update({
+      await prisma.template_rooms.update({
         where: { id: room.id },
         data: {
           totalWorksPrice,

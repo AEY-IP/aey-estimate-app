@@ -12,7 +12,7 @@ export async function POST(
     const { calculatedWorksData, calculatedMaterialsData, totals } = await request.json()
 
     // Сохраняем готовые рассчитанные данные в кеш
-    const cache = await prisma.estimateExport.upsert({
+    const cache = await prisma.estimate_exports.upsert({
       where: { estimateId: params.id },
       create: {
         estimateId: params.id,

@@ -23,7 +23,7 @@ export async function DELETE(
     }
 
     // Проверяем существование шаблона
-    const template = await prisma.template.findUnique({
+    const template = await prisma.templates.findUnique({
       where: { id: params.id, isActive: true }
     })
 
@@ -35,7 +35,7 @@ export async function DELETE(
     }
 
     // Получаем работу для определения помещения и блока
-    const work = await prisma.templateWork.findUnique({
+    const work = await prisma.template_works.findUnique({
       where: { id: params.workId },
       include: { room: true }
     })
@@ -51,32 +51,32 @@ export async function DELETE(
     const workBlockId = work.workBlockId
 
     // Удаляем работу
-    await prisma.templateWork.delete({
+    await prisma.template_works.delete({
       where: { id: params.workId }
     })
 
     // Обновляем итоги блока работ (если работа была в блоке)
     if (workBlockId) {
-      const blockWorks = await prisma.templateWork.findMany({
+      const blockWorks = await prisma.template_works.findMany({
         where: { workBlockId }
       })
 
       const blockTotalPrice = blockWorks.reduce((sum, work) => sum + work.totalPrice, 0)
 
-      await prisma.templateWorkBlock.update({
+      await prisma.template_work_blocks.update({
         where: { id: workBlockId },
         data: { totalPrice: blockTotalPrice }
       })
     }
 
     // Обновляем итоги помещения
-    const roomWorks = await prisma.templateWork.findMany({
+    const roomWorks = await prisma.template_works.findMany({
       where: { roomId }
     })
 
     const roomTotalWorksPrice = roomWorks.reduce((sum, work) => sum + work.totalPrice, 0)
 
-    await prisma.templateRoom.update({
+    await prisma.template_rooms.update({
       where: { id: roomId },
       data: {
         totalWorksPrice: roomTotalWorksPrice,
@@ -85,13 +85,13 @@ export async function DELETE(
     })
 
     // Обновляем итоги шаблона
-    const allRooms = await prisma.templateRoom.findMany({
+    const allRooms = await prisma.template_rooms.findMany({
       where: { templateId: params.id }
     })
 
     const templateTotalWorksPrice = allRooms.reduce((sum, room) => sum + room.totalWorksPrice, 0)
 
-    await prisma.template.update({
+    await prisma.templates.update({
       where: { id: params.id },
       data: {
         totalWorksPrice: templateTotalWorksPrice,
@@ -130,7 +130,7 @@ export async function PUT(
     const { quantity, description } = body
 
     // Проверяем существование шаблона
-    const template = await prisma.template.findUnique({
+    const template = await prisma.templates.findUnique({
       where: { id: params.id, isActive: true }
     })
 
@@ -142,7 +142,7 @@ export async function PUT(
     }
 
     // Получаем работу
-    const work = await prisma.templateWork.findUnique({
+    const work = await prisma.template_works.findUnique({
       where: { id: params.workId },
       include: { 
         room: true,
@@ -163,7 +163,7 @@ export async function PUT(
     const newTotalPrice = newQuantity * work.price
 
     // Обновляем работу
-    const updatedWork = await prisma.templateWork.update({
+    const updatedWork = await prisma.template_works.update({
       where: { id: params.workId },
       data: {
         ...(quantity !== undefined && { quantity: newQuantity }),
@@ -181,26 +181,26 @@ export async function PUT(
 
     // Обновляем итоги блока работ (если работа в блоке)
     if (workBlockId) {
-      const blockWorks = await prisma.templateWork.findMany({
+      const blockWorks = await prisma.template_works.findMany({
         where: { workBlockId }
       })
 
       const blockTotalPrice = blockWorks.reduce((sum, work) => sum + work.totalPrice, 0)
 
-      await prisma.templateWorkBlock.update({
+      await prisma.template_work_blocks.update({
         where: { id: workBlockId },
         data: { totalPrice: blockTotalPrice }
       })
     }
 
     // Обновляем итоги помещения
-    const roomWorks = await prisma.templateWork.findMany({
+    const roomWorks = await prisma.template_works.findMany({
       where: { roomId }
     })
 
     const roomTotalWorksPrice = roomWorks.reduce((sum, work) => sum + work.totalPrice, 0)
 
-    await prisma.templateRoom.update({
+    await prisma.template_rooms.update({
       where: { id: roomId },
       data: {
         totalWorksPrice: roomTotalWorksPrice,
@@ -209,13 +209,13 @@ export async function PUT(
     })
 
     // Обновляем итоги шаблона
-    const allRooms = await prisma.templateRoom.findMany({
+    const allRooms = await prisma.template_rooms.findMany({
       where: { templateId: params.id }
     })
 
     const templateTotalWorksPrice = allRooms.reduce((sum, room) => sum + room.totalWorksPrice, 0)
 
-    await prisma.template.update({
+    await prisma.templates.update({
       where: { id: params.id },
       data: {
         totalWorksPrice: templateTotalWorksPrice,

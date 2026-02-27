@@ -179,7 +179,7 @@ export async function PATCH(
           const exportData = await createExportCacheForRooms(fullEstimate, coefficients);
           
           // Сохраняем в базу
-          await prisma.estimateExport.upsert({
+          await prisma.estimate_exports.upsert({
             where: { estimateId },
             update: {
               worksData: JSON.stringify(exportData.works),

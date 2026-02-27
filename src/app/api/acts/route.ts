@@ -265,12 +265,12 @@ export async function POST(request: NextRequest) {
 
     // Обновляем кеш экспорта для акта (копируем из исходной сметы)
     console.log('Updating export cache for the new act...')
-    const originalCache = await prisma.estimateExport.findUnique({
+    const originalCache = await prisma.estimate_exports.findUnique({
       where: { estimateId: estimateId }
     })
     
     if (originalCache) {
-      await prisma.estimateExport.create({
+      await prisma.estimate_exports.create({
         data: {
           estimateId: act.id,
           worksData: originalCache.worksData,

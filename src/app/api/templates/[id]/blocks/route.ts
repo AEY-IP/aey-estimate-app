@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const template = await prisma.template.findUnique({
+    const template = await prisma.templates.findUnique({
       where: { id: params.id, isActive: true },
       include: {
         rooms: {
@@ -91,7 +91,7 @@ export async function POST(
     }
 
     // Проверяем существование шаблона
-    const template = await prisma.template.findUnique({
+    const template = await prisma.templates.findUnique({
       where: { id: params.id, isActive: true }
     })
 
@@ -103,7 +103,7 @@ export async function POST(
     }
 
     // Проверяем существование помещения
-    const room = await prisma.templateRoom.findFirst({
+    const room = await prisma.template_rooms.findFirst({
       where: {
         id: roomId,
         templateId: params.id
@@ -118,7 +118,7 @@ export async function POST(
     }
 
     // Проверяем, что блок с таким названием еще не существует в этом помещении
-    const existingBlock = await prisma.templateWorkBlock.findFirst({
+    const existingBlock = await prisma.template_work_blocks.findFirst({
       where: {
         roomId,
         title: title.trim()
@@ -133,13 +133,13 @@ export async function POST(
     }
 
     // Получаем максимальный sortOrder для новой позиции
-    const maxSortOrder = await prisma.templateWorkBlock.findFirst({
+    const maxSortOrder = await prisma.template_work_blocks.findFirst({
       where: { roomId },
       orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true }
     })
 
-    const newBlock = await prisma.templateWorkBlock.create({
+    const newBlock = await prisma.template_work_blocks.create({
       data: {
         title: title.trim(),
         description: description?.trim(),

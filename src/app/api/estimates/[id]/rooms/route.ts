@@ -65,14 +65,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
     
     // Получаем максимальный sortOrder для новой позиции
-    const maxSortOrder = await prisma.estimateRoom.findFirst({
+    const maxSortOrder = await prisma.estimate_rooms.findFirst({
       where: { estimateId: params.id },
       orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true }
     })
     
     // Создаём новое помещение
-    const newRoom = await prisma.estimateRoom.create({
+    const newRoom = await prisma.estimate_rooms.create({
       data: {
         name: name.trim(),
         estimateId: params.id,
@@ -156,7 +156,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
 
-    const room = await prisma.estimateRoom.findFirst({
+    const room = await prisma.estimate_rooms.findFirst({
       where: { 
         id: roomId,
         estimateId: params.id
@@ -171,7 +171,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
     
     // Удаляем помещение (связанные работы и материалы удалятся автоматически через CASCADE)
-    await prisma.estimateRoom.delete({
+    await prisma.estimate_rooms.delete({
       where: { id: roomId }
     })
     
@@ -231,7 +231,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    const room = await prisma.estimateRoom.findFirst({
+    const room = await prisma.estimate_rooms.findFirst({
       where: { 
         id: roomId,
         estimateId: params.id
@@ -246,7 +246,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
     
     // Обновляем название помещения
-    const updatedRoom = await prisma.estimateRoom.update({
+    const updatedRoom = await prisma.estimate_rooms.update({
       where: { id: roomId },
       data: { 
         name: name.trim(),

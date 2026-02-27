@@ -411,7 +411,7 @@ export async function PUT(
         
         // Получаем существующие помещения
         console.log('🔍 Fetching existing rooms...')
-        const existingRooms = await prisma.estimateRoom.findMany({
+        const existingRooms = await prisma.estimate_rooms.findMany({
           where: { estimateId: params.id }
         })
         console.log('📊 Existing rooms found:', existingRooms.length)
@@ -440,7 +440,7 @@ export async function PUT(
           // Если у помещения есть ID, обновляем существующее
           if (room.id && existingRooms.find((r: any) => r.id === room.id)) {
             console.log('🔄 Updating existing room:', room.id)
-            savedRoom = await prisma.estimateRoom.update({
+            savedRoom = await prisma.estimate_rooms.update({
               where: { id: room.id },
               data: roomData
             })
@@ -448,7 +448,7 @@ export async function PUT(
           } else {
             // Создаем новое помещение
             console.log('➕ Creating new room')
-            savedRoom = await prisma.estimateRoom.create({
+            savedRoom = await prisma.estimate_rooms.create({
               data: {
                 ...roomData,
                 estimateId: params.id
@@ -467,7 +467,7 @@ export async function PUT(
               console.log('Updating works for room:', savedRoom.id)
               
               // Удаляем старые работы ТОЛЬКО из этого помещения
-              await prisma.estimateWork.deleteMany({
+              await prisma.estimate_works.deleteMany({
                 where: { roomId: savedRoom.id }
               })
               
@@ -499,7 +499,7 @@ export async function PUT(
                 })
                 
                 // Создаем все работы (автоматические и ручные)
-                await prisma.estimateWork.createMany({
+                await prisma.estimate_works.createMany({
                   data: works
                 })
                 

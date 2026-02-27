@@ -33,7 +33,7 @@ export async function POST(
     }
 
     // Получаем шаблон с работами
-    const template = await prisma.template.findUnique({
+    const template = await prisma.templates.findUnique({
       where: {
         id: params.id,
         isActive: true
@@ -92,7 +92,7 @@ export async function POST(
         )
       }
       
-      targetRoom = await prisma.estimateRoom.findFirst({
+      targetRoom = await prisma.estimate_rooms.findFirst({
         where: {
           id: roomId,
           estimateId: estimateId
@@ -109,7 +109,7 @@ export async function POST(
       // Для смет "apartment" используем первое помещение или создаем его
       targetRoom = estimate.rooms[0]
       if (!targetRoom) {
-        targetRoom = await prisma.estimateRoom.create({
+        targetRoom = await prisma.estimate_rooms.create({
           data: {
             name: 'Основное помещение',
             estimateId: estimateId,
@@ -173,18 +173,18 @@ export async function POST(
     }
 
     // Создаем работы в базе данных
-    await prisma.estimateWork.createMany({
+    await prisma.estimate_works.createMany({
       data: worksToCreate
     })
 
     // Обновляем итоги помещения
-    const roomWorks = await prisma.estimateWork.findMany({
+    const roomWorks = await prisma.estimate_works.findMany({
       where: { roomId: targetRoom.id }
     })
 
     const roomTotalWorksPrice = roomWorks.reduce((sum, work) => sum + work.totalPrice, 0)
 
-    await prisma.estimateRoom.update({
+    await prisma.estimate_rooms.update({
       where: { id: targetRoom.id },
       data: {
         totalWorksPrice: roomTotalWorksPrice,
@@ -193,7 +193,7 @@ export async function POST(
     })
 
     // Обновляем итоги сметы
-    const allRooms = await prisma.estimateRoom.findMany({
+    const allRooms = await prisma.estimate_rooms.findMany({
       where: { estimateId: estimateId }
     })
 
@@ -209,7 +209,7 @@ export async function POST(
     })
 
     // Удаляем кеш экспорта, если он есть
-    await prisma.estimateExport.deleteMany({
+    await prisma.estimate_exports.deleteMany({
       where: { estimateId: estimateId }
     })
 
