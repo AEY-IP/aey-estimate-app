@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: {
         id: params.id,
         isActive: true
@@ -51,7 +51,7 @@ export async function PUT(
     const { username, password, role, designerType, name, phone, isActive } = await request.json()
     
     // Проверяем существование пользователя
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { id: params.id }
     })
     
@@ -61,7 +61,7 @@ export async function PUT(
     
     // Проверяем уникальность username если он изменился
     if (username && username !== existingUser.username) {
-      const userWithSameUsername = await prisma.user.findUnique({
+      const userWithSameUsername = await prisma.users.findUnique({
         where: { username }
       })
       
@@ -89,7 +89,7 @@ export async function PUT(
       hashedPassword = await bcrypt.hash(password, 12);
     }
     
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id: params.id },
       data: {
         ...(username && { username }),
@@ -131,7 +131,7 @@ export async function DELETE(
 ) {
   try {
     // Мягкое удаление - помечаем как неактивного
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id: params.id },
       data: { isActive: false },
       select: {

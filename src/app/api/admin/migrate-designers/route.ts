@@ -5,7 +5,7 @@ import { prisma } from '@/lib/database'
 export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
-    const result = await prisma.user.updateMany({
+    const result = await prisma.users.updateMany({
       where: {
         role: 'DESIGNER',
         designerType: null

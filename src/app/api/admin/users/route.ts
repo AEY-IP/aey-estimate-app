@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     // Получаем реальных пользователей из базы данных
-    const users = await prisma.user.findMany({
+    const users = await prisma.users.findMany({
       where: {
         isActive: true
       },

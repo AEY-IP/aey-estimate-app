@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       ...clients.map(c => c.designerId).filter(Boolean)
     ]))
     
-    const users = await prisma.user.findMany({
+    const users = await prisma.users.findMany({
       where: {
         id: { in: userIds as string[] }
       },

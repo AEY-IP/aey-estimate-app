@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 // GET - получить всех пользователей (только для админов)
 export async function GET() {
   try {
-    const users = await prisma.user.findMany({
+    const users = await prisma.users.findMany({
       where: {
         isActive: true
       },
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Проверяем уникальность имени пользователя
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { username }
     })
     
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // Хешируем пароль перед сохранением
     const hashedPassword = await bcrypt.hash(password, 12)
     
-    const newUser = await prisma.user.create({
+    const newUser = await prisma.users.create({
       data: {
         username,
         passwordHash: hashedPassword,

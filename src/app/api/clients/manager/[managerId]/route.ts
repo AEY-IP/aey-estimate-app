@@ -18,7 +18,7 @@ export async function GET(
     const { managerId } = params
 
     // Получаем информацию о менеджере
-    const manager = await prisma.user.findUnique({
+    const manager = await prisma.users.findUnique({
       where: { id: managerId },
       select: {
         id: true,

@@ -14,12 +14,12 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { username }
     })
 
     if (existingUser) {
-      await prisma.user.update({
+      await prisma.users.update({
         where: { id: existingUser.id },
         data: { role: 'DESIGNER' }
       })
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 10)
 
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         username,
         passwordHash,
