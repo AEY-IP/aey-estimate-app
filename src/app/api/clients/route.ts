@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
 
-    const clients = await prisma.client.findMany({
+    const clients = await prisma.clients.findMany({
       where,
       orderBy: { createdAt: 'desc' }
     })
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем нового клиента в базе данных
-    const newClient = await prisma.client.create({
+    const newClient = await prisma.clients.create({
       data: {
         name: name.trim(),
         phone: phone?.trim() || null,

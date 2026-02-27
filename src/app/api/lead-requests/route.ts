@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем заявку
-    const leadRequest = await prisma.leadRequest.create({
+    const leadRequest = await prisma.lead_requests.create({
       data: {
         name: name.trim(),
         phone: phone.trim(),
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     const where = status ? { status } : {}
 
-    const leadRequests = await prisma.leadRequest.findMany({
+    const leadRequests = await prisma.lead_requests.findMany({
       where,
       orderBy: {
         createdAt: 'desc'

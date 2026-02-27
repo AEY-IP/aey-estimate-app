@@ -63,7 +63,7 @@ export async function PUT(
     console.log('TEST: Filtered keys:', Object.keys(updateData))
     
     // Обновляем смету
-    const updatedEstimate = await prisma.estimate.update({
+    const updatedEstimate = await prisma.estimates.update({
       where: { id: params.id },
       data: updateData,
       include: {

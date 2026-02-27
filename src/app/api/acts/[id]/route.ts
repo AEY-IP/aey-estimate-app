@@ -19,7 +19,7 @@ export async function GET(
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
-    const act = await prisma.estimate.findUnique({
+    const act = await prisma.estimates.findUnique({
       where: { 
         id: params.id,
         isAct: true
@@ -98,7 +98,7 @@ export async function PUT(
 
     const data = await request.json()
 
-    const act = await prisma.estimate.update({
+    const act = await prisma.estimates.update({
       where: { 
         id: params.id,
         isAct: true
@@ -162,7 +162,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
-    await prisma.estimate.delete({
+    await prisma.estimates.delete({
       where: { 
         id: params.id,
         isAct: true

@@ -20,7 +20,7 @@ export async function PATCH(
     const { status, notes } = await request.json()
 
     // Проверяем существование заявки
-    const existingLead = await prisma.leadRequest.findUnique({
+    const existingLead = await prisma.lead_requests.findUnique({
       where: { id: params.id }
     })
 
@@ -29,7 +29,7 @@ export async function PATCH(
     }
 
     // Обновляем заявку
-    const updatedLead = await prisma.leadRequest.update({
+    const updatedLead = await prisma.lead_requests.update({
       where: { id: params.id },
       data: {
         ...(status !== undefined && { status }),
@@ -59,7 +59,7 @@ export async function DELETE(
     }
 
     // Проверяем существование заявки
-    const existingLead = await prisma.leadRequest.findUnique({
+    const existingLead = await prisma.lead_requests.findUnique({
       where: { id: params.id }
     })
 
@@ -68,7 +68,7 @@ export async function DELETE(
     }
 
     // Удаляем заявку
-    await prisma.leadRequest.delete({
+    await prisma.lead_requests.delete({
       where: { id: params.id }
     })
 

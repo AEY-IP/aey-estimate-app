@@ -21,7 +21,7 @@ export async function GET(
     console.log('Estimate ID:', estimateId)
     
     // Получаем смету с полными данными
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
         client: {

@@ -32,7 +32,7 @@ export async function GET(
     }
 
     // Получаем клиентов этого менеджера
-    const clients = await prisma.client.findMany({
+    const clients = await prisma.clients.findMany({
       where: {
         createdBy: managerId,
         isActive: true

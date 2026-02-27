@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Проверяем доступ к клиенту
-    const client = await prisma.client.findFirst({
+    const client = await prisma.clients.findFirst({
       where: {
         id: clientId,
         isActive: true

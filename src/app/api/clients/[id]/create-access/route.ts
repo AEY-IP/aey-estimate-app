@@ -31,7 +31,7 @@ export async function POST(
     const clientId = params.id
 
     // Проверяем, существует ли клиент
-    const client = await prisma.client.findUnique({
+    const client = await prisma.clients.findUnique({
       where: { id: clientId },
       include: { clientUser: true }
     })

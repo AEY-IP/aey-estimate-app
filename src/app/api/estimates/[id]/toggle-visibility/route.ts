@@ -120,7 +120,7 @@ export async function PATCH(
     const estimateId = params.id;
 
     // Получаем смету с информацией о клиенте
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
         client: true
@@ -137,7 +137,7 @@ export async function PATCH(
     }
 
     // Переключаем видимость
-    const updatedEstimate = await prisma.estimate.update({
+    const updatedEstimate = await prisma.estimates.update({
       where: { id: estimateId },
       data: {
         showToClient: !estimate.showToClient
@@ -148,7 +148,7 @@ export async function PATCH(
     if (updatedEstimate.showToClient) {
       try {
         // Получаем полную смету с коэффициентами для создания кеша
-        const fullEstimate = await prisma.estimate.findUnique({
+        const fullEstimate = await prisma.estimates.findUnique({
           where: { id: estimateId },
           include: {
             client: true,

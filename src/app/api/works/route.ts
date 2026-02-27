@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [workItems, total] = await Promise.all([
-      prisma.workItem.findMany({
+      prisma.work_items.findMany({
         where: whereWorkItem,
         include: {
           block: true,
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit
       }),
-      prisma.workItem.count({ where: whereWorkItem })
+      prisma.work_items.count({ where: whereWorkItem })
     ])
 
     // Преобразуем WorkItem в формат совместимый с фронтендом
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     
     blockId = block.id
 
-    const workItem = await prisma.workItem.create({
+    const workItem = await prisma.work_items.create({
       data: {
         name: name.trim(),
         unit: unit?.trim() || 'шт',

@@ -57,7 +57,7 @@ export async function POST(
     const newsType = validTypes.includes(type) ? type : 'other'
 
     // Проверяем, что клиент существует
-    const client = await prisma.client.findUnique({
+    const client = await prisma.clients.findUnique({
       where: { id: clientId }
     })
 

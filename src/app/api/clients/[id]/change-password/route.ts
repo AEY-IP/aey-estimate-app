@@ -27,7 +27,7 @@ export async function POST(
     }
 
     // Проверяем, что клиент существует и принадлежит текущему пользователю
-    const client = await prisma.client.findFirst({
+    const client = await prisma.clients.findFirst({
       where: {
         id: clientId,
         createdBy: session.id

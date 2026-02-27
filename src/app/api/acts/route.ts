@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       
       // Для менеджеров проверяем права доступа к клиенту
       if (session.role === 'MANAGER') {
-        const client = await prisma.client.findUnique({
+        const client = await prisma.clients.findUnique({
           where: { id: clientId, isActive: true }
         })
         
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       }
     } else if (session.role === 'MANAGER') {
       // Для менеджеров показываем только акты их клиентов
-      const managerClients = await prisma.client.findMany({
+      const managerClients = await prisma.clients.findMany({
         where: {
           createdBy: session.id,
           isActive: true
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const acts = await prisma.estimate.findMany({
+    const acts = await prisma.estimates.findMany({
       where: whereCondition,
       include: {
         client: {
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     console.log('Looking for estimate with ID:', estimateId)
     
     // Получаем смету для копирования
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
         rooms: {
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     console.log('Creating act (copy of estimate) based on estimate...')
     
     // Создаем акт как копию сметы в таблице estimates
-    const act = await prisma.estimate.create({
+    const act = await prisma.estimates.create({
       data: {
         title: `Акт - ${estimate.title}`,
         type: estimate.type,

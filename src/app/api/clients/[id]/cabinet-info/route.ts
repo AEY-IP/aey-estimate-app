@@ -18,7 +18,7 @@ export async function GET(
     const clientId = params.id
 
     // Проверяем, существует ли клиент и есть ли доступ
-    const client = await prisma.client.findUnique({
+    const client = await prisma.clients.findUnique({
       where: { id: clientId }
     })
 

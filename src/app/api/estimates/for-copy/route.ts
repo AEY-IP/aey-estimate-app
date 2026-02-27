@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const estimates = await prisma.estimate.findMany({
+    const estimates = await prisma.estimates.findMany({
       where: whereClause,
       select: {
         id: true,

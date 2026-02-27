@@ -22,7 +22,7 @@ export async function PUT(
     console.log('Update fields:', Object.keys(body))
     
     // Проверяем что смета существует
-    const existingEstimate = await prisma.estimate.findUnique({
+    const existingEstimate = await prisma.estimates.findUnique({
       where: { id: params.id }
     })
     
@@ -67,13 +67,13 @@ export async function PUT(
     console.log('Updating estimate...')
     
     // Обновляем смету
-    await prisma.estimate.update({
+    await prisma.estimates.update({
       where: { id: params.id },
       data: updateData
     })
     
     // Получаем обновленную смету
-    const result = await prisma.estimate.findUnique({
+    const result = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
         client: { select: { id: true, name: true } },

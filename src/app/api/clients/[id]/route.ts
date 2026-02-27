@@ -32,7 +32,7 @@ export async function GET(
     
     // Сначала найдём клиента по ID
     console.log('Searching for client in database...')
-    const client = await prisma.client.findUnique({
+    const client = await prisma.clients.findUnique({
       where: { 
         id: params.id 
       }
@@ -88,7 +88,7 @@ export async function PUT(
     }
     
     // Сначала найдём клиента по ID
-    const existingClient = await prisma.client.findUnique({
+    const existingClient = await prisma.clients.findUnique({
       where: { 
         id: params.id 
       }
@@ -138,7 +138,7 @@ export async function PUT(
       }
 
       // Проверяем уникальность имени (исключая текущего клиента)
-      const existingClientWithName = await prisma.client.findFirst({
+      const existingClientWithName = await prisma.clients.findFirst({
         where: {
           id: { not: params.id },
           name: { equals: name.trim(), mode: 'insensitive' },
@@ -170,7 +170,7 @@ export async function PUT(
       }
     }
     
-    const updatedClient = await prisma.client.update({
+    const updatedClient = await prisma.clients.update({
       where: { id: params.id },
       data: updateData
     })
@@ -200,7 +200,7 @@ export async function DELETE(
     }
     
     // Сначала найдём клиента по ID
-    const existingClient = await prisma.client.findUnique({
+    const existingClient = await prisma.clients.findUnique({
       where: { 
         id: params.id 
       },
@@ -235,7 +235,7 @@ export async function DELETE(
     }
 
     // Помечаем клиента как неактивного (мягкое удаление)
-    const deletedClient = await prisma.client.update({
+    const deletedClient = await prisma.clients.update({
       where: { id: params.id },
       data: {
         isActive: false,

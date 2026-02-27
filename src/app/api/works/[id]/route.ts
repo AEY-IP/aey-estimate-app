@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const work = await prisma.workItem.findUnique({
+    const work = await prisma.work_items.findUnique({
       where: { id: params.id },
       include: {
         parameter: true,
@@ -88,7 +88,7 @@ export async function PUT(
     if (parameterId !== undefined) updateData.parameterId = parameterId || null
     if (isActive !== undefined) updateData.isActive = isActive
 
-    const work = await prisma.workItem.update({
+    const work = await prisma.work_items.update({
       where: { id: params.id },
       data: updateData,
       include: {
@@ -133,7 +133,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Не указан статус' }, { status: 400 })
     }
 
-    const work = await prisma.workItem.update({
+    const work = await prisma.work_items.update({
       where: { id: params.id },
       data: { isActive },
       include: {
@@ -171,7 +171,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.workItem.delete({
+    await prisma.work_items.delete({
       where: { id: params.id }
     })
     

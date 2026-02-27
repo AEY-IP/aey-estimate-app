@@ -30,7 +30,7 @@ export async function POST(
     }
 
     // Получаем исходную смету со всей структурой
-    const sourceEstimate = await prisma.estimate.findUnique({
+    const sourceEstimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
         rooms: {
@@ -58,7 +58,7 @@ export async function POST(
     }
 
     // Проверяем существование целевого клиента
-    const targetClient = await prisma.client.findUnique({
+    const targetClient = await prisma.clients.findUnique({
       where: { id: targetClientId }
     })
 

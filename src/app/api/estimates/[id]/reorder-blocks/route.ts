@@ -28,7 +28,7 @@ export async function PUT(
     }
 
     // Получаем смету
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
         client: true,
@@ -45,7 +45,7 @@ export async function PUT(
 
     // Проверяем права доступа
     if (session.role === 'MANAGER') {
-      const client = await prisma.client.findUnique({
+      const client = await prisma.clients.findUnique({
         where: { id: estimate.clientId }
       })
       if (!client || client.createdBy !== session.id) {
@@ -71,7 +71,7 @@ export async function PUT(
       const reorderedBlocks = blockIds.map((blockId: string) => blocksMap.get(blockId)).filter(Boolean)
 
       // Обновляем смету
-      await prisma.estimate.update({
+      await prisma.estimates.update({
         where: { id: params.id },
         data: {
           worksBlock: JSON.stringify({
@@ -95,7 +95,7 @@ export async function PUT(
       const reorderedBlocks = blockIds.map((blockId: string) => blocksMap.get(blockId)).filter(Boolean)
 
       // Обновляем смету
-      await prisma.estimate.update({
+      await prisma.estimates.update({
         where: { id: params.id },
         data: {
           summaryWorksBlock: JSON.stringify({

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
     
     // Проверяем что смета существует и имеет тип "rooms"
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: params.id }
     })
     
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     })
     
     // Обновляем время изменения сметы
-    await prisma.estimate.update({
+    await prisma.estimates.update({
       where: { id: params.id },
       data: { updatedAt: new Date() }
     })
@@ -145,7 +145,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
     
     // Проверяем что смета и помещение существуют
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: params.id }
     })
     
@@ -176,7 +176,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     })
     
     // Обновляем время изменения сметы
-    await prisma.estimate.update({
+    await prisma.estimates.update({
       where: { id: params.id },
       data: { updatedAt: new Date() }
     })
@@ -220,7 +220,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
     
     // Проверяем что смета и помещение существуют
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: params.id }
     })
     
@@ -255,7 +255,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     })
     
     // Обновляем время изменения сметы
-    await prisma.estimate.update({
+    await prisma.estimates.update({
       where: { id: params.id },
       data: { updatedAt: new Date() }
     })
@@ -316,7 +316,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
     
     // Проверяем что смета существует
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: params.id }
     })
     
@@ -345,7 +345,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     })
     
     // Обновляем время изменения сметы
-    await prisma.estimate.update({
+    await prisma.estimates.update({
       where: { id: params.id },
       data: { updatedAt: new Date() }
     })

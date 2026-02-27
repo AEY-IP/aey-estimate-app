@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const { showToClient } = body
 
     // Проверяем, что акт существует
-    const act = await prisma.estimate.findUnique({
+    const act = await prisma.estimates.findUnique({
       where: { 
         id,
         isAct: true 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Обновляем видимость акта
-    const updatedAct = await prisma.estimate.update({
+    const updatedAct = await prisma.estimates.update({
       where: { id },
       data: { showToClient },
       include: {

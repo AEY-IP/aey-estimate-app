@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     // Проверяем доступ к клиенту только если clientId указан
     let client = null
     if (clientId) {
-      client = await prisma.client.findFirst({
+      client = await prisma.clients.findFirst({
         where: {
           id: clientId,
           isActive: true,
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       whereCondition.clientId = clientId
     } else if (session && session.role === 'MANAGER') {
       // Для менеджеров показываем только сметы их клиентов
-      const managerClients = await prisma.client.findMany({
+      const managerClients = await prisma.clients.findMany({
         where: {
           createdBy: session.id,
           isActive: true
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       whereCondition.isAct = false // Исключаем акты из клиентского кабинета
     }
 
-    const estimates = await prisma.estimate.findMany({
+    const estimates = await prisma.estimates.findMany({
       where: whereCondition,
       include: {
         client: {
@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Проверяем существование клиента и права доступа
-    const client = await prisma.client.findUnique({
+    const client = await prisma.clients.findUnique({
       where: { id: clientId, isActive: true }
     })
     
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
     
-    const newEstimate = await prisma.estimate.create({
+    const newEstimate = await prisma.estimates.create({
       data: {
         title,
         type,

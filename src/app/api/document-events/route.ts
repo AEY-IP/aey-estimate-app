@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Проверяем доступ к клиенту
-    const client = await prisma.client.findUnique({
+    const client = await prisma.clients.findUnique({
       where: { id: clientId }
     })
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Проверяем доступ к клиенту
-    const client = await prisma.client.findUnique({
+    const client = await prisma.clients.findUnique({
       where: { id: clientId }
     })
 

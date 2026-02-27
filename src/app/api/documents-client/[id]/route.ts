@@ -26,7 +26,7 @@ export async function GET(
     }
 
     // Получаем данные клиента
-    const client = await prisma.client.findUnique({
+    const client = await prisma.clients.findUnique({
       where: { id: clientId },
       select: {
         id: true,

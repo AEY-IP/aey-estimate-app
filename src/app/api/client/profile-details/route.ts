@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Получаем данные клиента через clientId из токена
-    const client = await prisma.client.findUnique({
+    const client = await prisma.clients.findUnique({
       where: { id: decoded.clientId },
       select: {
         id: true,

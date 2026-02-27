@@ -77,7 +77,7 @@ export async function PUT(
     if (existingUser.role === 'DESIGNER' && 
         existingUser.designerType === 'INTERNAL' && 
         designerType === 'EXTERNAL') {
-      await prisma.client.updateMany({
+      await prisma.clients.updateMany({
         where: { designerId: params.id },
         data: { designerId: null }
       })

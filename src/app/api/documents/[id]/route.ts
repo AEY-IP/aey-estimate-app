@@ -26,7 +26,7 @@ export async function GET(
     }
 
     // Проверяем доступ к клиенту документа
-    const client = await prisma.client.findFirst({
+    const client = await prisma.clients.findFirst({
       where: { id: document.clientId, isActive: true }
     });
 
@@ -87,7 +87,7 @@ export async function PUT(
     }
 
     // Проверяем доступ к клиенту документа
-    const client = await prisma.client.findFirst({
+    const client = await prisma.clients.findFirst({
       where: { id: document.clientId, isActive: true }
     });
 
@@ -158,7 +158,7 @@ export async function DELETE(
     }
 
     // Проверяем доступ к клиенту документа
-    const client = await prisma.client.findFirst({
+    const client = await prisma.clients.findFirst({
       where: { id: document.clientId, isActive: true }
     });
 

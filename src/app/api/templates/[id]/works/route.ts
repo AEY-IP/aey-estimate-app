@@ -83,7 +83,7 @@ export async function POST(
 
     if (workItemId) {
       // Работа из справочника
-      const workItem = await prisma.workItem.findUnique({
+      const workItem = await prisma.work_items.findUnique({
         where: { id: workItemId },
         include: { block: true }
       })

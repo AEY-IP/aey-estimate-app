@@ -63,7 +63,7 @@ export async function POST(
     }
 
     // Получаем смету
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
         rooms: true
@@ -124,7 +124,7 @@ export async function POST(
       room.works.filter(work => work.workItemId).map(work => work.workItemId!)
     )
 
-    const currentWorkItems = await prisma.workItem.findMany({
+    const currentWorkItems = await prisma.work_items.findMany({
       where: {
         id: { in: workItemIds }
       },
@@ -200,7 +200,7 @@ export async function POST(
     const estimateTotalWorksPrice = allRooms.reduce((sum, room) => sum + room.totalWorksPrice, 0)
     const estimateTotalPrice = allRooms.reduce((sum, room) => sum + room.totalPrice, 0)
 
-    await prisma.estimate.update({
+    await prisma.estimates.update({
       where: { id: estimateId },
       data: {
         totalWorksPrice: estimateTotalWorksPrice,

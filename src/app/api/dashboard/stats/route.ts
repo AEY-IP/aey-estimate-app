@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       case 'MANAGER': {
         // Для менеджеров считаем только их данные
         const [managerClients, allWorks, managerEstimates] = await Promise.all([
-          prisma.client.count({ 
+          prisma.clients.count({ 
             where: { 
               isActive: true,
               OR: [
@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
               ]
             } 
           }),
-          prisma.workItem.count({ where: { isActive: true } }),
-          prisma.estimate.count({ 
+          prisma.work_items.count({ where: { isActive: true } }),
+          prisma.estimates.count({ 
             where: { 
               isAct: false,
               client: {
@@ -49,13 +49,13 @@ export async function GET(request: NextRequest) {
       case 'DESIGNER': {
         // Для дизайнеров считаем только клиентов привязанных к ним
         const [designerClients, designerEstimates] = await Promise.all([
-          prisma.client.count({ 
+          prisma.clients.count({ 
             where: { 
               isActive: true,
               designerId: session.id
             } 
           }),
-          prisma.estimate.count({ 
+          prisma.estimates.count({ 
             where: { 
               isAct: false,
               client: {
@@ -74,10 +74,10 @@ export async function GET(request: NextRequest) {
       default: {
         // Для админов получаем всю статистику
         const [allClients, allWorks, allEstimates, newLeadsCount] = await Promise.all([
-          prisma.client.count({ where: { isActive: true } }),
-          prisma.workItem.count({ where: { isActive: true } }),
-          prisma.estimate.count({ where: { isAct: false } }),
-          prisma.leadRequest.count({ where: { status: 'new' } })
+          prisma.clients.count({ where: { isActive: true } }),
+          prisma.work_items.count({ where: { isActive: true } }),
+          prisma.estimates.count({ where: { isAct: false } }),
+          prisma.lead_requests.count({ where: { status: 'new' } })
         ])
         
         totalClients = allClients

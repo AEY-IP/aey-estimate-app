@@ -29,7 +29,7 @@ export async function GET(
     */
 
     // Загружаем смету с кешем экспорта
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
         exportCache: true,

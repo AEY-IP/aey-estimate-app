@@ -22,7 +22,7 @@ export async function GET(
     const estimateId = params.id
 
     // Получаем смету для проверки прав доступа
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
         client: true
@@ -146,7 +146,7 @@ export async function POST(
     }
 
     // Получаем смету для проверки прав доступа
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
         client: true

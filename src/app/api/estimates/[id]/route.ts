@@ -202,7 +202,7 @@ export async function GET(
       }
     } else if (session && session.role === 'MANAGER') {
       // Менеджер может видеть только сметы своих клиентов
-      const client = await prisma.client.findUnique({
+      const client = await prisma.clients.findUnique({
         where: { id: estimate.clientId }
       })
       if (!client || client.createdBy !== session.id) {
@@ -340,7 +340,7 @@ export async function PUT(
     
     // Проверяем что смета существует
     console.log('🔍 Checking if estimate exists...')
-    const existingEstimate = await prisma.estimate.findUnique({
+    const existingEstimate = await prisma.estimates.findUnique({
       where: { id: params.id }
     })
     
@@ -394,7 +394,7 @@ export async function PUT(
     let updatedEstimate
     try {
       console.log('🔄 Updating basic estimate fields...')
-      updatedEstimate = await prisma.estimate.update({
+      updatedEstimate = await prisma.estimates.update({
         where: { id: params.id },
         data: updateData
       })
@@ -620,7 +620,7 @@ export async function PUT(
     }
 
     // Получаем обновленную смету с всеми связанными данными
-    const finalEstimate = await prisma.estimate.findUnique({
+    const finalEstimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
         client: {
@@ -928,7 +928,7 @@ export async function DELETE(
     }
 
     // Получаем смету с полными данными перед удалением
-    const estimate = await prisma.estimate.findUnique({
+    const estimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
         client: true,
@@ -988,7 +988,7 @@ export async function DELETE(
     })
 
     // Удаляем оригинальную смету (каскадное удаление позаботится о связанных данных)
-    await prisma.estimate.delete({
+    await prisma.estimates.delete({
       where: { id: params.id }
     })
 
