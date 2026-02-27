@@ -1,20 +1,13 @@
 {
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
+  "buildCommand": "prisma generate && next build",
   "installCommand": "npm install",
   "framework": "nextjs",
   "functions": {
-    "app/api/**/*.ts": {
+    "app/**/*.ts": {
+      "maxDuration": 30
+    },
+    "api/**/*.ts": {
       "maxDuration": 30
     }
-  },
-  "env": {
-    "PRISMA_GENERATE_DATAPROXY": "true"
-  },
-  "build": {
-    "env": {
-      "ENABLE_EXPERIMENTAL_COREPACK": "1"
-    }
-  },
-  "public": true
-} 
+  }
+}
