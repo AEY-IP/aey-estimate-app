@@ -169,7 +169,7 @@ export default function PricingPage() {
                     <tr className="border-b border-gray-200 hover:bg-white/50 transition-colors">
                       <td className="py-5 px-6">
                         <div className="font-semibold text-black">Разработка сметы проекта</div>
-                        <div className="text-sm text-gray-500 mt-1">Расчёт стоимости ремонта.</div>
+                        <div className="text-sm text-gray-500 mt-1">Подбор и расчет стоимости материалов и/или мебели.</div>
                       </td>
                       <td className="text-center py-5 px-6">
                         <div className="text-2xl font-bold text-black">890</div>
@@ -329,7 +329,7 @@ export default function PricingPage() {
               {/* Услуга 6 */}
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6">
                 <h3 className="font-bold text-lg text-black mb-1">Разработка сметы проекта</h3>
-                <p className="text-sm text-gray-500 mb-4">Расчёт стоимости ремонта.</p>
+                <p className="text-sm text-gray-500 mb-4">Подбор и расчет стоимости материалов и/или мебели.</p>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Отдельно</span>

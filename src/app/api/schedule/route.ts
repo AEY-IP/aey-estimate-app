@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     const projects = await prisma.schedule_projects.findMany({
       where: whereCondition,
       include: {
-        tasks: {
+        schedule_tasks: {
           orderBy: [
             { level: 'asc' },
             { orderIndex: 'asc' }
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
         status: project.status,
         showToClient: project.showToClient,
         createdAt: project.createdAt,
-        tasks: project.tasks.map(task => ({
+        tasks: project.schedule_tasks.map(task => ({
           id: task.id,
           parentId: task.parentId,
           title: task.title,

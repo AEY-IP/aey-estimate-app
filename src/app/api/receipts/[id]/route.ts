@@ -22,9 +22,9 @@ export async function DELETE(
     const receipt = await prisma.receipts.findUnique({
       where: { id: params.id },
       include: {
-        block: {
+        receipt_blocks: {
           include: {
-            client: true
+            clients: true
           }
         }
       }
@@ -34,7 +34,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Чек не найден' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && receipt.block.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && receipt.receipt_blocks.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 

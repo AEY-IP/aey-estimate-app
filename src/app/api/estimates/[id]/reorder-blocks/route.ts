@@ -31,8 +31,8 @@ export async function PUT(
     const estimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
-        client: true,
-        rooms: true
+        clients: true,
+        estimate_rooms: true
       }
     })
 

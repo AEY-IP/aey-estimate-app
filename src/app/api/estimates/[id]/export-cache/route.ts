@@ -25,7 +25,7 @@ export async function GET(
     const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
-        client: true
+        clients: true
       }
     })
 
@@ -36,7 +36,7 @@ export async function GET(
     // Проверяем права доступа
     if (session) {
       // Авторизация как админ/менеджер
-      if (session.role === 'MANAGER' && estimate.client.createdBy !== session.id) {
+      if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id) {
         return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
       }
     } else if (clientSession) {
@@ -149,7 +149,7 @@ export async function POST(
     const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
-        client: true
+        clients: true
       }
     })
 
@@ -158,7 +158,7 @@ export async function POST(
     }
 
     // Проверяем права доступа для менеджеров
-    if (session.role === 'MANAGER' && estimate.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 

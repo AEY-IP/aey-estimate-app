@@ -10,9 +10,9 @@ async function checkItemAccess(itemId: string, sessionId: string, role: string) 
   const item = await prisma.designer_estimate_items.findUnique({
     where: { id: itemId },
     include: {
-      block: {
+      designer_estimate_blocks: {
         include: {
-          estimate: true
+          designer_estimates: true
         }
       }
     }
@@ -22,7 +22,7 @@ async function checkItemAccess(itemId: string, sessionId: string, role: string) 
     return { error: 'Позиция не найдена', status: 404 }
   }
 
-  if (role === 'DESIGNER' && item.block.estimate.designerId !== sessionId) {
+  if (role === 'DESIGNER' && item.designer_estimate_blocks.designer_estimates.designerId !== sessionId) {
     return { error: 'Доступ запрещен', status: 403 }
   }
 
@@ -132,10 +132,11 @@ export async function PUT(
         pricePerUnit,
         quantity,
         totalPrice,
-        notes: notes?.trim() || null
+        notes: notes?.trim() || null,
+        updatedAt: new Date()
       },
       include: {
-        block: true
+        designer_estimate_blocks: true
       }
     })
 
@@ -145,7 +146,12 @@ export async function PUT(
       itemWithSignedUrl.imageUrl = await getSignedDownloadUrl(itemWithSignedUrl.imageUrl, 3600);
     }
 
-    return NextResponse.json({ item: itemWithSignedUrl })
+    return NextResponse.json({
+      item: {
+        ...itemWithSignedUrl,
+        block: itemWithSignedUrl.designer_estimate_blocks
+      }
+    })
   } catch (error) {
     console.error('Error updating item:', error)
     return NextResponse.json({ error: 'Ошибка обновления позиции' }, { status: 500 })

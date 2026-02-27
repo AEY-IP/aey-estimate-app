@@ -3,6 +3,7 @@ import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 import { uploadFile, getSignedDownloadUrl } from '@/lib/storage'
 import sharp from 'sharp'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -45,7 +46,7 @@ export async function GET(
     const blockId = searchParams.get('blockId')
 
     const where: any = {
-      block: {
+      designer_estimate_blocks: {
         estimateId: params.id,
         isActive: true
       }
@@ -58,7 +59,7 @@ export async function GET(
     const items = await prisma.designer_estimate_items.findMany({
       where,
       include: {
-        block: true
+        designer_estimate_blocks: true
       },
       orderBy: { sortOrder: 'asc' }
     })
@@ -73,7 +74,12 @@ export async function GET(
       })
     )
 
-    return NextResponse.json({ items: itemsWithSignedUrls })
+    return NextResponse.json({
+      items: itemsWithSignedUrls.map((item) => ({
+        ...item,
+        block: item.designer_estimate_blocks
+      }))
+    })
   } catch (error) {
     console.error('Error fetching items:', error)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
@@ -171,6 +177,7 @@ export async function POST(
 
     const item = await prisma.designer_estimate_items.create({
       data: {
+        id: randomUUID(),
         name: name.trim(),
         manufacturer: manufacturer?.trim() || null,
         link: link?.trim() || null,
@@ -181,10 +188,11 @@ export async function POST(
         totalPrice,
         blockId,
         notes: notes?.trim() || null,
-        sortOrder: (maxSortOrder?.sortOrder ?? -1) + 1
+        sortOrder: (maxSortOrder?.sortOrder ?? -1) + 1,
+        updatedAt: new Date()
       },
       include: {
-        block: true
+        designer_estimate_blocks: true
       }
     })
 
@@ -198,7 +206,12 @@ export async function POST(
     }
 
     console.log('📤 Возвращаем item с imageUrl:', itemWithSignedUrl.imageUrl);
-    return NextResponse.json({ item: itemWithSignedUrl })
+    return NextResponse.json({
+      item: {
+        ...itemWithSignedUrl,
+        block: itemWithSignedUrl.designer_estimate_blocks
+      }
+    })
   } catch (error) {
     console.error('Error creating item:', error)
     return NextResponse.json({ error: 'Ошибка создания позиции' }, { status: 500 })

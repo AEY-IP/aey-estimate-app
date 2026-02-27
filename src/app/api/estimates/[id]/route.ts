@@ -51,46 +51,51 @@ export async function GET(
     }
 
     // Безопасная загрузка сметы с проверкой типа
-    const estimate = await (prisma as any).estimate.findUnique({
+    const estimate = await (prisma as any).estimates.findUnique({
       where: { id: params.id },
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             username: true
           }
         },
-        roomParameterValues: {
+        estimate_room_parameter_values: {
           include: {
-            parameter: true
+            room_parameters: true
           }
         }
       }
     })
+    if (estimate) {
+      estimate.client = estimate.clients
+      estimate.creator = estimate.users
+      estimate.roomParameterValues = estimate.estimate_room_parameter_values || []
+    }
 
     // Если смета типа "rooms", пытаемся загрузить помещения
     let rooms: any[] = []
     if (estimate && estimate.type === 'rooms') {
       try {
         console.log('🏠 Loading rooms for estimate:', params.id)
-        rooms = await (prisma as any).estimateRoom.findMany({
+        rooms = await (prisma as any).estimate_rooms.findMany({
           where: { estimateId: params.id },
           include: {
-            works: {
+            estimate_works: {
               include: {
-                workItem: true
+                work_items: true
               }
             },
-            materials: true,
-            roomParameterValues: {
+            estimate_materials: true,
+            estimate_room_parameter_values: {
               include: {
-                parameter: true
+                room_parameters: true
               }
             }
           },
@@ -98,14 +103,22 @@ export async function GET(
             sortOrder: 'asc'
           }
         })
+        rooms = rooms.map((room: any) => ({
+          ...room,
+          works: room.estimate_works || [],
+          materials: room.estimate_materials || [],
+          roomParameterValues: room.estimate_room_parameter_values || []
+        }))
         console.log('🏠 Rooms loaded from DB:', rooms.length)
         
         // Форматируем помещения для фронтенда
         rooms = rooms.map((room: any) => {
           // Группируем работы по блокам
           const worksByBlock: { [key: string]: any } = {}
-          room.works.forEach((work: any) => {
-            const blockTitle = work.blockTitle || work.workItem?.blockTitle || 'Без категории'
+          const works = room.estimate_works || room.works || []
+          works.forEach((work: any) => {
+            const workItem = work.work_items || work.workItem
+            const blockTitle = work.blockTitle || workItem?.blockTitle || 'Без категории'
             if (!worksByBlock[blockTitle]) {
               worksByBlock[blockTitle] = {
                 id: `block_${blockTitle.replace(/\s+/g, '_')}`,
@@ -115,8 +128,8 @@ export async function GET(
               }
             }
             
-            const workName = work.workItem?.name || work.manualWorkName || 'Без названия'
-            const workUnit = work.workItem?.unit || work.manualWorkUnit || 'шт'
+            const workName = workItem?.name || work.manualWorkName || 'Без названия'
+            const workUnit = workItem?.unit || work.manualWorkUnit || 'шт'
             
             worksByBlock[blockTitle].items.push({
               id: work.id,
@@ -150,7 +163,7 @@ export async function GET(
             materialsBlock: {
               id: `materials_${room.id}`,
               title: `Материалы - ${room.name}`,
-              items: room.materials.map((material: any) => ({
+              items: (room.estimate_materials || room.materials || []).map((material: any) => ({
                 id: material.id,
                 name: material.name,
                 unit: material.unit,
@@ -623,55 +636,67 @@ export async function PUT(
     const finalEstimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             username: true
           }
         },
-        rooms: {
+        estimate_rooms: {
           include: {
-            works: {
+            estimate_works: {
               include: {
-                workItem: true
+                work_items: true
               }
             },
-            materials: true,
+            estimate_materials: true,
             // @ts-ignore
-            roomParameterValues: {
+            estimate_room_parameter_values: {
               include: {
-                parameter: true
+                room_parameters: true
               }
             }
           }
         },
         // @ts-ignore
-        roomParameterValues: {
+        estimate_room_parameter_values: {
           include: {
-            parameter: true
+            room_parameters: true
           }
         },
-        coefficients: true
+        estimate_coefficients: true
       }
     })
+    if (finalEstimate) {
+      ;(finalEstimate as any).client = (finalEstimate as any).clients
+      ;(finalEstimate as any).creator = (finalEstimate as any).users
+      ;(finalEstimate as any).roomParameterValues = (finalEstimate as any).estimate_room_parameter_values || []
+      ;(finalEstimate as any).rooms = ((finalEstimate as any).estimate_rooms || []).map((room: any) => ({
+        ...room,
+        works: room.estimate_works || [],
+        materials: room.estimate_materials || [],
+        roomParameterValues: room.estimate_room_parameter_values || []
+      }))
+    }
     
     console.log('Estimate updated successfully')
     
     // Форматируем данные для фронтенда
     let formattedRooms: any[] = []
-    if (finalEstimate?.rooms && finalEstimate.type === 'rooms') {
+    if (finalEstimate?.estimate_rooms && finalEstimate.type === 'rooms') {
       // Для смет типа "rooms" форматируем помещения с worksBlock и materialsBlock
-      formattedRooms = finalEstimate.rooms.map((room: any) => {
+      formattedRooms = finalEstimate.estimate_rooms.map((room: any) => {
         // Группируем работы по блокам
         const worksByBlock: { [key: string]: any } = {}
-        room.works.forEach((work: any) => {
-          const blockTitle = work.blockTitle || work.workItem?.blockTitle || 'Без категории'
+        ;(room.estimate_works || []).forEach((work: any) => {
+          const workItem = work.work_items
+          const blockTitle = work.blockTitle || workItem?.blockTitle || 'Без категории'
           if (!worksByBlock[blockTitle]) {
             worksByBlock[blockTitle] = {
               id: `block_${blockTitle.replace(/\s+/g, '_')}`,
@@ -681,8 +706,8 @@ export async function PUT(
             }
           }
           
-          const workName = work.workItem?.name || work.manualWorkName || 'Без названия'
-          const workUnit = work.workItem?.unit || work.manualWorkUnit || 'шт'
+          const workName = workItem?.name || work.manualWorkName || 'Без названия'
+          const workUnit = workItem?.unit || work.manualWorkUnit || 'шт'
           
           worksByBlock[blockTitle].items.push({
             id: work.id,
@@ -716,7 +741,7 @@ export async function PUT(
           materialsBlock: {
             id: `materials_${room.id}`,
             title: `Материалы - ${room.name}`,
-            items: room.materials.map((material: any) => ({
+            items: (room.estimate_materials || []).map((material: any) => ({
               id: material.id,
               name: material.name,
               unit: material.unit,
@@ -744,7 +769,7 @@ export async function PUT(
       })
     } else if (finalEstimate?.rooms) {
       // Для других типов смет используем простое форматирование
-      formattedRooms = finalEstimate.rooms.map(formatRoomForFrontend)
+      formattedRooms = finalEstimate.estimate_rooms.map(formatRoomForFrontend)
     }
 
     const formattedEstimate: any = {
@@ -864,10 +889,10 @@ export async function PATCH(
     }
 
     // Получаем смету для проверки прав доступа
-    const estimate = await (prisma as any).estimate.findUnique({
+    const estimate = await (prisma as any).estimates.findUnique({
       where: { id: params.id },
       include: {
-        client: true
+        clients: true
       }
     })
 
@@ -879,7 +904,7 @@ export async function PATCH(
     }
 
     // Для менеджеров проверяем права доступа к клиенту
-    if (session.role === 'MANAGER' && estimate.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id) {
       return NextResponse.json(
         { error: 'Доступ запрещен' },
         { status: 403 }
@@ -887,7 +912,7 @@ export async function PATCH(
     }
 
     // Обновляем название сметы
-    const updatedEstimate = await (prisma as any).estimate.update({
+    const updatedEstimate = await (prisma as any).estimates.update({
       where: { id: params.id },
       data: { 
         title: title.trim(),
@@ -931,29 +956,29 @@ export async function DELETE(
     const estimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
-        client: true,
-        creator: true,
-        rooms: {
+        clients: true,
+        users: true,
+        estimate_rooms: {
           include: {
-            works: {
+            estimate_works: {
               include: {
-                workItem: true
+                work_items: true
               }
             },
-            materials: true,
-            roomParameterValues: {
+            estimate_materials: true,
+            estimate_room_parameter_values: {
               include: {
-                parameter: true
+                room_parameters: true
               }
             }
           }
         },
-        roomParameterValues: {
+        estimate_room_parameter_values: {
           include: {
-            parameter: true
+            room_parameters: true
           }
         },
-        coefficients: true
+        estimate_coefficients: true
       }
     })
 

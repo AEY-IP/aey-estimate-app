@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 import { getSignedDownloadUrl } from '@/lib/storage'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -46,12 +47,17 @@ export async function GET(
         isActive: true
       },
       include: {
-        items: {
+        designer_estimate_items: {
           orderBy: { sortOrder: 'asc' }
         },
-        parent: true,
-        children: {
+        designer_estimate_blocks: true,
+        other_designer_estimate_blocks: {
           where: { isActive: true },
+          include: {
+            designer_estimate_items: {
+              orderBy: { sortOrder: 'asc' }
+            }
+          },
           orderBy: { sortOrder: 'asc' }
         }
       },
@@ -62,7 +68,7 @@ export async function GET(
     const blocksWithSignedUrls = await Promise.all(
       blocks.map(async (block) => {
         const itemsWithUrls = await Promise.all(
-          block.items.map(async (item) => {
+          block.designer_estimate_items.map(async (item) => {
             if (item.imageUrl && !item.imageUrl.startsWith('http')) {
               return { ...item, imageUrl: await getSignedDownloadUrl(item.imageUrl, 3600) };
             }
@@ -72,9 +78,9 @@ export async function GET(
         
         // Обрабатываем дочерние блоки (если есть)
         const childrenWithUrls = await Promise.all(
-          (block.children || []).map(async (child) => {
+          (block.other_designer_estimate_blocks || []).map(async (child) => {
             const childItemsWithUrls = await Promise.all(
-              (child.items || []).map(async (item) => {
+              (child.designer_estimate_items || []).map(async (item) => {
                 if (item.imageUrl && !item.imageUrl.startsWith('http')) {
                   return { ...item, imageUrl: await getSignedDownloadUrl(item.imageUrl, 3600) };
                 }
@@ -99,6 +105,7 @@ export async function GET(
         return {
           ...block,
           items: itemsWithUrls,
+          parent: block.designer_estimate_blocks,
           children: childrenWithUrls,
           totalAmount: blockTotal,
           itemsCount: itemsWithUrls.length
@@ -157,21 +164,30 @@ export async function POST(
 
     const block = await prisma.designer_estimate_blocks.create({
       data: {
+        id: randomUUID(),
         name: name.trim(),
         description: description?.trim() || null,
         estimateId: params.id,
         parentId: parentId || null,
         level: level || 1,
-        sortOrder: (maxSortOrder?.sortOrder ?? -1) + 1
+        sortOrder: (maxSortOrder?.sortOrder ?? -1) + 1,
+        updatedAt: new Date()
       },
       include: {
-        items: true,
-        parent: true,
-        children: true
+        designer_estimate_items: true,
+        designer_estimate_blocks: true,
+        other_designer_estimate_blocks: true
       }
     })
 
-    return NextResponse.json({ block })
+    return NextResponse.json({
+      block: {
+        ...block,
+        items: block.designer_estimate_items,
+        parent: block.designer_estimate_blocks,
+        children: block.other_designer_estimate_blocks
+      }
+    })
   } catch (error) {
     console.error('Error creating block:', error)
     return NextResponse.json({ error: 'Ошибка создания блока' }, { status: 500 })

@@ -42,13 +42,13 @@ export async function GET(request: NextRequest) {
         notes: true,
         createdAt: true,
         updatedAt: true,
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             name: true
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: [
-        { client: { name: 'asc' } },
+        { clients: { name: 'asc' } },
         { createdAt: 'desc' }
       ]
     })
@@ -65,12 +65,12 @@ export async function GET(request: NextRequest) {
     const clientsMap = new Map()
     
     estimates.forEach(estimate => {
-      const clientId = estimate.client.id
+      const clientId = estimate.clients.id
       
       if (!clientsMap.has(clientId)) {
         clientsMap.set(clientId, {
           id: clientId,
-          name: estimate.client.name,
+          name: estimate.clients.name,
           estimates: []
         })
       }

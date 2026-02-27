@@ -80,12 +80,12 @@ export async function POST(
     const photoBlock = await prisma.photo_blocks.findFirst({
       where: {
         id: eventId,
-        client: {
+        clients: {
           ...(user.role !== 'ADMIN' ? { createdBy: user.id } : {})
         }
       },
       include: {
-        client: true
+        clients: true
       }
     });
 

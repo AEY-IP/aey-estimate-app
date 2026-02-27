@@ -18,12 +18,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const file = await (prisma as any).designProjectFile.findUnique({
+    const file = await (prisma as any).design_project_files.findUnique({
       where: { id: params.id },
       include: {
-        block: {
+        design_project_blocks: {
           include: {
-            client: true
+            clients: true
           }
         }
       }
@@ -34,7 +34,7 @@ export async function DELETE(
     }
 
     // Проверяем права доступа: только ADMIN и DESIGNER (привязанный к клиенту)
-    if (session.role === 'DESIGNER' && file.block.client.designerId !== session.id) {
+    if (session.role === 'DESIGNER' && file.design_project_blocks.clients.designerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -51,7 +51,7 @@ export async function DELETE(
     }
 
     // Удаляем файл из БД
-    await (prisma as any).designProjectFile.delete({
+    await (prisma as any).design_project_files.delete({
       where: { id: params.id }
     })
 

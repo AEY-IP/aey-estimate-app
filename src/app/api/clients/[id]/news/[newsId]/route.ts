@@ -35,7 +35,7 @@ export async function PUT(
         clientId: clientId
       },
       include: {
-        client: true
+        clients: true
       }
     })
 
@@ -47,7 +47,7 @@ export async function PUT(
     }
 
     // Проверяем права доступа для менеджеров
-    if (session.role === 'MANAGER' && newsItem.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && newsItem.clients.createdBy !== session.id) {
       return NextResponse.json(
         { error: 'Доступ запрещен' },
         { status: 403 }

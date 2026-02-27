@@ -18,14 +18,14 @@ export async function GET(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const designProjectBlock = await (prisma as any).designProjectBlock.findUnique({
+    const designProjectBlock = await (prisma as any).design_project_blocks.findUnique({
       where: { id: params.id },
       include: {
-        files: {
+        design_project_files: {
           where: { isVisible: true },
           orderBy: { sortOrder: 'asc' }
         },
-        client: true
+        clients: true
       }
     })
 
@@ -34,11 +34,11 @@ export async function GET(
     }
 
     // Проверяем права доступа
-    if (session.role === 'DESIGNER' && designProjectBlock.client.designerId !== session.id) {
+    if (session.role === 'DESIGNER' && designProjectBlock.clients.designerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
-    if (session.role === 'MANAGER' && designProjectBlock.client.managerId !== session.id && designProjectBlock.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && designProjectBlock.clients.managerId !== session.id && designProjectBlock.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -70,9 +70,9 @@ export async function PUT(
     }
 
     // Проверяем существование блока и права доступа
-    const designProjectBlock = await (prisma as any).designProjectBlock.findUnique({
+    const designProjectBlock = await (prisma as any).design_project_blocks.findUnique({
       where: { id: params.id },
-      include: { client: true }
+      include: { clients: true }
     })
 
     if (!designProjectBlock) {
@@ -80,7 +80,7 @@ export async function PUT(
     }
 
     // Только ADMIN и DESIGNER могут редактировать
-    if (session.role === 'DESIGNER' && designProjectBlock.client.designerId !== session.id) {
+    if (session.role === 'DESIGNER' && designProjectBlock.clients.designerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -89,7 +89,7 @@ export async function PUT(
     }
 
     // Обновляем блок
-    const updatedBlock = await (prisma as any).designProjectBlock.update({
+    const updatedBlock = await (prisma as any).design_project_blocks.update({
       where: { id: params.id },
       data: {
         title: title.trim(),
@@ -97,7 +97,7 @@ export async function PUT(
         updatedAt: new Date()
       },
       include: {
-        files: {
+        design_project_files: {
           where: { isVisible: true },
           orderBy: { sortOrder: 'asc' }
         }
@@ -123,11 +123,11 @@ export async function DELETE(
     }
 
     // Получаем блок с файлами
-    const designProjectBlock = await (prisma as any).designProjectBlock.findUnique({
+    const designProjectBlock = await (prisma as any).design_project_blocks.findUnique({
       where: { id: params.id },
       include: {
-        files: true,
-        client: true
+        design_project_files: true,
+        clients: true
       }
     })
 
@@ -136,7 +136,7 @@ export async function DELETE(
     }
 
     // Только ADMIN и DESIGNER могут удалять
-    if (session.role === 'DESIGNER' && designProjectBlock.client.designerId !== session.id) {
+    if (session.role === 'DESIGNER' && designProjectBlock.clients.designerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -145,7 +145,7 @@ export async function DELETE(
     }
 
     // Удаляем все файлы из Yandex Cloud
-    for (const file of designProjectBlock.files) {
+    for (const file of designProjectBlock.design_project_files) {
       try {
         await deleteFile(file.filePath)
       } catch (error) {
@@ -155,7 +155,7 @@ export async function DELETE(
     }
 
     // Удаляем блок (каскадно удалятся и файлы из БД)
-    await (prisma as any).designProjectBlock.delete({
+    await (prisma as any).design_project_blocks.delete({
       where: { id: params.id }
     })
 

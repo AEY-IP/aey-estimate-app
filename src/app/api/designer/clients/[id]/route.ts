@@ -17,14 +17,14 @@ export async function GET(
     const client = await prisma.designer_clients.findUnique({
       where: { id: params.id },
       include: {
-        designer: {
+        users: {
           select: {
             id: true,
             name: true,
             username: true
           }
         },
-        estimates: {
+        designer_estimates: {
           where: { isActive: true },
           orderBy: { createdAt: 'desc' }
         }
@@ -43,7 +43,13 @@ export async function GET(
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
 
-    return NextResponse.json({ client })
+    return NextResponse.json({
+      client: {
+        ...client,
+        designer: client.users,
+        estimates: client.designer_estimates
+      }
+    })
   } catch (error) {
     console.error('Error fetching designer client:', error)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
@@ -90,10 +96,11 @@ export async function PUT(
         phone: phone?.trim() || null,
         email: email?.trim() || null,
         address: address?.trim() || null,
-        notes: notes?.trim() || null
+        notes: notes?.trim() || null,
+        updatedAt: new Date()
       },
       include: {
-        designer: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -103,7 +110,12 @@ export async function PUT(
       }
     })
 
-    return NextResponse.json({ client })
+    return NextResponse.json({
+      client: {
+        ...client,
+        designer: client.users
+      }
+    })
   } catch (error) {
     console.error('Error updating designer client:', error)
     return NextResponse.json({ error: 'Ошибка обновления клиента' }, { status: 500 })
@@ -138,7 +150,10 @@ export async function DELETE(
 
     await prisma.designer_clients.update({
       where: { id: params.id },
-      data: { isActive: false }
+      data: {
+        isActive: false,
+        updatedAt: new Date()
+      }
     })
 
     return NextResponse.json({ success: true })

@@ -25,8 +25,10 @@ async function createExportCacheForRooms(estimate: any, coefficients: any[]) {
   // Ручные цены
   const manualPrices = new Set(JSON.parse(estimate.manualPrices || '[]'));
 
-  for (const room of estimate.rooms) {
-    for (const work of room.works) {
+  const rooms = estimate.estimate_rooms || estimate.rooms || [];
+  for (const room of rooms) {
+    const works = room.estimate_works || room.works || [];
+    for (const work of works) {
       const blockTitle = work.blockTitle || 'Прочее';
       
       if (!blockMap.has(blockTitle)) {
@@ -46,14 +48,15 @@ async function createExportCacheForRooms(estimate: any, coefficients: any[]) {
       const adjustedTotalPrice = work.totalPrice;
       
       // Определяем, была ли цена изменена вручную (для группировки)
-      const basePrice = work.workItem?.price || 0;
+      const workItem = work.work_items || work.workItem;
+      const basePrice = workItem?.price || 0;
       const expectedAutoPrice = Math.round(basePrice * work.quantity);
       const isManualPrice = work.totalPrice !== expectedAutoPrice && !manualPrices.has(work.id);
 
       // Проверяем есть ли уже такая работа в блоке (группируем одинаковые)
-      const workName = work.workItem?.name || 'Без названия'
-      const workUnit = work.workItem?.unit || 'шт'
-      const workItemId = work.workItem?.id
+      const workName = workItem?.name || 'Без названия'
+      const workUnit = workItem?.unit || 'шт'
+      const workItemId = workItem?.id
       const isCurrentManual = isManualPrice || manualPrices.has(work.id)
       
       const existingItem = block.items.find((item: any) => 
@@ -123,7 +126,7 @@ export async function PATCH(
     const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
-        client: true
+        clients: true
       }
     });
 
@@ -132,7 +135,7 @@ export async function PATCH(
     }
 
     // Проверяем права доступа
-    if (session.role === 'MANAGER' && estimate.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
@@ -151,15 +154,15 @@ export async function PATCH(
         const fullEstimate = await prisma.estimates.findUnique({
           where: { id: estimateId },
           include: {
-            client: true,
-            rooms: {
+            clients: true,
+            estimate_rooms: {
               include: {
-                works: {
+                estimate_works: {
                   include: {
-                    workItem: true
+                    work_items: true
                   }
                 },
-                materials: true
+                estimate_materials: true
               }
             }
           }

@@ -43,7 +43,7 @@ export async function POST(
         isVisible: true
       },
       include: {
-        client: true
+        clients: true
       }
     });
 
@@ -52,7 +52,7 @@ export async function POST(
     }
 
     // Проверяем права доступа к клиенту для менеджеров
-    if (session && session.role === 'MANAGER' && receiptBlock.client.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -40,18 +41,18 @@ export async function GET(request: NextRequest) {
         isActive: true
       },
       include: {
-        client: true,
-        designer: {
+        designer_clients: true,
+        users: {
           select: {
             id: true,
             name: true,
             username: true
           }
         },
-        blocks: {
+        designer_estimate_blocks: {
           where: { isActive: true },
           include: {
-            items: true
+            designer_estimate_items: true
           }
         }
       },
@@ -59,16 +60,16 @@ export async function GET(request: NextRequest) {
     })
 
     const estimatesWithTotals = estimates.map(estimate => {
-      const totalAmount = estimate.blocks.reduce((sum, block) => {
-        const blockTotal = block.items.reduce((itemSum, item) => itemSum + item.totalPrice, 0)
+      const totalAmount = estimate.designer_estimate_blocks.reduce((sum, block) => {
+        const blockTotal = block.designer_estimate_items.reduce((itemSum, item) => itemSum + item.totalPrice, 0)
         return sum + blockTotal
       }, 0)
 
       return {
         ...estimate,
         totalAmount,
-        itemsCount: estimate.blocks.reduce((sum, block) => sum + block.items.length, 0),
-        blocksCount: estimate.blocks.length
+        itemsCount: estimate.designer_estimate_blocks.reduce((sum, block) => sum + block.designer_estimate_items.length, 0),
+        blocksCount: estimate.designer_estimate_blocks.length
       }
     })
 
@@ -115,14 +116,16 @@ export async function POST(request: NextRequest) {
 
     const estimate = await prisma.designer_estimates.create({
       data: {
+        id: randomUUID(),
         name: name.trim(),
         description: description?.trim() || null,
         clientId,
-        designerId: session.role === 'DESIGNER' ? session.id : client.designerId
+        designerId: session.role === 'DESIGNER' ? session.id : client.designerId,
+        updatedAt: new Date()
       },
       include: {
-        client: true,
-        designer: {
+        designer_clients: true,
+        users: {
           select: {
             id: true,
             name: true,

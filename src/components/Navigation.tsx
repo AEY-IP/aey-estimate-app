@@ -122,9 +122,20 @@ const Navigation = () => {
     } else if (isProfessionalEnvironment) {
       // Профессиональное меню
       const items = []
+      const isDesigner = session?.user?.role === 'DESIGNER'
       
       // Внешние дизайнеры не имеют доступа к основным разделам
       const isExternalDesigner = session?.user?.role === 'DESIGNER' && session?.user?.designerType === 'EXTERNAL'
+
+      // У дизайнеров всегда должен быть явный корневой раздел "Мои клиенты"
+      if (isDesigner) {
+        items.push({
+          title: 'Мои клиенты',
+          href: '/designer/clients',
+          icon: Users,
+          color: 'bg-purple-100 text-purple-700'
+        })
+      }
       
       if (!isExternalDesigner) {
         items.push(
@@ -193,10 +204,28 @@ const Navigation = () => {
     // Получаем параметр returnTo из URL
     const returnTo = searchParams.get('returnTo')
 
+    // Для /designer/estimates/[id] восстанавливаем цепочку от клиента,
+    // чтобы навигация оставалась "Dashboard > Клиенты > Клиент > Смета".
+    if (pathname.startsWith('/designer/estimates/') && returnTo?.startsWith('/designer/clients/')) {
+      breadcrumbs.push({ name: 'Клиенты дизайнера', href: '/designer/clients', icon: Users })
+      breadcrumbs.push({ name: 'Клиент', href: returnTo, icon: User })
+    }
+
     let currentPath = ''
     pathSegments.forEach((segment, index) => {
       // Пропускаем технический сегмент "designer" из breadcrumbs
       if (segment === 'designer') {
+        currentPath += `/${segment}`
+        return
+      }
+
+      // Для /designer/estimates/[id] сегмент "estimates" не показываем отдельной
+      // крошкой, если уже есть контекст returnTo (иначе "Сметы" визуально выпадает в начало).
+      if (
+        segment === 'estimates' &&
+        pathname.startsWith('/designer/estimates/') &&
+        returnTo?.startsWith('/designer/clients/')
+      ) {
         currentPath += `/${segment}`
         return
       }

@@ -19,21 +19,21 @@ export async function GET(
     const estimate = await prisma.designer_estimates.findUnique({
       where: { id: params.id },
       include: {
-        client: true,
-        designer: {
+        designer_clients: true,
+        users: {
           select: {
             id: true,
             name: true,
             username: true
           }
         },
-        blocks: {
+        designer_estimate_blocks: {
           where: { isActive: true },
           include: {
-            items: {
+            designer_estimate_items: {
               orderBy: { sortOrder: 'asc' }
             },
-            parent: true
+            designer_estimate_blocks: true
           },
           orderBy: { sortOrder: 'asc' }
         }
@@ -109,8 +109,8 @@ export async function GET(
 
     // Генерируем signed URLs для всех изображений
     const itemsWithImages = await Promise.all(
-      estimate.blocks.flatMap(block => 
-        block.items.map(async (item: any) => {
+      estimate.designer_estimate_blocks.flatMap(block => 
+        block.designer_estimate_items.map(async (item: any) => {
           if (item.imageUrl && !item.imageUrl.startsWith('http')) {
             return {
               ...item,
@@ -124,14 +124,14 @@ export async function GET(
 
     // Обновляем items в блоках с signed URLs
     const itemsMap = new Map(itemsWithImages.map(item => [item.id, item]))
-    estimate.blocks.forEach((block: any) => {
-      block.items = block.items.map((item: any) => itemsMap.get(item.id) || item)
+    estimate.designer_estimate_blocks.forEach((block: any) => {
+      block.designer_estimate_items = block.designer_estimate_items.map((item: any) => itemsMap.get(item.id) || item)
     })
 
     // Рекурсивный подсчет стоимости блока с учетом дочерних
     function calculateBlockTotal(block: any): number {
-      const ownItemsTotal = block.items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) || 0
-      const children = estimate.blocks.filter((b: any) => b.parentId === block.id)
+      const ownItemsTotal = block.designer_estimate_items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) || 0
+      const children = estimate.designer_estimate_blocks.filter((b: any) => b.parentId === block.id)
       const childrenTotal = children.reduce((sum: number, child: any) => sum + calculateBlockTotal(child), 0)
       return ownItemsTotal + childrenTotal
     }
@@ -155,8 +155,8 @@ export async function GET(
     }
 
     function renderBlockHTML(block: any, level: number = 1, parentNumber: string = '', fontSize: number = 20): string {
-      const ownItemsTotal = block.items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) || 0
-      const children = estimate.blocks.filter((b: any) => b.parentId === block.id)
+      const ownItemsTotal = block.designer_estimate_items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) || 0
+      const children = estimate.designer_estimate_blocks.filter((b: any) => b.parentId === block.id)
       const childrenTotal = children.reduce((sum: number, child: any) => sum + calculateBlockTotal(child), 0)
       const blockTotal = ownItemsTotal + childrenTotal
 
@@ -200,10 +200,10 @@ export async function GET(
           </div>
       `
 
-      if (block.items && block.items.length > 0) {
+      if (block.designer_estimate_items && block.designer_estimate_items.length > 0) {
         html += '<div class="items-container" style="margin-bottom: 12px; page-break-before: avoid;">'
         
-        block.items.forEach((item: any, idx: number) => {
+        block.designer_estimate_items.forEach((item: any, idx: number) => {
           const itemNumber = `${blockNumber}.${idx + 1}`
           
           html += `
@@ -270,15 +270,15 @@ export async function GET(
       return html
     }
 
-    const rootBlocks = estimate.blocks.filter(b => !b.parentId)
+    const rootBlocks = estimate.designer_estimate_blocks.filter(b => !b.parentId)
     const totalAmount = rootBlocks.reduce((sum: number, block: any) => sum + calculateBlockTotal(block), 0)
 
     // Собираем все суммы для определения размера шрифта
     const allAmounts: number[] = []
-    estimate.blocks.forEach((block: any) => {
+    estimate.designer_estimate_blocks.forEach((block: any) => {
       const blockTotal = calculateBlockTotal(block)
       if (blockTotal > 0) allAmounts.push(blockTotal)
-      block.items?.forEach((item: any) => {
+      block.designer_estimate_items?.forEach((item: any) => {
         if (item.totalPrice > 0) allAmounts.push(item.totalPrice)
       })
     })
@@ -491,11 +491,11 @@ export async function GET(
             <tr>
               <td style="width: 33.33%; text-align: center; padding: 10px;">
                 <div class="meta-label">👤 Клиент</div>
-                <div class="meta-value">${estimate.client.name}</div>
+                <div class="meta-value">${estimate.designer_clients.name}</div>
               </td>
               <td style="width: 33.33%; text-align: center; padding: 10px;">
                 <div class="meta-label">✏️ Дизайнер</div>
-                <div class="meta-value">${estimate.designer.name}</div>
+                <div class="meta-value">${estimate.users.name}</div>
               </td>
               <td style="width: 33.33%; text-align: center; padding: 10px;">
                 <div class="meta-label">📅 Дата</div>

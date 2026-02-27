@@ -21,7 +21,7 @@ export async function PATCH(
       where: { id },
       data: updates,
       include: {
-        tasks: {
+        schedule_tasks: {
           orderBy: [
             { level: 'asc' },
             { orderIndex: 'asc' }

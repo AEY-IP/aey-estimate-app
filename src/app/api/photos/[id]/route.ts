@@ -22,9 +22,9 @@ export async function DELETE(
     const photo = await prisma.photos.findUnique({
       where: { id: params.id },
       include: {
-        block: {
+        photo_blocks: {
           include: {
-            client: true
+            clients: true
           }
         }
       }
@@ -34,7 +34,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Фото не найдено' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && photo.block.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && photo.photo_blocks.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 

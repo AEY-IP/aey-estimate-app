@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -22,14 +23,14 @@ export async function GET(request: NextRequest) {
     const clients = await prisma.designer_clients.findMany({
       where,
       include: {
-        designer: {
+        users: {
           select: {
             id: true,
             name: true,
             username: true
           }
         },
-        estimates: {
+        designer_estimates: {
           where: { isActive: true },
           select: {
             id: true,
@@ -40,7 +41,13 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ clients })
+    return NextResponse.json({
+      clients: clients.map((client) => ({
+        ...client,
+        designer: client.users,
+        estimates: client.designer_estimates
+      }))
+    })
   } catch (error) {
     console.error('Error fetching designer clients:', error)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
@@ -79,15 +86,17 @@ export async function POST(request: NextRequest) {
 
     const client = await prisma.designer_clients.create({
       data: {
+        id: randomUUID(),
         name: name.trim(),
         phone: phone?.trim() || null,
         email: email?.trim() || null,
         address: address?.trim() || null,
         notes: notes?.trim() || null,
-        designerId
+        designerId,
+        updatedAt: new Date()
       },
       include: {
-        designer: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -97,7 +106,13 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ client })
+    return NextResponse.json({
+      client: {
+        ...client,
+        designer: client.users,
+        estimates: []
+      }
+    })
   } catch (error) {
     console.error('Error creating designer client:', error)
     return NextResponse.json({ error: 'Ошибка создания клиента' }, { status: 500 })

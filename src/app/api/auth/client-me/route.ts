@@ -34,13 +34,13 @@ export async function GET(request: NextRequest) {
     const clientUser = await prisma.client_users.findUnique({
       where: { id: decoded.clientUserId },
       include: {
-        client: true
+        clients: true
       }
     })
 
     console.log('ClientUser found:', !!clientUser)
     if (clientUser) {
-      console.log('Client data:', { id: clientUser.client.id, name: clientUser.client.name, username: clientUser.username })
+      console.log('Client data:', { id: clientUser.clients.id, name: clientUser.clients.name, username: clientUser.username })
     }
 
     if (!clientUser || !clientUser.isActive) {
@@ -53,12 +53,12 @@ export async function GET(request: NextRequest) {
 
     const response = {
       client: {
-        id: clientUser.client.id,
-        name: clientUser.client.name
+        id: clientUser.clients.id,
+        name: clientUser.clients.name
       },
       user: {
-        id: clientUser.client.id,
-        name: clientUser.client.name,
+        id: clientUser.clients.id,
+        name: clientUser.clients.name,
         username: clientUser.username,
         role: 'CLIENT'
       },

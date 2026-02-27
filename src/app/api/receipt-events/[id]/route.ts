@@ -25,7 +25,7 @@ export async function GET(
           where: { isVisible: true },
           orderBy: { createdAt: 'desc' }
         },
-        client: true
+        clients: true
       }
     })
 
@@ -34,7 +34,7 @@ export async function GET(
     }
 
     // Проверяем права доступа для менеджеров
-    if (session.role === 'MANAGER' && receiptBlock.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -68,14 +68,14 @@ export async function PUT(
     // Проверяем существование блока и права доступа
     const receiptBlock = await prisma.receipt_blocks.findUnique({
       where: { id: params.id },
-      include: { client: true }
+      include: { clients: true }
     })
 
     if (!receiptBlock) {
       return NextResponse.json({ error: 'Блок не найден' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && receiptBlock.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -118,7 +118,7 @@ export async function DELETE(
       where: { id: params.id },
       include: {
         receipts: true,
-        client: true
+        clients: true
       }
     })
 
@@ -126,7 +126,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Блок не найден' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && receiptBlock.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 

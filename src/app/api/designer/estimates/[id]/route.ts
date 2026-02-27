@@ -18,24 +18,24 @@ export async function GET(
     const estimate = await prisma.designer_estimates.findUnique({
       where: { id: params.id },
       include: {
-        client: true,
-        designer: {
+        designer_clients: true,
+        users: {
           select: {
             id: true,
             name: true,
             username: true
           }
         },
-        blocks: {
+        designer_estimate_blocks: {
           where: { isActive: true },
           include: {
-            items: {
+            designer_estimate_items: {
               orderBy: { sortOrder: 'asc' }
             },
-            children: {
+            other_designer_estimate_blocks: {
               where: { isActive: true },
               include: {
-                items: true
+                designer_estimate_items: true
               }
             }
           },
@@ -58,9 +58,9 @@ export async function GET(
 
     // Генерируем signed URLs для всех изображений в items
     const blocksWithSignedUrls = await Promise.all(
-      estimate.blocks.map(async (block) => {
+      estimate.designer_estimate_blocks.map(async (block) => {
         const itemsWithUrls = await Promise.all(
-          block.items.map(async (item) => {
+          block.designer_estimate_items.map(async (item) => {
             if (item.imageUrl && !item.imageUrl.startsWith('http')) {
               return { ...item, imageUrl: await getSignedDownloadUrl(item.imageUrl, 3600) };
             }
@@ -69,27 +69,27 @@ export async function GET(
         );
         
         const childrenWithUrls = await Promise.all(
-          (block.children || []).map(async (child) => {
+          (block.other_designer_estimate_blocks || []).map(async (child) => {
             const childItemsWithUrls = await Promise.all(
-              (child.items || []).map(async (item) => {
+              (child.designer_estimate_items || []).map(async (item) => {
                 if (item.imageUrl && !item.imageUrl.startsWith('http')) {
                   return { ...item, imageUrl: await getSignedDownloadUrl(item.imageUrl, 3600) };
                 }
                 return item;
               })
             );
-            return { ...child, items: childItemsWithUrls };
+            return { ...child, designer_estimate_items: childItemsWithUrls };
           })
         );
         
-        return { ...block, items: itemsWithUrls, children: childrenWithUrls };
+        return { ...block, designer_estimate_items: itemsWithUrls, other_designer_estimate_blocks: childrenWithUrls };
       })
     );
 
     // Подсчет общей суммы с учетом иерархии
     const calculateBlockTotal = (block: any): number => {
-      const ownItemsTotal = block.items.reduce((sum: number, item: any) => sum + item.totalPrice, 0);
-      const childrenTotal = (block.children || []).reduce((sum: number, child: any) => {
+      const ownItemsTotal = block.designer_estimate_items.reduce((sum: number, item: any) => sum + item.totalPrice, 0);
+      const childrenTotal = (block.other_designer_estimate_blocks || []).reduce((sum: number, child: any) => {
         return sum + calculateBlockTotal(child);
       }, 0);
       return ownItemsTotal + childrenTotal;
@@ -106,7 +106,7 @@ export async function GET(
     return NextResponse.json({ 
       estimate: {
         ...estimate,
-        blocks: blocksWithSignedUrls,
+        designer_estimate_blocks: blocksWithSignedUrls,
         totalAmount
       }
     })
@@ -156,8 +156,8 @@ export async function PUT(
         description: description?.trim() || null
       },
       include: {
-        client: true,
-        designer: {
+        designer_clients: true,
+        users: {
           select: {
             id: true,
             name: true,

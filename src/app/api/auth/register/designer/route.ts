@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
         resourceLinks: linksObject,
         role: 'DESIGNER',
         designerType: 'EXTERNAL',
-        isActive: true
+        isActive: true,
+        updatedAt: new Date()
       }
     })
 

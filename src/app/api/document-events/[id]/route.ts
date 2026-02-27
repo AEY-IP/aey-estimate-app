@@ -18,14 +18,14 @@ export async function GET(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const documentBlock = await (prisma as any).documentBlock.findUnique({
+    const documentBlock = await (prisma as any).document_blocks.findUnique({
       where: { id: params.id },
       include: {
         documents: {
           where: { isVisible: true },
           orderBy: { createdAt: 'desc' }
         },
-        client: true
+        clients: true
       }
     })
 
@@ -34,7 +34,7 @@ export async function GET(
     }
 
     // Проверяем права доступа для менеджеров
-    if (session.role === 'MANAGER' && documentBlock.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && documentBlock.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -66,21 +66,21 @@ export async function PUT(
     }
 
     // Проверяем существование блока и права доступа
-    const documentBlock = await (prisma as any).documentBlock.findUnique({
+    const documentBlock = await (prisma as any).document_blocks.findUnique({
       where: { id: params.id },
-      include: { client: true }
+      include: { clients: true }
     })
 
     if (!documentBlock) {
       return NextResponse.json({ error: 'Блок не найден' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && documentBlock.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && documentBlock.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
     // Обновляем блок
-    const updatedBlock = await (prisma as any).documentBlock.update({
+    const updatedBlock = await (prisma as any).document_blocks.update({
       where: { id: params.id },
       data: {
         title: title.trim(),
@@ -114,11 +114,11 @@ export async function DELETE(
     }
 
     // Получаем блок с документами
-    const documentBlock = await (prisma as any).documentBlock.findUnique({
+    const documentBlock = await (prisma as any).document_blocks.findUnique({
       where: { id: params.id },
       include: {
         documents: true,
-        client: true
+        clients: true
       }
     })
 
@@ -126,7 +126,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Блок не найден' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && documentBlock.client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && documentBlock.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -141,7 +141,7 @@ export async function DELETE(
     }
 
     // Удаляем блок (каскадно удалятся и документы из БД)
-    await (prisma as any).documentBlock.delete({
+    await (prisma as any).document_blocks.delete({
       where: { id: params.id }
     })
 

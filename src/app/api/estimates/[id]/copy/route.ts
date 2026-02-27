@@ -33,18 +33,18 @@ export async function POST(
     const sourceEstimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
-        rooms: {
+        estimate_rooms: {
           include: {
-            works: {
+            estimate_works: {
               include: {
-                workItem: true
+                work_items: true
               }
             },
-            materials: true
+            estimate_materials: true
           }
         },
-        coefficients: true,
-        exportCache: true
+        estimate_coefficients: true,
+        estimate_exports: true
       }
     })
 
@@ -69,7 +69,7 @@ export async function POST(
     // Начинаем транзакцию для копирования
     const result = await prisma.$transaction(async (tx) => {
       // 1. Создаем новую смету
-      const newEstimate = await tx.estimate.create({
+      const newEstimate = await tx.estimates.create({
         data: {
           title: newTitle.trim(),
           type: sourceEstimate.type,
@@ -83,21 +83,20 @@ export async function POST(
       })
 
       // 2. Копируем коэффициенты
-      if (sourceEstimate.coefficients.length > 0) {
-        await tx.coefficient.createMany({
-          data: sourceEstimate.coefficients.map(coeff => ({
+      if (sourceEstimate.estimate_coefficients.length > 0) {
+        await tx.estimate_coefficients.createMany({
+          data: sourceEstimate.estimate_coefficients.map(coeff => ({
             estimateId: newEstimate.id,
             name: coeff.name,
             value: coeff.value,
             description: coeff.description,
-            sortOrder: coeff.sortOrder
           }))
         })
       }
 
       // 3. Копируем комнаты со всей структурой
-      for (const room of sourceEstimate.rooms) {
-        const newRoom = await tx.estimateRoom.create({
+      for (const room of sourceEstimate.estimate_rooms) {
+        const newRoom = await tx.estimate_rooms.create({
           data: {
             name: room.name,
             totalWorksPrice: room.totalWorksPrice,
@@ -109,9 +108,9 @@ export async function POST(
         })
 
         // Копируем работы комнаты
-        if (room.works.length > 0) {
-          await tx.estimateWork.createMany({
-            data: room.works.map(work => ({
+        if (room.estimate_works.length > 0) {
+          await tx.estimate_works.createMany({
+            data: room.estimate_works.map(work => ({
               quantity: work.quantity,
               price: work.price,
               totalPrice: work.totalPrice,
@@ -126,9 +125,9 @@ export async function POST(
         }
 
         // Копируем материалы комнаты
-        if (room.materials.length > 0) {
-          await tx.estimateMaterial.createMany({
-            data: room.materials.map(material => ({
+        if (room.estimate_materials.length > 0) {
+          await tx.estimate_materials.createMany({
+            data: room.estimate_materials.map(material => ({
               name: material.name,
               unit: material.unit,
               quantity: material.quantity,
@@ -165,22 +164,22 @@ export async function POST(
 async function generateExportCache(tx: any, estimateId: string) {
   try {
     // Получаем данные сметы для кэша
-    const estimate = await tx.estimate.findUnique({
+    const estimate = await tx.estimates.findUnique({
       where: { id: estimateId },
       include: {
-        client: true,
-        creator: true,
-        rooms: {
+        clients: true,
+        users: true,
+        estimate_rooms: {
           include: {
-            works: {
+            estimate_works: {
               include: {
-                workItem: true
+                work_items: true
               }
             },
-            materials: true
+            estimate_materials: true
           }
         },
-        coefficients: true
+        estimate_coefficients: true
       }
     })
 
@@ -198,21 +197,21 @@ async function generateExportCache(tx: any, estimateId: string) {
         updatedAt: estimate.updatedAt
       },
       client: {
-        id: estimate.client.id,
-        name: estimate.client.name
+        id: estimate.clients.id,
+        name: estimate.clients.name
       },
       creator: {
-        id: estimate.creator.id,
-        name: estimate.creator.name
+        id: estimate.users.id,
+        name: estimate.users.name
       },
-      rooms: estimate.rooms.map(room => ({
+      rooms: estimate.estimate_rooms.map(room => ({
         id: room.id,
         name: room.name,
         totalWorksPrice: room.totalWorksPrice,
         totalMaterialsPrice: room.totalMaterialsPrice,
         totalPrice: room.totalPrice,
         sortOrder: room.sortOrder,
-        works: room.works.map(work => ({
+        works: room.estimate_works.map(work => ({
           id: work.id,
           workItemId: work.workItemId,
           blockTitle: work.blockTitle,
@@ -222,14 +221,14 @@ async function generateExportCache(tx: any, estimateId: string) {
           price: work.price,
           totalPrice: work.totalPrice,
           description: work.description,
-          workItem: work.workItem ? {
-            id: work.workItem.id,
-            name: work.workItem.name,
-            unit: work.workItem.unit,
-            price: work.workItem.price
+          workItem: work.work_items ? {
+            id: work.work_items.id,
+            name: work.work_items.name,
+            unit: work.work_items.unit,
+            price: work.work_items.price
           } : null
         })),
-        materials: room.materials.map(material => ({
+        materials: room.estimate_materials.map(material => ({
           id: material.id,
           name: material.name,
           unit: material.unit,
@@ -238,7 +237,7 @@ async function generateExportCache(tx: any, estimateId: string) {
           totalPrice: material.totalPrice
         }))
       })),
-      coefficients: estimate.coefficients.map(coeff => ({
+      coefficients: estimate.estimate_coefficients.map(coeff => ({
         id: coeff.id,
         name: coeff.name,
         value: coeff.value,
@@ -247,7 +246,7 @@ async function generateExportCache(tx: any, estimateId: string) {
     }
 
     // Сохраняем кэш
-    await tx.estimateExport.upsert({
+    await tx.estimate_exports.upsert({
       where: { estimateId },
       update: {
         data: cacheData,

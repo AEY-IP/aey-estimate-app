@@ -25,13 +25,13 @@ export async function GET(
     const project = await prisma.schedule_projects.findUnique({
       where: { id: projectId },
       include: {
-        tasks: {
+        schedule_tasks: {
           orderBy: [
             { level: 'asc' },
             { orderIndex: 'asc' }
           ]
         },
-        client: true
+        clients: true
       }
     });
 
@@ -40,7 +40,7 @@ export async function GET(
     }
 
     // Проверяем права доступа
-    if (session && session.role === 'MANAGER' && project.client.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && project.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
@@ -50,7 +50,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      tasks: project.tasks.map((task: any) => ({
+      tasks: project.schedule_tasks.map((task: any) => ({
         id: task.id,
         parentId: task.parentId,
         title: task.title,
@@ -119,7 +119,7 @@ export async function POST(
     // Проверяем существование проекта
     const project = await prisma.schedule_projects.findUnique({
       where: { id: projectId },
-      include: { client: true }
+      include: { clients: true }
     });
 
     console.log('Project found:', !!project);
@@ -129,7 +129,7 @@ export async function POST(
     }
 
     // Проверяем права доступа
-    if (session && session.role === 'MANAGER' && project.client.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && project.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 

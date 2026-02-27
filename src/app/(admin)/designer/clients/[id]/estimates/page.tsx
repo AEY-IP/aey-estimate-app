@@ -341,7 +341,7 @@ export default function DesignerClientEstimatesPage() {
                       <Trash2 className="h-5 w-5" />
                     </button>
                     <Link
-                      href={`/designer/estimates/${estimate.id}`}
+                      href={`/designer/estimates/${estimate.id}?returnTo=/designer/clients/${clientId}/estimates`}
                       className="btn-primary inline-flex items-center"
                     >
                       Открыть

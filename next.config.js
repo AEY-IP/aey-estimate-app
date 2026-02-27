@@ -6,7 +6,11 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  outputFileTracing: false,
+  output: 'standalone',
+  experimental: {
+    // Ограничиваем глубину tracing чтобы избежать переполнения стека
+    outputFileTracingRoot: process.cwd(),
+  },
 }
 
 module.exports = nextConfig

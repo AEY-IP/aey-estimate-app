@@ -30,9 +30,9 @@ export async function PATCH(
     const task = await prisma.schedule_tasks.findUnique({
       where: { id: taskId },
       include: {
-        project: {
+        schedule_projects: {
           include: {
-            client: true
+            clients: true
           }
         }
       }
@@ -43,7 +43,7 @@ export async function PATCH(
     }
 
     // Проверяем права доступа к проекту
-    if (session && session.role === 'MANAGER' && task.project.client.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && task.schedule_projects.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
@@ -111,9 +111,9 @@ export async function DELETE(
     const task = await prisma.schedule_tasks.findUnique({
       where: { id: taskId },
       include: {
-        project: {
+        schedule_projects: {
           include: {
-            client: true
+            clients: true
           }
         }
       }
@@ -124,7 +124,7 @@ export async function DELETE(
     }
 
     // Проверяем права доступа к проекту
-    if (session && session.role === 'MANAGER' && task.project.client.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && task.schedule_projects.clients.createdBy !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 

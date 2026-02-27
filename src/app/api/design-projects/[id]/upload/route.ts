@@ -20,9 +20,9 @@ export async function POST(
     const blockId = params.id
 
     // Получаем блок дизайн-проекта
-    const designProjectBlock = await (prisma as any).designProjectBlock.findUnique({
+    const designProjectBlock = await (prisma as any).design_project_blocks.findUnique({
       where: { id: blockId },
-      include: { client: true }
+      include: { clients: true }
     })
 
     if (!designProjectBlock) {
@@ -30,7 +30,7 @@ export async function POST(
     }
 
     // Проверяем права доступа: только ADMIN и DESIGNER (привязанный к клиенту)
-    if (session.role === 'DESIGNER' && designProjectBlock.client.designerId !== session.id) {
+    if (session.role === 'DESIGNER' && designProjectBlock.clients.designerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -57,14 +57,14 @@ export async function POST(
     await uploadFile(buffer, key, file.type, false)
 
     // Получаем максимальный sortOrder
-    const maxSortOrder = await (prisma as any).designProjectFile.findFirst({
+    const maxSortOrder = await (prisma as any).design_project_files.findFirst({
       where: { blockId },
       orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true }
     })
 
     // Сохраняем информацию о файле в БД
-    const designProjectFile = await (prisma as any).designProjectFile.create({
+    const designProjectFile = await (prisma as any).design_project_files.create({
       data: {
         blockId: blockId,
         fileName: file.name,

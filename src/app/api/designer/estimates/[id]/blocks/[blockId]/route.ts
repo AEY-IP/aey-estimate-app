@@ -8,7 +8,7 @@ async function checkBlockAccess(blockId: string, sessionId: string, role: string
   const block = await prisma.designer_estimate_blocks.findUnique({
     where: { id: blockId },
     include: {
-      estimate: true
+      designer_estimates: true
     }
   })
 
@@ -16,7 +16,7 @@ async function checkBlockAccess(blockId: string, sessionId: string, role: string
     return { error: 'Блок не найден', status: 404 }
   }
 
-  if (role === 'DESIGNER' && block.estimate.designerId !== sessionId) {
+  if (role === 'DESIGNER' && block.designer_estimates.designerId !== sessionId) {
     return { error: 'Доступ запрещен', status: 403 }
   }
 
@@ -65,16 +65,24 @@ export async function PUT(
         name: name.trim(),
         description: description?.trim() || null,
         parentId: parentId || null,
-        level: level || accessCheck.block!.level
+        level: level || accessCheck.block!.level,
+        updatedAt: new Date()
       },
       include: {
-        items: true,
-        parent: true,
-        children: true
+        designer_estimate_items: true,
+        designer_estimate_blocks: true,
+        other_designer_estimate_blocks: true
       }
     })
 
-    return NextResponse.json({ block })
+    return NextResponse.json({
+      block: {
+        ...block,
+        items: block.designer_estimate_items,
+        parent: block.designer_estimate_blocks,
+        children: block.other_designer_estimate_blocks
+      }
+    })
   } catch (error) {
     console.error('Error updating block:', error)
     return NextResponse.json({ error: 'Ошибка обновления блока' }, { status: 500 })
@@ -105,7 +113,10 @@ export async function PATCH(
 
     const block = await prisma.designer_estimate_blocks.update({
       where: { id: params.blockId },
-      data: updateData
+      data: {
+        ...updateData,
+        updatedAt: new Date()
+      }
     })
 
     return NextResponse.json({ block })
@@ -132,7 +143,10 @@ export async function DELETE(
 
     await prisma.designer_estimate_blocks.update({
       where: { id: params.blockId },
-      data: { isActive: false }
+      data: {
+        isActive: false,
+        updatedAt: new Date()
+      }
     })
 
     return NextResponse.json({ success: true })

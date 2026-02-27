@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const clientUser = await prisma.client_users.findUnique({
       where: { username },
       include: {
-        client: true
+        clients: true
       }
     })
 
@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       success: true,
       client: {
-        id: clientUser.client.id,
-        name: clientUser.client.name,
+        id: clientUser.clients.id,
+        name: clientUser.clients.name,
         username: clientUser.username
       }
     })
