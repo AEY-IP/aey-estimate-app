@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Проверка существующего username
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { username }
     })
 
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем дизайнера
-    const designer = await prisma.user.create({
+    const designer = await prisma.users.create({
       data: {
         username,
         passwordHash,

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/database'
+import { PrismaClient } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
+
+// Создаем экземпляр Prisma напрямую
+const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,10 +35,10 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Проверка существования пользователя - запрашиваем только username
-    const existingUser = await prisma.user.findUnique({
+    // Проверка существования пользователя
+    const existingUser = await prisma.users.findUnique({
       where: { username },
-      select: { id: true } // Запрашиваем только id для минимизации нагрузки
+      select: { id: true }
     })
 
     // Возвращаем результат
