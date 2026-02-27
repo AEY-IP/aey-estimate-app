@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import bcrypt from 'bcryptjs'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
     // Создаем дизайнера
     const designer = await prisma.users.create({
       data: {
+        id: randomUUID(),
         username,
         passwordHash,
         name,
