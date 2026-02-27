@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
     
-    const parameters = await prisma.roomParameter.findMany({
+    const parameters = await prisma.room_parameters.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' }
     })
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const parameter = await prisma.roomParameter.create({
+    const parameter = await prisma.room_parameters.create({
       data: {
         name: name.trim(),
         unit: unit.trim(),

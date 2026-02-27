@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       whereClause.category = category
     }
     
-    const coefficients = await prisma.coefficient.findMany({
+    const coefficients = await prisma.coefficients.findMany({
       where: whereClause,
       orderBy: [
         { category: 'asc' },
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     })
     
     // Получаем уникальные категории
-    const categories = await prisma.coefficient.groupBy({
+    const categories = await prisma.coefficients.groupBy({
       by: ['category'],
       where: { isActive: true }
     })
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const newCoefficient = await prisma.coefficient.create({
+    const newCoefficient = await prisma.coefficients.create({
       data: {
         name,
         value: parseFloat(value),

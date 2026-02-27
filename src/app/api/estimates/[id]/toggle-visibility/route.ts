@@ -168,7 +168,7 @@ export async function PATCH(
         if (fullEstimate) {
           // Получаем коэффициенты
           const estimateCoefficients = JSON.parse(fullEstimate.coefficientsData || '[]');
-          const coefficients = await prisma.coefficient.findMany({
+          const coefficients = await prisma.coefficients.findMany({
             where: {
               id: { in: estimateCoefficients },
               isActive: true

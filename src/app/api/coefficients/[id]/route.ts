@@ -11,7 +11,7 @@ export async function PUT(
     const body = await request.json()
     
     // Обновляем коэффициент
-    const updatedCoefficient = await prisma.coefficient.update({
+    const updatedCoefficient = await prisma.coefficients.update({
       where: { id: params.id },
       data: {
         ...body
@@ -34,7 +34,7 @@ export async function DELETE(
 ) {
   try {
     // Удаляем коэффициент
-    await prisma.coefficient.delete({
+    await prisma.coefficients.delete({
       where: { id: params.id }
     })
     

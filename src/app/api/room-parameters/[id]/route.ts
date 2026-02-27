@@ -19,7 +19,7 @@ export async function GET(
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
     
-    const parameter = await prisma.roomParameter.findUnique({
+    const parameter = await prisma.room_parameters.findUnique({
       where: { id: params.id }
     })
     
@@ -57,7 +57,7 @@ export async function PUT(
     
     const { name, unit, description, isActive } = await request.json()
     
-    const updatedParameter = await prisma.roomParameter.update({
+    const updatedParameter = await prisma.room_parameters.update({
       where: { id: params.id },
       data: {
         ...(name && { name: name.trim() }),
@@ -92,7 +92,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
     
-    await prisma.roomParameter.delete({
+    await prisma.room_parameters.delete({
       where: { id: params.id }
     })
     
