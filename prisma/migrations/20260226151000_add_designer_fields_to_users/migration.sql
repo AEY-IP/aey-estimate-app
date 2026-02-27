@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "designerType" TEXT;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "companyName" TEXT;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "resourceLinks" JSONB;
