@@ -44,7 +44,7 @@ export async function POST(
     const hashedPassword = await bcrypt.hash(newPassword, 10)
 
     // Обновляем пароль в базе данных
-    await prisma.clientUser.update({
+    await prisma.client_users.update({
       where: {
         clientId: clientId
       },

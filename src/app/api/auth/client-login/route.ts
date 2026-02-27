@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Найти клиента по логину
-    const clientUser = await prisma.clientUser.findUnique({
+    const clientUser = await prisma.client_users.findUnique({
       where: { username },
       include: {
         client: true

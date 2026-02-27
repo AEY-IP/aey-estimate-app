@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Получаем блоки чеков с чеками
-    const receiptBlocks = await prisma.receiptBlock.findMany({
+    const receiptBlocks = await prisma.receipt_blocks.findMany({
       where: {
         clientId: clientId
       },
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем блок чеков
-    const receiptBlock = await prisma.receiptBlock.create({
+    const receiptBlock = await prisma.receipt_blocks.create({
       data: {
         clientId,
         title,

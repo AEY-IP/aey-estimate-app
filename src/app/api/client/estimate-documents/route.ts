@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       isVisible: true
     };
 
-    const estimateDocuments = await prisma.document.findMany({
+    const estimateDocuments = await prisma.documents.findMany({
       where: whereClause,
       orderBy: {
         createdAt: 'desc'

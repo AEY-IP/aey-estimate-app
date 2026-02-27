@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     console.log('📸 Loading photo blocks for client:', clientId);
 
     // Получаем события фотографий для данного клиента
-    const photoBlocks = await prisma.photoBlock.findMany({
+    const photoBlocks = await prisma.photo_blocks.findMany({
       where: {
         clientId
       },

@@ -77,7 +77,7 @@ export async function POST(
     const eventId = params.id;
 
     // Проверяем существование события
-    const photoBlock = await prisma.photoBlock.findFirst({
+    const photoBlock = await prisma.photo_blocks.findFirst({
       where: {
         id: eventId,
         client: {

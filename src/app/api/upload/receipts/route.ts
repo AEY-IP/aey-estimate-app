@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Находим или создаем блок чеков
-    let receiptBlock = await prisma.receiptBlock.findFirst({
+    let receiptBlock = await prisma.receipt_blocks.findFirst({
       where: {
         id: blockId,
         clientId: clientId
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     if (!receiptBlock) {
       // Создаем блок если он не существует
-      receiptBlock = await prisma.receiptBlock.create({
+      receiptBlock = await prisma.receipt_blocks.create({
         data: {
           id: blockId,
           title: 'Чеки',

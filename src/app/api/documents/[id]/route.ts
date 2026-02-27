@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
 
-    const document = await prisma.document.findUnique({
+    const document = await prisma.documents.findUnique({
       where: { id: params.id }
     });
 
@@ -78,7 +78,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Название обязательно' }, { status: 400 });
     }
 
-    const document = await prisma.document.findUnique({
+    const document = await prisma.documents.findUnique({
       where: { id: params.id }
     });
 
@@ -111,7 +111,7 @@ export async function PUT(
       updateData.category = category;
     }
 
-    const updatedDocument = await prisma.document.update({
+    const updatedDocument = await prisma.documents.update({
       where: { id: params.id },
       data: updateData
     });
@@ -149,7 +149,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
 
-    const document = await prisma.document.findUnique({
+    const document = await prisma.documents.findUnique({
       where: { id: params.id }
     });
 
@@ -172,7 +172,7 @@ export async function DELETE(
     }
 
     // Удаляем документ из БД
-    await prisma.document.delete({
+    await prisma.documents.delete({
       where: { id: params.id }
     });
 

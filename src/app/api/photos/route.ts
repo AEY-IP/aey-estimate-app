@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Получаем блоки фотографий с фотографиями
-    const photoBlocks = await prisma.photoBlock.findMany({
+    const photoBlocks = await prisma.photo_blocks.findMany({
       where: {
         clientId: clientId
       },
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем блок фотографий
-    const photoBlock = await prisma.photoBlock.create({
+    const photoBlock = await prisma.photo_blocks.create({
       data: {
         clientId,
         title,

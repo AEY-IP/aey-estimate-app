@@ -32,7 +32,7 @@ export async function GET(
     }
 
     // Ищем информацию о кабинете клиента
-    const clientUser = await prisma.clientUser.findUnique({
+    const clientUser = await prisma.client_users.findUnique({
       where: { clientId }
     })
 

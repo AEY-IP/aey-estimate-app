@@ -57,7 +57,7 @@ export async function POST(
     // Проверяем уникальность логина
     let attempts = 0
     while (attempts < 10) {
-      const existingUser = await prisma.clientUser.findUnique({
+      const existingUser = await prisma.client_users.findUnique({
         where: { username }
       })
       
@@ -78,7 +78,7 @@ export async function POST(
     const passwordHash = await bcrypt.hash(password, 10)
 
     // Создаем доступ к кабинету
-    const clientUser = await prisma.clientUser.create({
+    const clientUser = await prisma.client_users.create({
       data: {
         username,
         passwordHash,

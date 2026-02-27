@@ -29,7 +29,7 @@ export async function PUT(
     const newsType = validTypes.includes(type) ? type : 'other'
 
     // Проверяем, что новость существует и принадлежит этому клиенту
-    const newsItem = await prisma.projectNews.findFirst({
+    const newsItem = await prisma.project_news.findFirst({
       where: {
         id: newsId,
         clientId: clientId
@@ -55,7 +55,7 @@ export async function PUT(
     }
 
     // Обновляем новость
-    const updatedNewsItem = await prisma.projectNews.update({
+    const updatedNewsItem = await prisma.project_news.update({
       where: { id: newsId },
       data: {
         title: title.trim(),
@@ -89,7 +89,7 @@ export async function DELETE(
     const { id: clientId, newsId } = params
 
     // Проверяем, что новость существует и принадлежит этому клиенту
-    const newsItem = await prisma.projectNews.findFirst({
+    const newsItem = await prisma.project_news.findFirst({
       where: {
         id: newsId,
         clientId: clientId
@@ -104,7 +104,7 @@ export async function DELETE(
     }
 
     // Удаляем новость
-    await prisma.projectNews.delete({
+    await prisma.project_news.delete({
       where: { id: newsId }
     })
 

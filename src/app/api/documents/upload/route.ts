@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       documentData.blockId = blockId;
     }
 
-    const document = await prisma.document.create({
+    const document = await prisma.documents.create({
       data: documentData
     });
 

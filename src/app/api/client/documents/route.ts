@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       category: 'document'
     };
 
-    const documents = await prisma.document.findMany({
+    const documents = await prisma.documents.findMany({
       where: whereClause,
       orderBy: {
         createdAt: 'desc'

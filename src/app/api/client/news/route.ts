@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const clientId = decoded.clientId
 
     // Получаем новости для клиента
-    const news = await prisma.projectNews.findMany({
+    const news = await prisma.project_news.findMany({
       where: { 
         clientId: clientId
       },

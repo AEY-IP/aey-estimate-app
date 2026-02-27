@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const clientId = decoded.clientId
 
     // Получаем блоки чеков с чеками для клиента
-    const receiptBlocks = await prisma.receiptBlock.findMany({
+    const receiptBlocks = await prisma.receipt_blocks.findMany({
       where: {
         clientId: clientId,
         isVisible: true

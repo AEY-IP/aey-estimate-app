@@ -37,7 +37,7 @@ export async function POST(
     const blockId = params.id;
 
     // Проверяем существование блока чеков
-    const receiptBlock = await prisma.receiptBlock.findFirst({
+    const receiptBlock = await prisma.receipt_blocks.findFirst({
       where: {
         id: blockId,
         isVisible: true

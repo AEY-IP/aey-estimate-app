@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Проверяем что блок принадлежит клиенту
-    const receiptBlock = await prisma.receiptBlock.findFirst({
+    const receiptBlock = await prisma.receipt_blocks.findFirst({
       where: {
         id: blockId,
         clientId: clientId

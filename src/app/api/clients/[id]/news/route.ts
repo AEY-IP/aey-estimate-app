@@ -17,7 +17,7 @@ export async function GET(
     const clientId = params.id
 
     // Получаем новости клиента
-    const news = await prisma.projectNews.findMany({
+    const news = await prisma.project_news.findMany({
       where: { clientId },
       orderBy: { createdAt: 'desc' }
     })
@@ -69,7 +69,7 @@ export async function POST(
     }
 
     // Создаем новость
-    const newsItem = await prisma.projectNews.create({
+    const newsItem = await prisma.project_news.create({
       data: {
         title: title.trim(),
         content: content.trim(),

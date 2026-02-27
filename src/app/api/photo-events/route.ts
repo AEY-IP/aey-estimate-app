@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 });
     }
 
-    const photoBlocks = await prisma.photoBlock.findMany({
+    const photoBlocks = await prisma.photo_blocks.findMany({
       where: {
         clientId
       },
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Клиент не найден' }, { status: 404 });
     }
 
-    const photoBlock = await prisma.photoBlock.create({
+    const photoBlock = await prisma.photo_blocks.create({
       data: {
         title,
         description,

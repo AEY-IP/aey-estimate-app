@@ -18,7 +18,7 @@ export async function GET(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const receiptBlock = await prisma.receiptBlock.findUnique({
+    const receiptBlock = await prisma.receipt_blocks.findUnique({
       where: { id: params.id },
       include: {
         receipts: {
@@ -66,7 +66,7 @@ export async function PUT(
     }
 
     // Проверяем существование блока и права доступа
-    const receiptBlock = await prisma.receiptBlock.findUnique({
+    const receiptBlock = await prisma.receipt_blocks.findUnique({
       where: { id: params.id },
       include: { client: true }
     })
@@ -80,7 +80,7 @@ export async function PUT(
     }
 
     // Обновляем блок
-    const updatedBlock = await prisma.receiptBlock.update({
+    const updatedBlock = await prisma.receipt_blocks.update({
       where: { id: params.id },
       data: {
         title: title.trim(),
@@ -114,7 +114,7 @@ export async function DELETE(
     }
 
     // Получаем блок с чеками
-    const receiptBlock = await prisma.receiptBlock.findUnique({
+    const receiptBlock = await prisma.receipt_blocks.findUnique({
       where: { id: params.id },
       include: {
         receipts: true,
@@ -141,7 +141,7 @@ export async function DELETE(
     }
 
     // Удаляем блок (каскадно удалятся и чеки из БД)
-    await prisma.receiptBlock.delete({
+    await prisma.receipt_blocks.delete({
       where: { id: params.id }
     })
 

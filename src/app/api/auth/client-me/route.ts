@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Получаем данные клиента
-    const clientUser = await prisma.clientUser.findUnique({
+    const clientUser = await prisma.client_users.findUnique({
       where: { id: decoded.clientUserId },
       include: {
         client: true

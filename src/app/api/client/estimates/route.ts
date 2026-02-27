@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Получаем сметы клиента, которые разрешены для показа (исключаем акты)
-    const estimates = await (prisma.estimate as any).findMany({
+    const estimates = await prisma.estimates.findMany({
       where: {
         clientId: decoded.clientId,
         showToClient: true,

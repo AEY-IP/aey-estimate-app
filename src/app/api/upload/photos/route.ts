@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
 
     console.log('🔍 Checking/creating photo block...');
     // Находим или создаем блок фотографий
-    let photoBlock = await prisma.photoBlock.findFirst({
+    let photoBlock = await prisma.photo_blocks.findFirst({
       where: {
         id: blockId,
         clientId: clientId
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
 
     if (!photoBlock) {
       // Создаем блок если он не существует
-      photoBlock = await prisma.photoBlock.create({
+      photoBlock = await prisma.photo_blocks.create({
         data: {
           id: blockId,
           title: 'Фотографии',

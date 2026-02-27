@@ -18,7 +18,7 @@ export async function GET(
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
 
-    const photoBlock = await prisma.photoBlock.findUnique({
+    const photoBlock = await prisma.photo_blocks.findUnique({
       where: { id: params.id },
       include: {
         photos: {
@@ -66,7 +66,7 @@ export async function PUT(
     }
 
     // Проверяем существование блока и права доступа
-    const photoBlock = await prisma.photoBlock.findUnique({
+    const photoBlock = await prisma.photo_blocks.findUnique({
       where: { id: params.id },
       include: { client: true }
     })
@@ -80,7 +80,7 @@ export async function PUT(
     }
 
     // Обновляем блок
-    const updatedBlock = await prisma.photoBlock.update({
+    const updatedBlock = await prisma.photo_blocks.update({
       where: { id: params.id },
       data: {
         title: title.trim(),
@@ -114,7 +114,7 @@ export async function DELETE(
     }
 
     // Получаем блок с фотографиями
-    const photoBlock = await prisma.photoBlock.findUnique({
+    const photoBlock = await prisma.photo_blocks.findUnique({
       where: { id: params.id },
       include: {
         photos: true,
@@ -141,7 +141,7 @@ export async function DELETE(
     }
 
     // Удаляем блок (каскадно удалятся и фото из БД)
-    await prisma.photoBlock.delete({
+    await prisma.photo_blocks.delete({
       where: { id: params.id }
     })
 
