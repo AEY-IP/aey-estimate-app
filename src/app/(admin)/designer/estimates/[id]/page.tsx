@@ -12,7 +12,6 @@ import {
   ChevronDown,
   Package,
   Image as ImageIcon,
-  ExternalLink,
   GripVertical,
   Download
 } from 'lucide-react'
@@ -24,11 +23,41 @@ import ImageCropModal from '@/components/ImageCropModal'
 
 interface SortableItemProps {
   item: DesignerEstimateItem
-  onEdit: (item: DesignerEstimateItem) => void
+  isSaving: boolean
+  onSave: (
+    itemId: string,
+    data: DesignerItemFormData,
+    imageFile: File | null,
+    removeImage: boolean,
+    options?: { silent?: boolean }
+  ) => Promise<boolean>
   onDelete: (itemId: string, itemName: string) => void
 }
 
-function SortableItem({ item, onEdit, onDelete }: SortableItemProps) {
+interface DesignerItemFormData {
+  name: string
+  manufacturer: string
+  link: string
+  unit: string
+  pricePerUnit: number
+  quantity: number
+  notes: string
+}
+
+const toSafeText = (value: unknown, fallback = ''): string => {
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+
+  if (value && typeof value === 'object') {
+    const nameValue = (value as { name?: unknown }).name
+    if (typeof nameValue === 'string') return nameValue
+    if (typeof nameValue === 'number' || typeof nameValue === 'boolean') return String(nameValue)
+  }
+
+  return fallback
+}
+
+function SortableItem({ item, isSaving, onSave, onDelete }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -42,76 +71,325 @@ function SortableItem({ item, onEdit, onDelete }: SortableItemProps) {
     transition,
   }
 
+  const [formData, setFormData] = useState<DesignerItemFormData>({
+    name: toSafeText(item.name),
+    manufacturer: toSafeText(item.manufacturer),
+    link: toSafeText(item.link),
+    unit: toSafeText(item.unit, 'шт.'),
+    pricePerUnit: item.pricePerUnit || 0,
+    quantity: item.quantity || 1,
+    notes: toSafeText(item.notes)
+  })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(item.imageUrl || null)
+  const [removeImage, setRemoveImage] = useState(false)
+  const [isAutoSaving, setIsAutoSaving] = useState(false)
+  const [showCropModal, setShowCropModal] = useState(false)
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null)
+  const [cropFileName, setCropFileName] = useState('')
+
+  useEffect(() => {
+    setFormData({
+      name: toSafeText(item.name),
+      manufacturer: toSafeText(item.manufacturer),
+      link: toSafeText(item.link),
+      unit: toSafeText(item.unit, 'шт.'),
+      pricePerUnit: item.pricePerUnit || 0,
+      quantity: item.quantity || 1,
+      notes: toSafeText(item.notes)
+    })
+    setImageFile(null)
+    setImagePreview(item.imageUrl || null)
+    setRemoveImage(false)
+    setShowCropModal(false)
+    setCropImageSrc(null)
+    setCropFileName('')
+  }, [item.id])
+
+  const toComparablePayload = (data: DesignerItemFormData) =>
+    JSON.stringify({
+      name: data.name.trim(),
+      manufacturer: data.manufacturer.trim(),
+      link: data.link.trim(),
+      unit: data.unit.trim(),
+      pricePerUnit: Number(data.pricePerUnit) || 0,
+      quantity: Number(data.quantity) || 0,
+      notes: data.notes.trim()
+    })
+
+  const [lastSavedPayload, setLastSavedPayload] = useState(toComparablePayload(formData))
+
+  useEffect(() => {
+    setLastSavedPayload(
+      toComparablePayload({
+        name: toSafeText(item.name),
+        manufacturer: toSafeText(item.manufacturer),
+        link: toSafeText(item.link),
+        unit: toSafeText(item.unit, 'шт.'),
+        pricePerUnit: item.pricePerUnit || 0,
+        quantity: item.quantity || 1,
+        notes: toSafeText(item.notes)
+      })
+    )
+  }, [item.id])
+
+  const processImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Из буфера можно вставить только изображение')
+      return
+    }
+
+    const safeName = file.name && file.name.trim() ? file.name : `clipboard-${Date.now()}.png`
+    setCropFileName(safeName)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setCropImageSrc(reader.result as string)
+      setShowCropModal(true)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    processImageFile(file)
+    e.target.value = ''
+  }
+
+  const handlePasteImage = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const items = Array.from(e.clipboardData?.items || [])
+    const imageItem = items.find((item) => item.type.startsWith('image/'))
+    if (!imageItem) return
+
+    const blob = imageItem.getAsFile()
+    if (!blob) return
+    e.preventDefault()
+    processImageFile(blob)
+  }
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      if (!navigator.clipboard?.read) {
+        alert('В этом браузере недоступно чтение изображений из буфера через кнопку. Используйте Ctrl/Cmd+V.')
+        return
+      }
+
+      const clipboardItems = await navigator.clipboard.read()
+      for (const clipboardItem of clipboardItems) {
+        const imageType = clipboardItem.types.find((type) => type.startsWith('image/'))
+        if (!imageType) continue
+        const blob = await clipboardItem.getType(imageType)
+        const file = new File([blob], `clipboard-${Date.now()}.png`, { type: blob.type })
+        processImageFile(file)
+        return
+      }
+
+      alert('В буфере не найдено изображение')
+    } catch (error) {
+      console.error('Clipboard read error:', error)
+      alert('Не удалось прочитать буфер. Попробуйте вставку Ctrl/Cmd+V в зоне изображения.')
+    }
+  }
+
+  const handleCropComplete = (croppedFile: File) => {
+    setImageFile(croppedFile)
+    setRemoveImage(false)
+    const reader = new FileReader()
+    reader.onloadend = () => setImagePreview(reader.result as string)
+    reader.readAsDataURL(croppedFile)
+    setShowCropModal(false)
+    setCropImageSrc(null)
+
+    setIsAutoSaving(true)
+    onSave(item.id, formData, croppedFile, false, { silent: true }).finally(() => {
+      setIsAutoSaving(false)
+    })
+  }
+
+  const handleCropCancel = () => {
+    setShowCropModal(false)
+    setCropImageSrc(null)
+  }
+
+  const handleRemoveImage = () => {
+    setImageFile(null)
+    setImagePreview(null)
+    setRemoveImage(true)
+
+    setIsAutoSaving(true)
+    onSave(item.id, formData, null, true, { silent: true }).finally(() => {
+      setIsAutoSaving(false)
+    })
+  }
+
+  useEffect(() => {
+    const nextPayload = toComparablePayload(formData)
+    if (nextPayload === lastSavedPayload) return
+    if (!formData.name.trim() || !formData.unit.trim()) return
+
+    const timeoutId = setTimeout(async () => {
+      setIsAutoSaving(true)
+      const success = await onSave(item.id, formData, null, false, { silent: true })
+      if (success) {
+        setLastSavedPayload(nextPayload)
+      }
+      setIsAutoSaving(false)
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [formData, item.id, lastSavedPayload, onSave])
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white rounded-lg p-4 border border-gray-200 hover:border-purple-300 transition-colors"
+      className="bg-white rounded-md p-2 border border-gray-200 hover:border-purple-300 transition-colors"
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-2">
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing mt-1">
-          <GripVertical className="h-5 w-5 text-gray-400" />
+          <GripVertical className="h-4 w-4 text-gray-400" />
         </div>
 
-        {item.imageUrl && (
-          <img 
-            src={item.imageUrl} 
-            alt={item.name}
-            className="w-16 h-16 object-cover rounded-lg"
-          />
-        )}
+        <div className="flex-1 min-w-0 grid grid-cols-12 gap-2">
+          <div className="col-span-4">
+            <input
+              type="text"
+              placeholder="Название *"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="input-field w-full h-8 text-xs leading-tight py-0 px-2"
+              required
+            />
+          </div>
 
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-gray-900 mb-1">{item.name}</h4>
-          
-          <div className="flex flex-wrap gap-2 text-sm text-gray-600 mb-2">
-            {item.manufacturer && (
-              <span className="bg-gray-100 px-2 py-1 rounded">
-                {item.manufacturer}
-              </span>
-            )}
-            {item.link && (
-              <a 
-                href={item.link} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center text-blue-600 hover:text-blue-800"
+          <div className="col-span-3">
+            <input
+              type="text"
+              placeholder="Производитель"
+              value={formData.manufacturer}
+              onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
+              className="input-field w-full h-8 text-xs leading-tight py-0 px-2"
+            />
+          </div>
+
+          <div className="col-span-3">
+            <input
+              type="url"
+              placeholder="Ссылка"
+              value={formData.link}
+              onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+              className="input-field w-full h-8 text-xs leading-tight py-0 px-2"
+            />
+          </div>
+
+          <div className="col-span-1">
+            <input
+              type="text"
+              placeholder="Ед."
+              value={formData.unit}
+              onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+              className="input-field w-full h-8 text-xs leading-tight py-0 px-2"
+              required
+            />
+          </div>
+
+          <div className="col-span-1">
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Кол-во"
+              value={formData.quantity}
+              onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 1 })}
+              className="input-field w-full h-8 text-xs leading-tight py-0 px-2"
+            />
+          </div>
+
+          <div className="col-span-2">
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Цена за единицу"
+              value={formData.pricePerUnit === 0 ? '' : formData.pricePerUnit}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  pricePerUnit: e.target.value === '' ? 0 : parseFloat(e.target.value) || 0
+                })
+              }
+              className="input-field w-full h-8 text-xs leading-tight py-0 px-2"
+            />
+          </div>
+
+          <div className="col-span-2">
+            <div className="input-field w-full h-8 bg-gray-50 text-xs leading-tight py-0 px-2 flex items-center">
+              {(formData.pricePerUnit * formData.quantity).toLocaleString('ru-RU')} ₽
+            </div>
+          </div>
+
+          <div className="col-span-8">
+            <textarea
+              placeholder="Заметки"
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="input-field w-full h-8 text-xs leading-tight py-1 px-2 resize-none"
+              rows={1}
+            />
+          </div>
+
+          <div className="col-span-4">
+            <div
+              className="flex items-center gap-2"
+              onPaste={handlePasteImage}
+              title="Можно вставить изображение Ctrl/Cmd+V"
+            >
+              {imagePreview && !removeImage && (
+                <div className="relative">
+                  <img src={imagePreview} alt="Preview" className="w-10 h-10 object-cover rounded" />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute -top-1 -right-1 p-0.5 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  >
+                    <Trash2 className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+              )}
+              <label className="cursor-pointer text-[11px] text-purple-600 hover:text-purple-800">
+                {imageFile ? imageFile.name : 'Выбрать файл'}
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+              </label>
+              <button
+                type="button"
+                onClick={handlePasteFromClipboard}
+                className="text-[11px] text-purple-600 hover:text-purple-800 underline underline-offset-2"
               >
-                <ExternalLink className="h-3 w-3 mr-1" />
-                Ссылка
-              </a>
-            )}
+                Вставить из буфера
+              </button>
+            </div>
           </div>
-
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-gray-600">
-              {item.pricePerUnit.toLocaleString('ru-RU')} ₽ × {item.quantity} {item.unit}
-            </span>
-            <span className="font-bold text-purple-600">
-              = {item.totalPrice.toLocaleString('ru-RU')} ₽
-            </span>
-          </div>
-
-          {item.notes && (
-            <p className="text-sm text-gray-500 mt-2 italic">{item.notes}</p>
-          )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-start">
           <button
-            onClick={() => onEdit(item)}
-            className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors"
+            type="button"
+            onClick={() => onDelete(item.id, toSafeText(item.name, 'позиция'))}
+            className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
           >
-            <Edit2 className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => onDelete(item.id, item.name)}
-            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
+
+      {showCropModal && cropImageSrc && (
+        <ImageCropModal
+          imageSrc={cropImageSrc}
+          fileName={cropFileName}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   )
 }
@@ -121,12 +399,18 @@ interface BlockComponentProps {
   allBlocks: DesignerEstimateBlock[]
   level: number
   onAddItem: (blockId: string) => void
-  onEditItem: (item: DesignerEstimateItem) => void
   onDeleteItem: (itemId: string, itemName: string) => void
   onAddSubBlock: (parentId: string, level: number) => void
   onEditBlock: (block: DesignerEstimateBlock) => void
   onDeleteBlock: (blockId: string, blockName: string) => void
   onReorderItems: (blockId: string, items: DesignerEstimateItem[]) => void
+  onSaveInlineItem: (
+    itemId: string,
+    data: DesignerItemFormData,
+    imageFile: File | null,
+    removeImage: boolean
+  ) => Promise<boolean>
+  isSavingItem: boolean
 }
 
 function BlockComponent({
@@ -134,12 +418,13 @@ function BlockComponent({
   allBlocks,
   level,
   onAddItem,
-  onEditItem,
   onDeleteItem,
   onAddSubBlock,
   onEditBlock,
   onDeleteBlock,
-  onReorderItems
+  onReorderItems,
+  onSaveInlineItem,
+  isSavingItem,
 }: BlockComponentProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const children = allBlocks.filter(b => b.parentId === block.id)
@@ -188,11 +473,11 @@ function BlockComponent({
             
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900">
-                {block.name}
+                {toSafeText(block.name, 'Без названия блока')}
                 <span className="text-xs text-gray-500 ml-2">уровень {level}</span>
               </h3>
               {block.description && (
-                <p className="text-sm text-gray-600">{block.description}</p>
+                <p className="text-sm text-gray-600">{toSafeText(block.description)}</p>
               )}
             </div>
 
@@ -220,7 +505,7 @@ function BlockComponent({
               <Edit2 className="h-4 w-4" />
             </button>
             <button
-              onClick={() => onDeleteBlock(block.id, block.name)}
+              onClick={() => onDeleteBlock(block.id, toSafeText(block.name, 'блок'))}
               className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
               title="Удалить блок"
             >
@@ -239,7 +524,8 @@ function BlockComponent({
                       <SortableItem
                         key={item.id}
                         item={item}
-                        onEdit={onEditItem}
+                        isSaving={isSavingItem}
+                        onSave={onSaveInlineItem}
                         onDelete={onDeleteItem}
                       />
                     ))}
@@ -253,8 +539,9 @@ function BlockComponent({
               className="w-full py-2 border-2 border-dashed border-purple-300 rounded-lg text-purple-600 hover:bg-purple-50 transition-colors flex items-center justify-center"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Добавить позицию
+              Добавить позиции
             </button>
+
           </div>
         )}
       </div>
@@ -268,12 +555,13 @@ function BlockComponent({
               allBlocks={allBlocks}
               level={level + 1}
               onAddItem={onAddItem}
-              onEditItem={onEditItem}
               onDeleteItem={onDeleteItem}
               onAddSubBlock={onAddSubBlock}
               onEditBlock={onEditBlock}
               onDeleteBlock={onDeleteBlock}
               onReorderItems={onReorderItems}
+              onSaveInlineItem={onSaveInlineItem}
+              isSavingItem={isSavingItem}
             />
           ))}
         </div>
@@ -302,6 +590,9 @@ export default function DesignerEstimateEditorPage() {
 
   const [isCreatingItem, setIsCreatingItem] = useState(false)
   const [isSavingItem, setIsSavingItem] = useState(false)
+  const [isBulkCreateModalOpen, setIsBulkCreateModalOpen] = useState(false)
+  const [bulkCreateCount, setBulkCreateCount] = useState(1)
+  const [isBulkCreatingItems, setIsBulkCreatingItems] = useState(false)
   const [editingItem, setEditingItem] = useState<DesignerEstimateItem | null>(null)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [itemFormData, setItemFormData] = useState({
@@ -353,13 +644,16 @@ export default function DesignerEstimateEditorPage() {
       const response = await fetch(`/api/designer/estimates/${estimateId}/blocks`)
       if (response.ok) {
         const data = await response.json()
-        setBlocks(data.blocks || [])
+        const nextBlocks = data.blocks || []
+        setBlocks(nextBlocks)
+        return nextBlocks as DesignerEstimateBlock[]
       }
     } catch (error) {
       console.error('Error loading blocks:', error)
     } finally {
       setLoading(false)
     }
+    return [] as DesignerEstimateBlock[]
   }
 
   const handleCreateBlock = async (e: React.FormEvent) => {
@@ -449,24 +743,21 @@ export default function DesignerEstimateEditorPage() {
 
   const openAddItem = (blockId: string) => {
     setSelectedBlockId(blockId)
-    setIsCreatingItem(true)
-    setEditingItem(null)
-    setImageFile(null)
-    setImagePreview(null)
-    setRemoveImage(false)
+    setBulkCreateCount(1)
+    setIsBulkCreateModalOpen(true)
   }
 
   const openEditItem = (item: DesignerEstimateItem) => {
     setEditingItem(item)
     setSelectedBlockId(item.blockId)
     setItemFormData({
-      name: item.name,
-      manufacturer: item.manufacturer || '',
-      link: item.link || '',
-      unit: item.unit,
+      name: toSafeText(item.name),
+      manufacturer: toSafeText(item.manufacturer),
+      link: toSafeText(item.link),
+      unit: toSafeText(item.unit, 'шт.'),
       pricePerUnit: item.pricePerUnit,
       quantity: item.quantity,
-      notes: item.notes || ''
+      notes: toSafeText(item.notes)
     })
     setImagePreview(item.imageUrl || null)
     setImageFile(null)
@@ -492,6 +783,23 @@ export default function DesignerEstimateEditorPage() {
     setImageFile(null)
     setImagePreview(null)
     setRemoveImage(true)
+  }
+
+  const extractApiErrorMessage = async (response: Response, fallback: string) => {
+    const contentType = response.headers.get('content-type') || ''
+    try {
+      if (contentType.includes('application/json')) {
+        const payload = await response.json()
+        return payload?.error || fallback
+      }
+      const text = await response.text()
+      if (response.status === 413) {
+        return 'Файл слишком большой для загрузки. Уменьшите изображение и попробуйте снова.'
+      }
+      return text?.slice(0, 300) || fallback
+    } catch {
+      return fallback
+    }
   }
 
   const handleCreateItem = async (e: React.FormEvent) => {
@@ -525,7 +833,7 @@ export default function DesignerEstimateEditorPage() {
       }
 
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000)
+      const timeoutId = setTimeout(() => controller.abort(), 120000)
 
       try {
         const response = await fetch(`/api/designer/estimates/${estimateId}/items`, {
@@ -547,13 +855,13 @@ export default function DesignerEstimateEditorPage() {
           loadEstimate()
           alert('Позиция успешно добавлена!')
         } else {
-          const error = await response.json()
-          alert(error.error || 'Ошибка создания позиции')
+          const message = await extractApiErrorMessage(response, 'Ошибка создания позиции')
+          alert(message)
         }
       } catch (fetchError: any) {
         clearTimeout(timeoutId)
         if (fetchError.name === 'AbortError') {
-          alert('Превышено время ожидания (60 сек). Попробуйте:\n1. Уменьшить размер изображения\n2. Создать позицию без изображения\n3. Попробовать позже')
+          alert('Превышено время ожидания (120 сек). Попробуйте:\n1. Уменьшить размер изображения\n2. Создать позицию без изображения\n3. Попробовать позже')
         } else {
           throw fetchError
         }
@@ -596,7 +904,7 @@ export default function DesignerEstimateEditorPage() {
       }
 
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000)
+      const timeoutId = setTimeout(() => controller.abort(), 120000)
 
       try {
         const response = await fetch(`/api/designer/estimates/${estimateId}/items/${editingItem.id}`, {
@@ -618,13 +926,13 @@ export default function DesignerEstimateEditorPage() {
           loadEstimate()
           alert('Позиция успешно обновлена!')
         } else {
-          const error = await response.json()
-          alert(error.error || 'Ошибка обновления позиции')
+          const message = await extractApiErrorMessage(response, 'Ошибка обновления позиции')
+          alert(message)
         }
       } catch (fetchError: any) {
         clearTimeout(timeoutId)
         if (fetchError.name === 'AbortError') {
-          alert('Превышено время ожидания (60 сек). Попробуйте:\n1. Уменьшить размер изображения\n2. Обновить без изображения\n3. Попробовать позже')
+          alert('Превышено время ожидания (120 сек). Попробуйте:\n1. Уменьшить размер изображения\n2. Обновить без изображения\n3. Попробовать позже')
         } else {
           throw fetchError
         }
@@ -635,6 +943,90 @@ export default function DesignerEstimateEditorPage() {
     } finally {
       setIsSavingItem(false)
     }
+  }
+
+  const handleInlineSaveItem = async (
+    itemId: string,
+    data: DesignerItemFormData,
+    itemImageFile: File | null,
+    itemRemoveImage: boolean,
+    options?: { silent?: boolean }
+  ): Promise<boolean> => {
+    const silent = options?.silent === true
+
+    if (!data.name.trim()) {
+      if (!silent) alert('Название позиции обязательно')
+      return false
+    }
+
+    if (!data.unit.trim()) {
+      if (!silent) alert('Единица измерения обязательна')
+      return false
+    }
+
+    setIsSavingItem(true)
+    try {
+      const formData = new FormData()
+      formData.append('name', data.name.trim())
+      formData.append('manufacturer', data.manufacturer.trim())
+      formData.append('link', data.link.trim())
+      formData.append('unit', data.unit.trim())
+      formData.append('pricePerUnit', data.pricePerUnit.toString())
+      formData.append('quantity', data.quantity.toString())
+      formData.append('notes', data.notes.trim())
+
+      if (itemImageFile) {
+        formData.append('image', itemImageFile)
+      }
+
+      if (itemRemoveImage) {
+        formData.append('removeImage', 'true')
+      }
+
+      const response = await fetch(`/api/designer/estimates/${estimateId}/items/${itemId}`, {
+        method: 'PUT',
+        body: formData
+      })
+
+      if (response.ok) {
+        const payload = await response.json()
+        const updatedItem = payload?.item
+
+        if (updatedItem) {
+          setBlocks((prev) =>
+            prev.map((block) =>
+              block.id !== updatedItem.blockId
+                ? block
+                : {
+                    ...block,
+                    items: (block.items || []).map((it) =>
+                      it.id === updatedItem.id
+                        ? {
+                            ...it,
+                            ...updatedItem
+                          }
+                        : it
+                    )
+                  }
+            )
+          )
+        }
+        return true
+      } else {
+        const message = await extractApiErrorMessage(response, 'Ошибка обновления позиции')
+        if (!silent) {
+          alert(message)
+        } else {
+          console.error('Inline autosave error:', message)
+        }
+      }
+    } catch (error) {
+      console.error('Error inline updating item:', error)
+      if (!silent) alert('Ошибка обновления позиции')
+    } finally {
+      setIsSavingItem(false)
+    }
+    return false
   }
 
   const handleDeleteItem = async (itemId: string, itemName: string) => {
@@ -691,8 +1083,8 @@ export default function DesignerEstimateEditorPage() {
   const openEditBlock = (block: DesignerEstimateBlock) => {
     setEditingBlock(block)
     setBlockFormData({
-      name: block.name,
-      description: block.description || ''
+      name: toSafeText(block.name),
+      description: toSafeText(block.description)
     })
     setIsCreatingBlock(true)
   }
@@ -713,6 +1105,53 @@ export default function DesignerEstimateEditorPage() {
     setImagePreview(null)
     setSelectedBlockId(null)
     setRemoveImage(false)
+  }
+
+  const closeBulkCreateModal = () => {
+    setIsBulkCreateModalOpen(false)
+    setBulkCreateCount(1)
+    setSelectedBlockId(null)
+  }
+
+  const handleBulkCreateItems = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!selectedBlockId) {
+      alert('Не выбран блок')
+      return
+    }
+
+    const count = Math.trunc(bulkCreateCount)
+    if (!Number.isFinite(count) || count < 1 || count > 100) {
+      alert('Количество позиций должно быть от 1 до 100')
+      return
+    }
+
+    setIsBulkCreatingItems(true)
+    try {
+      const response = await fetch(`/api/designer/estimates/${estimateId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blockId: selectedBlockId,
+          count
+        })
+      })
+
+      if (response.ok) {
+        closeBulkCreateModal()
+        await loadBlocks()
+        await loadEstimate()
+      } else {
+        const message = await extractApiErrorMessage(response, 'Ошибка создания позиций')
+        alert(message)
+      }
+    } catch (error) {
+      console.error('Error creating empty items:', error)
+      alert('Ошибка создания позиций')
+    } finally {
+      setIsBulkCreatingItems(false)
+    }
   }
 
   const rootBlocks = blocks.filter(b => !b.parentId)
@@ -769,12 +1208,12 @@ export default function DesignerEstimateEditorPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{estimate?.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{toSafeText(estimate?.name, 'Смета')}</h1>
               {estimate?.description && (
-                <p className="text-gray-600">{estimate.description}</p>
+                <p className="text-gray-600">{toSafeText(estimate.description)}</p>
               )}
               <p className="text-sm text-gray-500 mt-1">
-                Клиент: {estimate?.client?.name}
+                Клиент: {toSafeText(estimate?.client?.name || (estimate as any)?.designer_clients?.name, '—')}
               </p>
             </div>
             <div className="flex gap-3">
@@ -867,7 +1306,56 @@ export default function DesignerEstimateEditorPage() {
           </div>
         )}
 
-        {isCreatingItem && (
+        {isBulkCreateModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Добавить позиции
+              </h3>
+
+              <form onSubmit={handleBulkCreateItems} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Количество пустых позиций
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    step={1}
+                    value={bulkCreateCount}
+                    onChange={(e) => setBulkCreateCount(parseInt(e.target.value || '1', 10))}
+                    className="input-field w-full"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Будут созданы пустые позиции, которые потом можно заполнить.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={closeBulkCreateModal}
+                    className="btn-secondary flex-1"
+                    disabled={isBulkCreatingItems}
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary flex-1 disabled:opacity-50"
+                    disabled={isBulkCreatingItems}
+                  >
+                    {isBulkCreatingItems ? 'Создание...' : 'Создать позиции'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {isCreatingItem && !editingItem && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
             <div className="bg-white rounded-xl p-6 w-full max-w-2xl mx-4 my-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -1082,12 +1570,13 @@ export default function DesignerEstimateEditorPage() {
                 allBlocks={blocks}
                 level={1}
                 onAddItem={openAddItem}
-                onEditItem={openEditItem}
                 onDeleteItem={handleDeleteItem}
                 onAddSubBlock={openAddSubBlock}
                 onEditBlock={openEditBlock}
                 onDeleteBlock={handleDeleteBlock}
                 onReorderItems={handleReorderItems}
+                onSaveInlineItem={handleInlineSaveItem}
+                isSavingItem={isSavingItem}
               />
             ))}
           </div>
