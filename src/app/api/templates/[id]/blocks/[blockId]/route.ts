@@ -1,10 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/database'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
+
+const mapTemplateWork = (work: any) => ({
+  ...work,
+  workItem: work.work_items
+    ? {
+        ...work.work_items,
+        block: work.work_items.work_blocks
+      }
+    : null
+})
+
+const mapTemplateBlock = (block: any) => ({
+  ...block,
+  works: (block.template_works || []).map(mapTemplateWork)
+})
 
 // GET /api/templates/[id]/blocks/[blockId] - Получить конкретный блок работ
 export async function GET(
@@ -25,17 +39,17 @@ export async function GET(
     const block = await prisma.template_work_blocks.findFirst({
       where: {
         id: params.blockId,
-        room: {
+        template_rooms: {
           templateId: params.id,
-          template: { isActive: true }
+          templates: { isActive: true }
         }
       },
       include: {
-        works: {
+        template_works: {
           include: {
-            workItem: {
+            work_items: {
               include: {
-                block: true
+                work_blocks: true
               }
             }
           },
@@ -51,7 +65,7 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(block)
+    return NextResponse.json(mapTemplateBlock(block))
   } catch (error) {
     console.error('Ошибка получения блока работ:', error)
     return NextResponse.json(
@@ -84,9 +98,9 @@ export async function PUT(
     const existingBlock = await prisma.template_work_blocks.findFirst({
       where: {
         id: params.blockId,
-        room: {
+        template_rooms: {
           templateId: params.id,
-          template: { isActive: true }
+          templates: { isActive: true }
         }
       }
     })
@@ -123,13 +137,16 @@ export async function PUT(
 
     const updatedBlock = await prisma.template_work_blocks.update({
       where: { id: params.blockId },
-      data: updateData,
+      data: {
+        ...updateData,
+        updatedAt: new Date()
+      },
       include: {
-        works: {
+        template_works: {
           include: {
-            workItem: {
+            work_items: {
               include: {
-                block: true
+                work_blocks: true
               }
             }
           }
@@ -137,7 +154,7 @@ export async function PUT(
       }
     })
 
-    return NextResponse.json(updatedBlock)
+    return NextResponse.json(mapTemplateBlock(updatedBlock))
   } catch (error) {
     console.error('Ошибка обновления блока работ:', error)
     return NextResponse.json(
@@ -167,13 +184,13 @@ export async function DELETE(
     const existingBlock = await prisma.template_work_blocks.findFirst({
       where: {
         id: params.blockId,
-        room: {
+        template_rooms: {
           templateId: params.id,
-          template: { isActive: true }
+          templates: { isActive: true }
         }
       },
       include: {
-        works: true
+        template_works: true
       }
     })
 
@@ -193,21 +210,22 @@ export async function DELETE(
     const room = await prisma.template_rooms.findUnique({
       where: { id: existingBlock.roomId },
       include: {
-        works: true,
-        materials: true
+        template_works: true,
+        template_materials: true
       }
     })
 
     if (room) {
-      const totalWorksPrice = room.works.reduce((sum, work) => sum + work.totalPrice, 0)
-      const totalMaterialsPrice = room.materials.reduce((sum, material) => sum + material.totalPrice, 0)
+      const totalWorksPrice = room.template_works.reduce((sum, work) => sum + work.totalPrice, 0)
+      const totalMaterialsPrice = room.template_materials.reduce((sum, material) => sum + material.totalPrice, 0)
 
       await prisma.template_rooms.update({
         where: { id: room.id },
         data: {
           totalWorksPrice,
           totalMaterialsPrice,
-          totalPrice: totalWorksPrice + totalMaterialsPrice
+          totalPrice: totalWorksPrice + totalMaterialsPrice,
+          updatedAt: new Date()
         }
       })
     }

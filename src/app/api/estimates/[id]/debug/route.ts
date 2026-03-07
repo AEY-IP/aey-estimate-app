@@ -24,39 +24,39 @@ export async function GET(
     const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             username: true
           }
         },
-        rooms: {
+        estimate_rooms: {
           include: {
-            works: {
+            estimate_works: {
               include: {
-                workItem: true
+                work_items: true
               }
             },
-            materials: true,
-            roomParameterValues: {
+            estimate_materials: true,
+            estimate_room_parameter_values: {
               include: {
-                parameter: true
+                room_parameters: true
               }
             }
           }
         },
-        roomParameterValues: {
+        estimate_room_parameter_values: {
           include: {
-            parameter: true
+            room_parameters: true
           }
         },
-        coefficients: true
+        estimate_coefficients: true
       }
     })
 
@@ -71,7 +71,7 @@ export async function GET(
         title: estimate.title,
         type: estimate.type,
         category: estimate.category,
-        roomsCount: estimate.rooms?.length || 0,
+        roomsCount: estimate.estimate_rooms?.length || 0,
         hasWorksBlock: !!estimate.worksBlock,
         hasMaterialsBlock: !!estimate.materialsBlock,
         hasSummaryWorksBlock: !!estimate.summaryWorksBlock,
@@ -80,17 +80,17 @@ export async function GET(
         coefficientSettingsLength: estimate.coefficientSettings?.length || 0,
         manualPricesLength: estimate.manualPrices?.length || 0
       },
-      rooms: estimate.rooms?.map(room => ({
+      rooms: estimate.estimate_rooms?.map(room => ({
         id: room.id,
         name: room.name,
-        worksCount: room.works?.length || 0,
-        materialsCount: room.materials?.length || 0,
-        parameterValuesCount: room.roomParameterValues?.length || 0,
-        invalidWorkItems: room.works?.filter(work => work.workItemId && !work.workItem)?.length || 0,
-        invalidParameters: room.roomParameterValues?.filter(param => !param.parameter)?.length || 0
+        worksCount: room.estimate_works?.length || 0,
+        materialsCount: room.estimate_materials?.length || 0,
+        parameterValuesCount: room.estimate_room_parameter_values?.length || 0,
+        invalidWorkItems: room.estimate_works?.filter(work => work.workItemId && !work.work_items)?.length || 0,
+        invalidParameters: room.estimate_room_parameter_values?.filter(param => !param.room_parameters)?.length || 0
       })) || [],
-      globalParameterValues: estimate.roomParameterValues?.length || 0,
-      invalidGlobalParameters: estimate.roomParameterValues?.filter(param => !param.parameter)?.length || 0,
+      globalParameterValues: estimate.estimate_room_parameter_values?.length || 0,
+      invalidGlobalParameters: estimate.estimate_room_parameter_values?.filter(param => !param.room_parameters)?.length || 0,
       jsonFields: {
         worksBlockValid: estimate.worksBlock ? isValidJSON(estimate.worksBlock) : null,
         materialsBlockValid: estimate.materialsBlock ? isValidJSON(estimate.materialsBlock) : null,
@@ -101,10 +101,10 @@ export async function GET(
         manualPricesValid: estimate.manualPrices ? isValidJSON(estimate.manualPrices) : null
       },
       statistics: {
-        totalWorksAcrossRooms: estimate.rooms?.reduce((sum, room) => sum + (room.works?.length || 0), 0) || 0,
-        totalMaterialsAcrossRooms: estimate.rooms?.reduce((sum, room) => sum + (room.materials?.length || 0), 0) || 0,
-        averageWorksPerRoom: estimate.rooms?.length ? 
-          (estimate.rooms.reduce((sum, room) => sum + (room.works?.length || 0), 0) / estimate.rooms.length).toFixed(2) : 0
+        totalWorksAcrossRooms: estimate.estimate_rooms?.reduce((sum, room) => sum + (room.estimate_works?.length || 0), 0) || 0,
+        totalMaterialsAcrossRooms: estimate.estimate_rooms?.reduce((sum, room) => sum + (room.estimate_materials?.length || 0), 0) || 0,
+        averageWorksPerRoom: estimate.estimate_rooms?.length ?
+          (estimate.estimate_rooms.reduce((sum, room) => sum + (room.estimate_works?.length || 0), 0) / estimate.estimate_rooms.length).toFixed(2) : 0
       }
     }
 

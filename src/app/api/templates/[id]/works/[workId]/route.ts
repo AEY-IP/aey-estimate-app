@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/database'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
+
+const mapTemplateWork = (work: any) => ({
+  ...work,
+  workItem: work.work_items
+    ? {
+        ...work.work_items,
+        block: work.work_items.work_blocks
+      }
+    : null
+})
 
 // DELETE /api/templates/[id]/works/[workId] - Удалить работу из шаблона
 export async function DELETE(
@@ -23,7 +32,7 @@ export async function DELETE(
     }
 
     // Проверяем существование шаблона
-    const template = await prisma.templates.findUnique({
+    const template = await prisma.templates.findFirst({
       where: { id: params.id, isActive: true }
     })
 
@@ -37,10 +46,10 @@ export async function DELETE(
     // Получаем работу для определения помещения и блока
     const work = await prisma.template_works.findUnique({
       where: { id: params.workId },
-      include: { room: true }
+      include: { template_rooms: true }
     })
 
-    if (!work || work.room.templateId !== params.id) {
+    if (!work || work.template_rooms.templateId !== params.id) {
       return NextResponse.json(
         { error: 'Работа не найдена' },
         { status: 404 }
@@ -130,7 +139,7 @@ export async function PUT(
     const { quantity, description } = body
 
     // Проверяем существование шаблона
-    const template = await prisma.templates.findUnique({
+    const template = await prisma.templates.findFirst({
       where: { id: params.id, isActive: true }
     })
 
@@ -145,12 +154,12 @@ export async function PUT(
     const work = await prisma.template_works.findUnique({
       where: { id: params.workId },
       include: { 
-        room: true,
-        workItem: true
+        template_rooms: true,
+        work_items: true
       }
     })
 
-    if (!work || work.room.templateId !== params.id) {
+    if (!work || work.template_rooms.templateId !== params.id) {
       return NextResponse.json(
         { error: 'Работа не найдена' },
         { status: 404 }
@@ -171,9 +180,9 @@ export async function PUT(
         totalPrice: newTotalPrice
       },
       include: {
-        workItem: {
+        work_items: {
           include: {
-            block: true
+            work_blocks: true
           }
         }
       }
@@ -189,7 +198,10 @@ export async function PUT(
 
       await prisma.template_work_blocks.update({
         where: { id: workBlockId },
-        data: { totalPrice: blockTotalPrice }
+        data: {
+          totalPrice: blockTotalPrice,
+          updatedAt: new Date()
+        }
       })
     }
 
@@ -204,7 +216,8 @@ export async function PUT(
       where: { id: roomId },
       data: {
         totalWorksPrice: roomTotalWorksPrice,
-        totalPrice: roomTotalWorksPrice
+        totalPrice: roomTotalWorksPrice,
+        updatedAt: new Date()
       }
     })
 
@@ -219,11 +232,12 @@ export async function PUT(
       where: { id: params.id },
       data: {
         totalWorksPrice: templateTotalWorksPrice,
-        totalPrice: templateTotalWorksPrice
+        totalPrice: templateTotalWorksPrice,
+        updatedAt: new Date()
       }
     })
 
-    return NextResponse.json(updatedWork)
+    return NextResponse.json(mapTemplateWork(updatedWork))
 
   } catch (error) {
     console.error('Ошибка обновления работы в шаблоне:', error)

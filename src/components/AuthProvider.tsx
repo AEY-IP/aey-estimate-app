@@ -55,11 +55,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (isClientEnvironment) {
         // Выход клиента
         await fetch('/api/auth/client-logout', { method: 'POST' })
+        window.location.href = '/'
       } else {
         // Выход профессионала
         await fetch('/api/auth/logout', { method: 'POST' })
+        window.location.href = '/app'
       }
-      window.location.href = '/'
     } catch (error) {
       console.error('Ошибка выхода:', error)
     }

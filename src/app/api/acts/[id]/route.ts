@@ -20,57 +20,72 @@ export async function GET(
     }
 
     const act = await prisma.estimates.findUnique({
-      where: { 
-        id: params.id,
-        isAct: true
-      },
+      where: { id: params.id },
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             name: true
           }
         },
-        exportCache: true,
-        rooms: {
+        estimate_exports: true,
+        estimate_rooms: {
           include: {
-            works: {
+            estimate_works: {
               include: {
-                workItem: {
-                  include: {
-                    block: true
-                  }
-                }
+                work_items: true
               }
             },
-            materials: true,
-            roomParameterValues: {
+            estimate_materials: true,
+            estimate_room_parameter_values: {
               include: {
-                parameter: true
+                room_parameters: true
               }
             }
           }
         },
-        coefficients: true,
-        roomParameterValues: {
+        estimate_coefficients: true,
+        estimate_room_parameter_values: {
           include: {
-            parameter: true
+            room_parameters: true
           }
         }
       }
     })
 
-    if (!act) {
+    if (!act || !act.isAct) {
       return NextResponse.json({ error: 'Акт не найден' }, { status: 404 })
     }
 
-    return NextResponse.json(act)
+    return NextResponse.json({
+      ...act,
+      client: act.clients,
+      creator: act.users,
+      exportCache: act.estimate_exports,
+      rooms: act.estimate_rooms.map((room: any) => ({
+        ...room,
+        works: room.estimate_works.map((work: any) => ({
+          ...work,
+          workItem: work.work_items
+        })),
+        materials: room.estimate_materials,
+        roomParameterValues: room.estimate_room_parameter_values.map((v: any) => ({
+          ...v,
+          parameter: v.room_parameters
+        }))
+      })),
+      coefficients: act.estimate_coefficients,
+      roomParameterValues: act.estimate_room_parameter_values.map((v: any) => ({
+        ...v,
+        parameter: v.room_parameters
+      }))
+    })
 
   } catch (error) {
     console.error('Ошибка получения акта:', error)
@@ -98,11 +113,16 @@ export async function PUT(
 
     const data = await request.json()
 
+    const existingAct = await prisma.estimates.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!existingAct || !existingAct.isAct) {
+      return NextResponse.json({ error: 'Акт не найден' }, { status: 404 })
+    }
+
     const act = await prisma.estimates.update({
-      where: { 
-        id: params.id,
-        isAct: true
-      },
+      where: { id: params.id },
       data: {
         title: data.title,
         type: data.type,
@@ -118,16 +138,17 @@ export async function PUT(
         materialsBlock: data.materialsBlock,
         summaryMaterialsBlock: data.summaryMaterialsBlock,
         summaryWorksBlock: data.summaryWorksBlock,
-        worksBlock: data.worksBlock
+        worksBlock: data.worksBlock,
+        updatedAt: new Date()
       },
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             name: true
@@ -136,7 +157,11 @@ export async function PUT(
       }
     })
 
-    return NextResponse.json(act)
+    return NextResponse.json({
+      ...act,
+      client: act.clients,
+      creator: act.users
+    })
 
   } catch (error) {
     console.error('Ошибка обновления акта:', error)
@@ -162,12 +187,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
-    await prisma.estimates.delete({
-      where: { 
-        id: params.id,
-        isAct: true
-      }
+    const existingAct = await prisma.estimates.findUnique({
+      where: { id: params.id }
     })
+
+    if (!existingAct || !existingAct.isAct) {
+      return NextResponse.json({ error: 'Акт не найден' }, { status: 404 })
+    }
+
+    await prisma.estimates.delete({ where: { id: params.id } })
 
     return NextResponse.json({ success: true })
 

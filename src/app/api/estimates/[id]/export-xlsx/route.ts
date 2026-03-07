@@ -32,23 +32,37 @@ export async function GET(
     const estimate = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
-        exportCache: true,
-        rooms: {
+        estimate_exports: true,
+        estimate_rooms: {
           include: {
-            works: {
+            estimate_works: {
               include: {
-                workItem: true
+                work_items: true
               }
             },
-            materials: true
+            estimate_materials: true
           }
         },
-        coefficients: true
+        estimate_coefficients: true
       }
     })
 
     if (!estimate) {
       return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
+    }
+
+    const normalizedEstimate = {
+      ...estimate,
+      exportCache: estimate.estimate_exports,
+      coefficients: estimate.estimate_coefficients,
+      rooms: estimate.estimate_rooms.map((room) => ({
+        ...room,
+        works: room.estimate_works.map((work) => ({
+          ...work,
+          workItem: work.work_items
+        })),
+        materials: room.estimate_materials
+      }))
     }
 
     // Создаем рабочую книгу ExcelJS
@@ -71,7 +85,7 @@ export async function GET(
     // Функция для добавления заголовка сметы
     const addTitle = () => {
       const titleRow = worksheet.getRow(currentRow)
-      titleRow.getCell(1).value = estimate.title
+      titleRow.getCell(1).value = normalizedEstimate.title
       
       // Объединяем ячейки для заголовка
       worksheet.mergeCells(currentRow, 1, currentRow, 6)
@@ -234,18 +248,18 @@ export async function GET(
     let allWorks: any[] = []
     let allMaterials: any[] = []
 
-    if (estimate.exportCache) {
+    if (normalizedEstimate.exportCache) {
       console.log('📊 Используем кеш экспорта для Excel')
       console.log('📊 Кеш данные:', {
-        worksDataLength: estimate.exportCache.worksData?.length || 0,
-        materialsDataLength: estimate.exportCache.materialsData?.length || 0,
-        totalWorksPrice: estimate.exportCache.totalWorksPrice,
-        totalMaterialsPrice: estimate.exportCache.totalMaterialsPrice
+        worksDataLength: normalizedEstimate.exportCache.worksData?.length || 0,
+        materialsDataLength: normalizedEstimate.exportCache.materialsData?.length || 0,
+        totalWorksPrice: normalizedEstimate.exportCache.totalWorksPrice,
+        totalMaterialsPrice: normalizedEstimate.exportCache.totalMaterialsPrice
       })
       try {
         // Парсим данные из кеша
-        const worksData = JSON.parse(estimate.exportCache.worksData)
-        const materialsData = JSON.parse(estimate.exportCache.materialsData)
+        const worksData = JSON.parse(normalizedEstimate.exportCache.worksData)
+        const materialsData = JSON.parse(normalizedEstimate.exportCache.materialsData)
         
         // Преобразуем данные кеша в формат для Excel
         if (Array.isArray(worksData) && worksData.length > 0) {
@@ -291,16 +305,16 @@ export async function GET(
     // Если нет кеша или ошибка парсинга, пробуем альтернативные источники данных
     if (allWorks.length === 0 && allMaterials.length === 0) {
       console.log('📊 Fallback: пробуем альтернативные источники данных')
-      console.log('📊 Estimate type:', estimate.type)
-      console.log('📊 Estimate rooms count:', estimate.rooms?.length || 0)
-      console.log('📊 Has worksBlock:', !!estimate.worksBlock)
-      console.log('📊 Has summaryWorksBlock:', !!estimate.summaryWorksBlock)
+      console.log('📊 Estimate type:', normalizedEstimate.type)
+      console.log('📊 Estimate rooms count:', normalizedEstimate.rooms?.length || 0)
+      console.log('📊 Has worksBlock:', !!normalizedEstimate.worksBlock)
+      console.log('📊 Has summaryWorksBlock:', !!normalizedEstimate.summaryWorksBlock)
       
       // Сначала пробуем JSON поля сметы
-      if (estimate.summaryWorksBlock) {
+      if (normalizedEstimate.summaryWorksBlock) {
         try {
           console.log('📊 Используем summaryWorksBlock')
-          const summaryWorksData = JSON.parse(estimate.summaryWorksBlock)
+          const summaryWorksData = JSON.parse(normalizedEstimate.summaryWorksBlock)
           if (summaryWorksData.blocks && Array.isArray(summaryWorksData.blocks)) {
             summaryWorksData.blocks.forEach((block: any) => {
               if (block.items && Array.isArray(block.items)) {
@@ -320,10 +334,10 @@ export async function GET(
         } catch (error) {
           console.error('❌ Ошибка парсинга summaryWorksBlock:', error)
         }
-      } else if (estimate.worksBlock) {
+      } else if (normalizedEstimate.worksBlock) {
         try {
           console.log('📊 Используем worksBlock')
-          const worksData = JSON.parse(estimate.worksBlock)
+          const worksData = JSON.parse(normalizedEstimate.worksBlock)
           if (worksData.blocks && Array.isArray(worksData.blocks)) {
             worksData.blocks.forEach((block: any) => {
               if (block.items && Array.isArray(block.items)) {
@@ -346,10 +360,10 @@ export async function GET(
       }
       
       // Материалы из JSON полей
-      if (estimate.summaryMaterialsBlock) {
+      if (normalizedEstimate.summaryMaterialsBlock) {
         try {
           console.log('📊 Используем summaryMaterialsBlock')
-          const summaryMaterialsData = JSON.parse(estimate.summaryMaterialsBlock)
+          const summaryMaterialsData = JSON.parse(normalizedEstimate.summaryMaterialsBlock)
           if (summaryMaterialsData.items && Array.isArray(summaryMaterialsData.items)) {
             summaryMaterialsData.items.forEach((item: any) => {
               allMaterials.push({
@@ -364,10 +378,10 @@ export async function GET(
         } catch (error) {
           console.error('❌ Ошибка парсинга summaryMaterialsBlock:', error)
         }
-      } else if (estimate.materialsBlock) {
+      } else if (normalizedEstimate.materialsBlock) {
         try {
           console.log('📊 Используем materialsBlock')
-          const materialsData = JSON.parse(estimate.materialsBlock)
+          const materialsData = JSON.parse(normalizedEstimate.materialsBlock)
           if (materialsData.items && Array.isArray(materialsData.items)) {
             materialsData.items.forEach((item: any) => {
               allMaterials.push({
@@ -384,8 +398,8 @@ export async function GET(
         }
       }
       
-      if (estimate.rooms && estimate.rooms.length > 0) {
-        estimate.rooms.forEach((room: any, index: number) => {
+      if (normalizedEstimate.rooms && normalizedEstimate.rooms.length > 0) {
+        normalizedEstimate.rooms.forEach((room: any, index: number) => {
           console.log(`📊 Room ${index + 1} (${room.name}):`, {
             worksCount: room.works?.length || 0,
             materialsCount: room.materials?.length || 0
@@ -485,8 +499,8 @@ export async function GET(
       processWorkItems(allWorks, true)
       
       // Общий итог по работам (используем данные из кеша если есть)
-      const totalWorksPrice = estimate.exportCache 
-        ? estimate.exportCache.totalWorksPrice 
+      const totalWorksPrice = normalizedEstimate.exportCache 
+        ? normalizedEstimate.exportCache.totalWorksPrice 
         : allWorks.reduce((sum: number, work: any) => sum + (work.totalPrice || 0), 0)
       addSubtotal('ОБЩИЙ ИТОГ ПО РАБОТАМ', totalWorksPrice)
     }
@@ -497,8 +511,8 @@ export async function GET(
       processWorkItems(allMaterials, false)
       
       // Общий итог по материалам (используем данные из кеша если есть)
-      const totalMaterialsPrice = estimate.exportCache 
-        ? estimate.exportCache.totalMaterialsPrice 
+      const totalMaterialsPrice = normalizedEstimate.exportCache 
+        ? normalizedEstimate.exportCache.totalMaterialsPrice 
         : allMaterials.reduce((sum: number, material: any) => sum + (material.totalPrice || 0), 0)
       addSubtotal('ОБЩИЙ ИТОГ ПО МАТЕРИАЛАМ', totalMaterialsPrice)
     }
@@ -511,9 +525,9 @@ export async function GET(
     }
 
     // Общий итог сметы (используем данные из кеша если есть)
-    const grandTotal = estimate.exportCache 
-      ? estimate.exportCache.grandTotal 
-      : estimate.totalPrice || 0
+    const grandTotal = normalizedEstimate.exportCache 
+      ? normalizedEstimate.exportCache.grandTotal 
+      : normalizedEstimate.totalPrice || 0
     addSubtotal('ОБЩИЙ ИТОГ СМЕТЫ', grandTotal, true)
 
     // Настраиваем ширину колонок
@@ -530,13 +544,13 @@ export async function GET(
     const excelBuffer = await workbook.xlsx.writeBuffer()
 
     // Генерируем имя файла (только латиница и цифры для совместимости)
-    const safeTitle = estimate.title
+    const safeTitle = normalizedEstimate.title
       .replace(/[а-яё]/gi, '') // Убираем кириллицу
       .replace(/[^a-zA-Z0-9\s]/g, '') // Убираем все кроме латиницы, цифр и пробелов
       .replace(/\s+/g, '_') // Заменяем пробелы на подчеркивания
       .substring(0, 30) // Ограничиваем длину
     
-    const filename = `estimate_${safeTitle || 'unnamed'}_${estimate.id.substring(0, 8)}.xlsx`
+    const filename = `estimate_${safeTitle || 'unnamed'}_${normalizedEstimate.id.substring(0, 8)}.xlsx`
 
     // Возвращаем файл
     return new NextResponse(excelBuffer, {

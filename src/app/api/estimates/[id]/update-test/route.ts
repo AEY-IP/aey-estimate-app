@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { cookies } from 'next/headers'
+import { prisma } from '@/lib/database'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
-
 // Проверка авторизации
 async function checkAuth() {
   const cookieStore = cookies()
@@ -67,20 +65,20 @@ export async function PUT(
       where: { id: params.id },
       data: updateData,
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             username: true
           }
         },
-        rooms: true,
-        coefficients: true
+        estimate_rooms: true,
+        estimate_coefficients: true
       }
     })
     
@@ -90,7 +88,13 @@ export async function PUT(
     return NextResponse.json({ 
       success: true, 
       message: 'Тестовое обновление сработало!',
-      estimate: updatedEstimate 
+      estimate: {
+        ...updatedEstimate,
+        client: updatedEstimate.clients,
+        creator: updatedEstimate.users,
+        rooms: updatedEstimate.estimate_rooms,
+        coefficients: updatedEstimate.estimate_coefficients
+      }
     })
   } catch (error) {
     console.error('=== TEST UPDATE API ERROR ===')

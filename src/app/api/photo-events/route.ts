@@ -1,9 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
+import { getSignedDownloadUrl } from '@/lib/storage';
+import { randomUUID } from 'crypto';
 
 
 export const dynamic = 'force-dynamic'
+
+async function withSignedPhotoUrls<T extends { filePath: string }>(photos: T[]): Promise<T[]> {
+  return Promise.all(
+    photos.map(async (photo) => {
+      if (!photo.filePath || photo.filePath.startsWith('http')) {
+        return photo;
+      }
+
+      try {
+        const normalizedKey = photo.filePath.replace(/^\/+/, '');
+        const signedUrl = await getSignedDownloadUrl(normalizedKey, 3600);
+        return { ...photo, filePath: signedUrl };
+      } catch (error) {
+        console.error('Ошибка генерации signed URL для фото:', photo.filePath, error);
+        return photo;
+      }
+    })
+  );
+}
 // GET - получить все события фотографий для клиента
 export async function GET(request: NextRequest) {
   try {
@@ -43,7 +64,14 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    return NextResponse.json({ photoBlocks });
+    const photoBlocksWithUrls = await Promise.all(
+      photoBlocks.map(async (block) => ({
+        ...block,
+        photos: await withSignedPhotoUrls(block.photos)
+      }))
+    );
+
+    return NextResponse.json({ photoBlocks: photoBlocksWithUrls });
   } catch (error) {
     console.error('Ошибка загрузки событий фотографий:', error);
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 });
@@ -81,9 +109,11 @@ export async function POST(request: NextRequest) {
 
     const photoBlock = await prisma.photo_blocks.create({
       data: {
+        id: randomUUID(),
         title,
         description,
-        clientId
+        clientId,
+        updatedAt: new Date()
       },
       include: {
         photos: true

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/database'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
 
 // POST /api/templates/[id]/apply - Применить шаблон к смете
 export async function POST(
@@ -33,19 +33,19 @@ export async function POST(
     }
 
     // Получаем шаблон с работами
-    const template = await prisma.templates.findUnique({
+    const template = await prisma.templates.findFirst({
       where: {
         id: params.id,
         isActive: true
       },
       include: {
-        rooms: {
+        template_rooms: {
           include: {
-            works: {
+            template_works: {
               include: {
-                workItem: {
+                work_items: {
                   include: {
-                    block: true
+                    work_blocks: true
                   }
                 }
               }
@@ -66,7 +66,7 @@ export async function POST(
     const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
-        rooms: true
+        estimate_rooms: true
       }
     })
 
@@ -107,21 +107,23 @@ export async function POST(
       }
     } else {
       // Для смет "apartment" используем первое помещение или создаем его
-      targetRoom = estimate.rooms[0]
+      targetRoom = estimate.estimate_rooms[0]
       if (!targetRoom) {
         targetRoom = await prisma.estimate_rooms.create({
           data: {
+            id: randomUUID(),
             name: 'Основное помещение',
             estimateId: estimateId,
-            sortOrder: 0
+            sortOrder: 0,
+            updatedAt: new Date()
           }
         })
       }
     }
 
     // Получаем актуальные цены из справочника работ
-    const workItemIds = template.rooms.flatMap(room => 
-      room.works.filter(work => work.workItemId).map(work => work.workItemId!)
+    const workItemIds = template.template_rooms.flatMap(room =>
+      room.template_works.filter(work => work.workItemId).map(work => work.workItemId!)
     )
 
     const currentWorkItems = await prisma.work_items.findMany({
@@ -129,7 +131,7 @@ export async function POST(
         id: { in: workItemIds }
       },
       include: {
-        block: true
+        work_blocks: true
       }
     })
 
@@ -138,9 +140,10 @@ export async function POST(
     // Применяем работы из шаблона к целевому помещению
     const worksToCreate = []
     
-    for (const templateRoom of template.rooms) {
-      for (const templateWork of templateRoom.works) {
+    for (const templateRoom of template.template_rooms) {
+      for (const templateWork of templateRoom.template_works) {
         let workData: any = {
+          id: randomUUID(),
           roomId: targetRoom.id,
           quantity: templateWork.quantity,
           description: templateWork.description
@@ -154,7 +157,7 @@ export async function POST(
             workItemId: templateWork.workItemId,
             price: currentWorkItem.price,
             totalPrice: templateWork.quantity * currentWorkItem.price,
-            blockTitle: currentWorkItem.block.title
+            blockTitle: currentWorkItem.work_blocks?.title || 'Разное'
           }
         } else if (templateWork.manualWorkName) {
           // Ручная работа - используем сохраненные данные
@@ -188,7 +191,8 @@ export async function POST(
       where: { id: targetRoom.id },
       data: {
         totalWorksPrice: roomTotalWorksPrice,
-        totalPrice: roomTotalWorksPrice
+        totalPrice: roomTotalWorksPrice,
+        updatedAt: new Date()
       }
     })
 
@@ -204,7 +208,8 @@ export async function POST(
       where: { id: estimateId },
       data: {
         totalWorksPrice: estimateTotalWorksPrice,
-        totalPrice: estimateTotalPrice
+        totalPrice: estimateTotalPrice,
+        updatedAt: new Date()
       }
     })
 

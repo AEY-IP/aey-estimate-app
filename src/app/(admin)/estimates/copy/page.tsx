@@ -28,7 +28,7 @@ interface EstimateForCopy {
     id: string
     name: string
   }
-  creator: {
+  creator?: {
     id: string
     name: string
   }
@@ -262,7 +262,7 @@ export default function CopyEstimatePage() {
                           <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                             <div className="flex items-center gap-1">
                               <User className="h-4 w-4" />
-                              {estimate.creator.name}
+                              {estimate.creator?.name || 'Неизвестный автор'}
                             </div>
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />

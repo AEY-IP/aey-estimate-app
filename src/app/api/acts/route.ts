@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth, canAccessMainSystem } from '@/lib/auth'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -54,40 +55,31 @@ export async function GET(request: NextRequest) {
     const acts = await prisma.estimates.findMany({
       where: whereCondition,
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             name: true
           }
-        },
-        rooms: {
-          include: {
-            works: {
-              include: {
-                workItem: {
-                  include: {
-                    block: true
-                  }
-                }
-              }
-            },
-            materials: true
-          }
-        },
-        coefficients: true
+        }
       },
       orderBy: {
         createdAt: 'desc'
       }
     })
 
-    return NextResponse.json({ acts })
+    return NextResponse.json({
+      acts: acts.map((act) => ({
+        ...act,
+        client: act.clients,
+        creator: act.users
+      }))
+    })
 
   } catch (error) {
     console.error('Ошибка получения актов:', error)
@@ -132,15 +124,15 @@ export async function POST(request: NextRequest) {
     const estimate = await prisma.estimates.findUnique({
       where: { id: estimateId },
       include: {
-        rooms: {
+        estimate_rooms: {
           include: {
-            works: true,
-            materials: true,
-            roomParameterValues: true
+            estimate_works: true,
+            estimate_materials: true,
+            estimate_room_parameter_values: true
           }
         },
-        coefficients: true,
-        roomParameterValues: true
+        estimate_coefficients: true,
+        estimate_room_parameter_values: true
       }
     })
 
@@ -150,7 +142,7 @@ export async function POST(request: NextRequest) {
         id: estimate.id,
         title: estimate.title,
         clientId: estimate.clientId,
-        roomsCount: estimate.rooms?.length || 0
+        roomsCount: estimate.estimate_rooms?.length || 0
       })
     }
 
@@ -167,6 +159,7 @@ export async function POST(request: NextRequest) {
     // Создаем акт как копию сметы в таблице estimates
     const act = await prisma.estimates.create({
       data: {
+        id: randomUUID(),
         title: `Акт - ${estimate.title}`,
         type: estimate.type,
         category: estimate.category,
@@ -185,19 +178,23 @@ export async function POST(request: NextRequest) {
         worksBlock: estimate.worksBlock,
         showToClient: false, // По умолчанию скрыт от клиента
         isAct: true,
+        updatedAt: new Date(),
         
         // Копируем комнаты для смет по помещениям
-        ...(estimate.type === 'rooms' && estimate.rooms.length > 0 ? {
-          rooms: {
-            create: estimate.rooms.map(room => ({
+        ...(estimate.type === 'rooms' && estimate.estimate_rooms.length > 0 ? {
+          estimate_rooms: {
+            create: estimate.estimate_rooms.map((room) => ({
+              id: randomUUID(),
               name: room.name,
               totalWorksPrice: room.totalWorksPrice,
               totalMaterialsPrice: room.totalMaterialsPrice,
               totalPrice: room.totalPrice,
+              updatedAt: new Date(),
               
               // Копируем работы
-              works: {
-                create: room.works.map((work: any) => ({
+              estimate_works: {
+                create: room.estimate_works.map((work: any) => ({
+                  id: randomUUID(),
                   quantity: work.quantity,
                   price: work.price,
                   totalPrice: work.totalPrice,
@@ -210,8 +207,9 @@ export async function POST(request: NextRequest) {
               },
               
               // Копируем материалы
-              materials: {
-                create: room.materials.map(material => ({
+              estimate_materials: {
+                create: room.estimate_materials.map((material) => ({
+                  id: randomUUID(),
                   name: material.name,
                   unit: material.unit,
                   quantity: material.quantity,
@@ -225,8 +223,9 @@ export async function POST(request: NextRequest) {
         } : {}),
         
         // Копируем коэффициенты
-        coefficients: {
-          create: estimate.coefficients.map(coeff => ({
+        estimate_coefficients: {
+          create: estimate.estimate_coefficients.map((coeff) => ({
+            id: randomUUID(),
             name: coeff.name,
             value: coeff.value,
             description: coeff.description
@@ -234,13 +233,13 @@ export async function POST(request: NextRequest) {
         }
       },
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             name: true
@@ -252,13 +251,15 @@ export async function POST(request: NextRequest) {
     console.log('Act (estimate copy) created successfully:', act.id)
 
     // Копируем параметры комнат на уровне сметы (акта)
-    if (estimate.roomParameterValues.length > 0) {
+    if (estimate.estimate_room_parameter_values.length > 0) {
       console.log('Copying room parameter values...')
       await prisma.estimate_room_parameter_values.createMany({
-        data: estimate.roomParameterValues.map(param => ({
+        data: estimate.estimate_room_parameter_values.map((param) => ({
+          id: randomUUID(),
           parameterId: param.parameterId,
           value: param.value,
-          estimateId: act.id
+          estimateId: act.id,
+          updatedAt: new Date()
         }))
       })
     }
@@ -272,13 +273,15 @@ export async function POST(request: NextRequest) {
     if (originalCache) {
       await prisma.estimate_exports.create({
         data: {
+          id: randomUUID(),
           estimateId: act.id,
           worksData: originalCache.worksData,
           materialsData: originalCache.materialsData,
           totalWorksPrice: originalCache.totalWorksPrice,
           totalMaterialsPrice: originalCache.totalMaterialsPrice,
           grandTotal: originalCache.grandTotal,
-          coefficientsInfo: originalCache.coefficientsInfo
+          coefficientsInfo: originalCache.coefficientsInfo,
+          updatedAt: new Date()
         }
       })
       console.log('Export cache copied to estimateExport for the act')
@@ -287,7 +290,13 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('=== ACT CREATION API SUCCESS ===')
-    return NextResponse.json({ act })
+    return NextResponse.json({
+      act: {
+        ...act,
+        client: act.clients,
+        creator: act.users
+      }
+    })
 
   } catch (error) {
     console.error('Ошибка создания акта:', error)

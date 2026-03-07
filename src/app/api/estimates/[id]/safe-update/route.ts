@@ -90,21 +90,21 @@ export async function PUT(
     const result = await prisma.estimates.findUnique({
       where: { id: params.id },
       include: {
-        client: {
+        clients: {
           select: { id: true, name: true }
         },
-        creator: {
-          select: { id: true, username: true }
+        users: {
+          select: { id: true, username: true, name: true }
         },
-        rooms: {
+        estimate_rooms: {
           include: {
-            works: { include: { workItem: true } },
-            materials: true,
-            roomParameterValues: { include: { parameter: true } }
+            estimate_works: { include: { work_items: true } },
+            estimate_materials: true,
+            estimate_room_parameter_values: { include: { room_parameters: true } }
           }
         },
-        roomParameterValues: { include: { parameter: true } },
-        coefficients: true
+        estimate_room_parameter_values: { include: { room_parameters: true } },
+        estimate_coefficients: true
       }
     })
     
@@ -115,6 +115,25 @@ export async function PUT(
     // Форматируем для фронтенда
     const formattedEstimate = {
       ...result,
+      client: result.clients,
+      creator: result.users,
+      rooms: result.estimate_rooms.map((room: any) => ({
+        ...room,
+        works: room.estimate_works.map((work: any) => ({
+          ...work,
+          workItem: work.work_items
+        })),
+        materials: room.estimate_materials,
+        roomParameterValues: room.estimate_room_parameter_values.map((value: any) => ({
+          ...value,
+          parameter: value.room_parameters
+        }))
+      })),
+      roomParameterValues: result.estimate_room_parameter_values.map((value: any) => ({
+        ...value,
+        parameter: value.room_parameters
+      })),
+      coefficientEntries: result.estimate_coefficients,
       // Парсим JSON поля
       coefficients: result.coefficientsData ? JSON.parse(result.coefficientsData) : [],
       coefficientSettings: result.coefficientSettings ? JSON.parse(result.coefficientSettings) : {},

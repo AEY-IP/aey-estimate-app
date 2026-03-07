@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { randomUUID } from 'crypto'
 import { cookies } from 'next/headers'
+import { prisma } from '@/lib/database'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
 
 // Проверка авторизации
 async function checkAuth() {
@@ -74,12 +74,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Создаём новое помещение
     const newRoom = await prisma.estimate_rooms.create({
       data: {
+        id: randomUUID(),
         name: name.trim(),
         estimateId: params.id,
         sortOrder: (maxSortOrder?.sortOrder || 0) + 1,
         totalWorksPrice: 0,
         totalMaterialsPrice: 0,
-        totalPrice: 0
+        totalPrice: 0,
+        updatedAt: new Date()
       }
     })
     
@@ -331,7 +333,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     await prisma.$transaction(async (tx) => {
       for (let i = 0; i < roomsOrder.length; i++) {
         const roomId = roomsOrder[i]
-        await tx.estimateRoom.update({
+        await tx.estimate_rooms.updateMany({
           where: {
             id: roomId,
             estimateId: params.id // дополнительная проверка принадлежности к смете

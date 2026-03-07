@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/database'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
 
 // GET /api/templates/[id] - Получить шаблон по ID
 export async function GET(
@@ -22,26 +21,26 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const template = await prisma.templates.findUnique({
+    const template = await prisma.templates.findFirst({
       where: {
         id: params.id,
         isActive: true
       },
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             name: true,
             username: true
           }
         },
-        rooms: {
+        template_rooms: {
           include: {
-            works: {
+            template_works: {
               include: {
-                workItem: {
+                work_items: {
                   include: {
-                    block: true
+                    work_blocks: true
                   }
                 }
               },
@@ -49,7 +48,7 @@ export async function GET(
                 id: 'asc'
               }
             },
-            materials: {
+            template_materials: {
               orderBy: {
                 id: 'asc'
               }
@@ -69,7 +68,18 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(template)
+    return NextResponse.json({
+      ...template,
+      creator: template.users,
+      rooms: template.template_rooms.map((room) => ({
+        ...room,
+        works: room.template_works.map((work) => ({
+          ...work,
+          workItem: work.work_items
+        })),
+        materials: room.template_materials
+      }))
+    })
   } catch (error) {
     console.error('Ошибка получения шаблона:', error)
     return NextResponse.json(
@@ -117,34 +127,46 @@ export async function PUT(
         ...(name && { name }),
         ...(type && { type }),
         ...(description !== undefined && { description }),
-        ...(isActive !== undefined && { isActive })
+        ...(isActive !== undefined && { isActive }),
+        updatedAt: new Date()
       },
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             name: true,
             username: true
           }
         },
-        rooms: {
+        template_rooms: {
           include: {
-            works: {
+            template_works: {
               include: {
-                workItem: {
+                work_items: {
                   include: {
-                    block: true
+                    work_blocks: true
                   }
                 }
               }
             },
-            materials: true
+            template_materials: true
           }
         }
       }
     })
 
-    return NextResponse.json(template)
+    return NextResponse.json({
+      ...template,
+      creator: template.users,
+      rooms: template.template_rooms.map((room) => ({
+        ...room,
+        works: room.template_works.map((work) => ({
+          ...work,
+          workItem: work.work_items
+        })),
+        materials: room.template_materials
+      }))
+    })
   } catch (error) {
     console.error('Ошибка обновления шаблона:', error)
     return NextResponse.json(
@@ -185,7 +207,10 @@ export async function DELETE(
     // Мягкое удаление - помечаем как неактивный
     await prisma.templates.update({
       where: { id: params.id },
-      data: { isActive: false }
+      data: {
+        isActive: false,
+        updatedAt: new Date()
+      }
     })
 
     return NextResponse.json({ message: 'Шаблон успешно удален' })

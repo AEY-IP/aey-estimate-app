@@ -1,11 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { checkClientAuth } from '@/lib/auth';
+import { prisma } from '@/lib/database'
+import { getSignedDownloadUrl } from '@/lib/storage'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient();
+
+async function toSignedUrl(filePath: string): Promise<string> {
+  if (!filePath || filePath.startsWith('http')) {
+    return filePath
+  }
+
+  try {
+    const normalizedKey = filePath.replace(/^\/+/, '')
+    return await getSignedDownloadUrl(normalizedKey, 3600)
+  } catch (error) {
+    console.error('Ошибка генерации signed URL для сметы:', filePath, error)
+    return filePath
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -51,9 +65,8 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({
-      success: true,
-      documents: estimateDocuments.map((doc: any) => ({
+    const documentsWithSignedUrls = await Promise.all(
+      estimateDocuments.map(async (doc: any) => ({
         id: doc.id,
         name: doc.name,
         description: doc.description,
@@ -61,9 +74,14 @@ export async function GET(request: NextRequest) {
         fileName: doc.fileName,
         fileSize: doc.fileSize,
         mimeType: doc.mimeType,
-        filePath: doc.filePath,
+        filePath: await toSignedUrl(doc.filePath),
         createdAt: doc.createdAt
       }))
+    )
+
+    return NextResponse.json({
+      success: true,
+      documents: documentsWithSignedUrls
     });
 
   } catch (error) {

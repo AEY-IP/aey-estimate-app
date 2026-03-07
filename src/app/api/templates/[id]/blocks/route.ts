@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/database'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
+
+const mapTemplateWork = (work: any) => ({
+  ...work,
+  workItem: work.work_items
+    ? {
+        ...work.work_items,
+        block: work.work_items.work_blocks
+      }
+    : null
+})
+
+const mapTemplateBlock = (block: any) => ({
+  ...block,
+  works: (block.template_works || []).map(mapTemplateWork)
+})
 
 // GET /api/templates/[id]/blocks - Получить блоки работ шаблона
 export async function GET(
@@ -22,18 +37,18 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const template = await prisma.templates.findUnique({
+    const template = await prisma.templates.findFirst({
       where: { id: params.id, isActive: true },
       include: {
-        rooms: {
+        template_rooms: {
           include: {
-            workBlocks: {
+            template_work_blocks: {
               include: {
-                works: {
+                template_works: {
                   include: {
-                    workItem: {
+                    work_items: {
                       include: {
-                        block: true
+                        work_blocks: true
                       }
                     }
                   }
@@ -54,7 +69,13 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(template)
+    return NextResponse.json({
+      ...template,
+      rooms: template.template_rooms.map((room: any) => ({
+        ...room,
+        workBlocks: (room.template_work_blocks || []).map(mapTemplateBlock)
+      }))
+    })
   } catch (error) {
     console.error('Ошибка получения блоков шаблона:', error)
     return NextResponse.json(
@@ -91,7 +112,7 @@ export async function POST(
     }
 
     // Проверяем существование шаблона
-    const template = await prisma.templates.findUnique({
+    const template = await prisma.templates.findFirst({
       where: { id: params.id, isActive: true }
     })
 
@@ -141,17 +162,19 @@ export async function POST(
 
     const newBlock = await prisma.template_work_blocks.create({
       data: {
+        id: randomUUID(),
         title: title.trim(),
-        description: description?.trim(),
+        description: description?.trim() || null,
         roomId,
-        sortOrder: (maxSortOrder?.sortOrder || 0) + 1
+        sortOrder: (maxSortOrder?.sortOrder || 0) + 1,
+        updatedAt: new Date()
       },
       include: {
-        works: {
+        template_works: {
           include: {
-            workItem: {
+            work_items: {
               include: {
-                block: true
+                work_blocks: true
               }
             }
           }
@@ -159,7 +182,7 @@ export async function POST(
       }
     })
 
-    return NextResponse.json(newBlock, { status: 201 })
+    return NextResponse.json(mapTemplateBlock(newBlock), { status: 201 })
   } catch (error) {
     console.error('Ошибка создания блока работ:', error)
     return NextResponse.json(

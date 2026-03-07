@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/database'
+import { getSignedDownloadUrl } from '@/lib/storage'
 
 
 export const dynamic = 'force-dynamic'
+
+async function toSignedUrl(filePath: string): Promise<string> {
+  if (!filePath || filePath.startsWith('http')) {
+    return filePath
+  }
+
+  try {
+    const normalizedKey = filePath.replace(/^\/+/, '')
+    return await getSignedDownloadUrl(normalizedKey, 3600)
+  } catch (error) {
+    console.error('Ошибка генерации signed URL для документа:', filePath, error)
+    return filePath
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get('client-token')?.value
@@ -40,18 +56,22 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({
-      documents: documents.map((doc: any) => ({
+    const documentsWithSignedUrls = await Promise.all(
+      documents.map(async (doc: any) => ({
         id: doc.id,
         name: doc.name,
         fileName: doc.fileName,
-        filePath: doc.filePath,
+        filePath: await toSignedUrl(doc.filePath),
         fileSize: doc.fileSize,
         mimeType: doc.mimeType,
         description: doc.description,
         category: doc.category || 'document',
         createdAt: doc.createdAt
       }))
+    )
+
+    return NextResponse.json({
+      documents: documentsWithSignedUrls
     })
   } catch (error) {
     console.error('Client documents error:', error)

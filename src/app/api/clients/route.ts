@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { CreateClientRequest } from '@/types/client'
 import { checkAuth, canAccessMainSystem } from '@/lib/auth'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -108,6 +109,7 @@ export async function POST(request: NextRequest) {
     // Создаем нового клиента в базе данных
     const newClient = await prisma.clients.create({
       data: {
+        id: randomUUID(),
         name: name.trim(),
         phone: phone?.trim() || null,
         email: email?.trim() || null,
@@ -118,7 +120,8 @@ export async function POST(request: NextRequest) {
         createdBy: session.id,
         managerId: managerId || null,
         designerId: designerId || null,
-        isActive: true
+        isActive: true,
+        updatedAt: new Date()
       }
     })
 

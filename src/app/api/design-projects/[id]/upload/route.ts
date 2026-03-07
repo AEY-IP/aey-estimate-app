@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadFile } from '@/lib/storage'
-import { PrismaClient } from '@prisma/client'
 import { checkAuth } from '@/lib/auth'
+import { prisma } from '@/lib/database'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
-
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }

@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     // Группируем сметы по клиентам
     const clientsMap = new Map()
     
-    estimates.forEach(estimate => {
+    estimates.forEach((estimate) => {
       const clientId = estimate.clients.id
       
       if (!clientsMap.has(clientId)) {
@@ -75,7 +75,12 @@ export async function GET(request: NextRequest) {
         })
       }
       
-      clientsMap.get(clientId).estimates.push(estimate)
+      clientsMap.get(clientId).estimates.push({
+        ...estimate,
+        creator: estimate.users
+          ? estimate.users
+          : { id: 'unknown', name: 'Неизвестный автор' }
+      })
     })
 
     const clients = Array.from(clientsMap.values())

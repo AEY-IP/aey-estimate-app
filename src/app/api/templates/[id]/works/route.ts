@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/database'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
+
+const mapTemplateWork = (work: any) => ({
+  ...work,
+  workItem: work.work_items
+    ? {
+        ...work.work_items,
+        block: work.work_items.work_blocks
+      }
+    : null
+})
 
 // POST /api/templates/[id]/works - Добавить работу в блок шаблона
 export async function POST(
@@ -33,7 +42,7 @@ export async function POST(
     }
 
     // Проверяем существование шаблона
-    const template = await prisma.templates.findUnique({
+    const template = await prisma.templates.findFirst({
       where: { id: params.id, isActive: true }
     })
 
@@ -85,7 +94,7 @@ export async function POST(
       // Работа из справочника
       const workItem = await prisma.work_items.findUnique({
         where: { id: workItemId },
-        include: { block: true }
+        include: { work_blocks: true }
       })
 
       if (!workItem) {
@@ -100,7 +109,7 @@ export async function POST(
         workItemId,
         price: workItem.price,
         totalPrice: parseFloat(quantity) * workItem.price,
-        blockTitle: workItem.block.title
+        blockTitle: workItem.work_blocks?.title || 'Разное'
       }
     } else if (manualWorkName && manualWorkUnit && price) {
       // Ручная работа
@@ -124,9 +133,9 @@ export async function POST(
     const work = await prisma.template_works.create({
       data: workData,
       include: {
-        workItem: {
+        work_items: {
           include: {
-            block: true
+            work_blocks: true
           }
         }
       }
@@ -141,7 +150,10 @@ export async function POST(
 
     await prisma.template_work_blocks.update({
       where: { id: workBlockId },
-      data: { totalPrice: blockTotalPrice }
+      data: {
+        totalPrice: blockTotalPrice,
+        updatedAt: new Date()
+      }
     })
 
     // Обновляем итоги помещения
@@ -155,7 +167,8 @@ export async function POST(
       where: { id: roomId },
       data: {
         totalWorksPrice: roomTotalWorksPrice,
-        totalPrice: roomTotalWorksPrice
+        totalPrice: roomTotalWorksPrice,
+        updatedAt: new Date()
       }
     })
 
@@ -170,11 +183,12 @@ export async function POST(
       where: { id: params.id },
       data: {
         totalWorksPrice: templateTotalWorksPrice,
-        totalPrice: templateTotalWorksPrice
+        totalPrice: templateTotalWorksPrice,
+        updatedAt: new Date()
       }
     })
 
-    return NextResponse.json(work, { status: 201 })
+    return NextResponse.json(mapTemplateWork(work), { status: 201 })
 
   } catch (error) {
     console.error('Ошибка добавления работы в шаблон:', error)

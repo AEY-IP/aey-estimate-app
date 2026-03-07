@@ -28,6 +28,7 @@ const Navigation = () => {
 
   // Проверяем, является ли пользователь админом
   const isAdmin = session?.user?.role === 'ADMIN'
+  const isDesigner = session?.user?.role === 'DESIGNER'
 
   // Определяем среду (профи или клиент) на основе URL
   const isClientEnvironment = pathname.startsWith('/client-')
@@ -41,7 +42,10 @@ const Navigation = () => {
     if (isClientEnvironment) {
       return '/client-dashboard'
     }
-    if (session?.user?.role === 'ADMIN' || session?.user?.role === 'MANAGER' || session?.user?.role === 'DESIGNER') {
+    if (isDesigner) {
+      return '/designer/clients'
+    }
+    if (session?.user?.role === 'ADMIN' || session?.user?.role === 'MANAGER') {
       return '/dashboard'
     }
     return '/'
@@ -121,44 +125,39 @@ const Navigation = () => {
       ]
     } else if (isProfessionalEnvironment) {
       // Профессиональное меню
-      const items = []
-      const isDesigner = session?.user?.role === 'DESIGNER'
-      
-      // Внешние дизайнеры не имеют доступа к основным разделам
-      const isExternalDesigner = session?.user?.role === 'DESIGNER' && session?.user?.designerType === 'EXTERNAL'
-
-      // У дизайнеров всегда должен быть явный корневой раздел "Мои клиенты"
       if (isDesigner) {
-        items.push({
+        return [
+          {
           title: 'Мои клиенты',
           href: '/designer/clients',
           icon: Users,
           color: 'bg-purple-100 text-purple-700'
-        })
-      }
-      
-      if (!isExternalDesigner) {
-        items.push(
-          {
-            title: 'Клиенты',
-            href: '/dashboard/clients',
-            icon: Users,
-            color: 'bg-pink-100 text-pink-700'
-          },
-          {
-            title: 'Акты',
-            href: '/acts',
-            icon: FileText,
-            color: 'bg-green-100 text-green-700'
-          },
-          {
-            title: 'Параметры помещений',
-            href: '/room-parameters',
-            icon: Settings,
-            color: 'bg-gray-100 text-gray-700'
           }
-        )
+        ]
       }
+
+      const items = []
+      
+      items.push(
+        {
+          title: 'Клиенты',
+          href: '/dashboard/clients',
+          icon: Users,
+          color: 'bg-pink-100 text-pink-700'
+        },
+        {
+          title: 'Акты',
+          href: '/acts',
+          icon: FileText,
+          color: 'bg-green-100 text-green-700'
+        },
+        {
+          title: 'Параметры помещений',
+          href: '/room-parameters',
+          icon: Settings,
+          color: 'bg-gray-100 text-gray-700'
+        }
+      )
 
       // Добавляем пункты только для админов
       if (isAdmin) {

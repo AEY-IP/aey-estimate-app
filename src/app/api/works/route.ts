@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -14,11 +15,11 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // Строим запрос для WorkItem с блоками
+    // Строим запрос для work_items с актуальными relation-именами Prisma
     const whereWorkItem: any = {}
     
     if (category && category !== 'all') {
-      whereWorkItem.block = {
+      whereWorkItem.work_blocks = {
         title: category
       }
     }
@@ -34,8 +35,8 @@ export async function GET(request: NextRequest) {
       prisma.work_items.findMany({
         where: whereWorkItem,
         include: {
-          block: true,
-          parameter: true
+          work_blocks: true,
+          room_parameters: true
         },
         orderBy: { name: 'asc' },
         skip,
@@ -50,13 +51,13 @@ export async function GET(request: NextRequest) {
       name: workItem.name,
       unit: workItem.unit,
       basePrice: workItem.price,
-      category: workItem.block.title,
+      category: workItem.work_blocks?.title || 'Разное',
       description: workItem.description,
       parameterId: workItem.parameterId,
       isActive: workItem.isActive,
       createdAt: workItem.createdAt,
       updatedAt: workItem.updatedAt,
-      parameter: workItem.parameter
+      parameter: workItem.room_parameters
     }))
 
     return NextResponse.json({
@@ -97,7 +98,11 @@ export async function POST(request: NextRequest) {
     // Если блок не найден, создаем новый
     if (!block) {
       block = await prisma.work_blocks.create({
-        data: { title: categoryName }
+        data: {
+          id: randomUUID(),
+          title: categoryName,
+          updatedAt: new Date()
+        }
       })
     }
     
@@ -105,16 +110,18 @@ export async function POST(request: NextRequest) {
 
     const workItem = await prisma.work_items.create({
       data: {
+        id: randomUUID(),
         name: name.trim(),
         unit: unit?.trim() || 'шт',
         price: basePrice ? parseFloat(basePrice) : 0,
         description: description?.trim() || '',
         parameterId: parameterId || null,
-        blockId: blockId
+        blockId: blockId,
+        updatedAt: new Date()
       },
       include: {
-        block: true,
-        parameter: true
+        work_blocks: true,
+        room_parameters: true
       }
     })
 
@@ -124,13 +131,13 @@ export async function POST(request: NextRequest) {
       name: workItem.name,
       unit: workItem.unit,
       basePrice: workItem.price,
-      category: workItem.block.title,
+      category: workItem.work_blocks?.title || categoryName,
       description: workItem.description,
       parameterId: workItem.parameterId,
       isActive: workItem.isActive,
       createdAt: workItem.createdAt,
       updatedAt: workItem.updatedAt,
-      parameter: workItem.parameter
+      parameter: workItem.room_parameters
     }
 
     return NextResponse.json(work, { status: 201 })

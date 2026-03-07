@@ -1,19 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { checkAuth } from '@/lib/auth'
 import { deleteFile } from '@/lib/storage'
+import { prisma } from '@/lib/database'
+import { getSignedDownloadUrl } from '@/lib/storage'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
 
+async function withSignedPhotoUrls<T extends { filePath: string }>(photos: T[]): Promise<T[]> {
+  return Promise.all(
+    photos.map(async (photo) => {
+      if (!photo.filePath || photo.filePath.startsWith('http')) {
+        return photo
+      }
+
+      try {
+        const normalizedKey = photo.filePath.replace(/^\/+/, '')
+        const signedUrl = await getSignedDownloadUrl(normalizedKey, 3600)
+        return { ...photo, filePath: signedUrl }
+      } catch (error) {
+        console.error('Ошибка генерации signed URL для фото:', photo.filePath, error)
+        return photo
+      }
+    })
+  )
+}
 // GET - получить блок фотографий
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = checkAuth(request)
+    const session = await checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
@@ -38,7 +56,10 @@ export async function GET(
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
-    return NextResponse.json(photoBlock)
+    return NextResponse.json({
+      ...photoBlock,
+      photos: await withSignedPhotoUrls(photoBlock.photos)
+    })
   } catch (error) {
     console.error('Error fetching photo block:', error)
     return NextResponse.json({ error: 'Ошибка загрузки блока' }, { status: 500 })
@@ -51,7 +72,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = checkAuth(request)
+    const session = await checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }
@@ -95,7 +116,10 @@ export async function PUT(
       }
     })
 
-    return NextResponse.json(updatedBlock)
+    return NextResponse.json({
+      ...updatedBlock,
+      photos: await withSignedPhotoUrls(updatedBlock.photos)
+    })
   } catch (error) {
     console.error('Error updating photo block:', error)
     return NextResponse.json({ error: 'Ошибка обновления блока' }, { status: 500 })
@@ -108,7 +132,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = checkAuth(request)
+    const session = await checkAuth(request)
     if (!session) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
     }

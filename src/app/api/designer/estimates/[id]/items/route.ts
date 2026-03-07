@@ -2,11 +2,29 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 import { uploadFile, getSignedDownloadUrl } from '@/lib/storage'
-import sharp from 'sharp'
 import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
+
+async function optimizeImage(buffer: Buffer): Promise<Buffer> {
+  try {
+    const sharpModule = await import('sharp')
+    return await sharpModule
+      .default(buffer)
+      .resize(400, 400, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .flatten({ background: '#ffffff' })
+      .jpeg({ quality: 90 })
+      .toBuffer()
+  } catch (error) {
+    console.warn('Sharp недоступен, загружаем изображение без оптимизации:', error)
+    return buffer
+  }
+}
+
 async function checkEstimateAccess(estimateId: string, sessionId: string, role: string) {
   const estimate = await prisma.designer_estimates.findUnique({
     where: { id: estimateId }
@@ -101,6 +119,59 @@ export async function POST(
       return NextResponse.json({ error: accessCheck.error }, { status: accessCheck.status })
     }
 
+    const contentType = request.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const body = await request.json()
+      const blockId = typeof body?.blockId === 'string' ? body.blockId : ''
+      const countRaw = Number(body?.count)
+      const count = Number.isInteger(countRaw) ? countRaw : 0
+
+      if (!blockId) {
+        return NextResponse.json({ error: 'Не указан блок' }, { status: 400 })
+      }
+
+      if (count < 1 || count > 100) {
+        return NextResponse.json({ error: 'Количество позиций должно быть от 1 до 100' }, { status: 400 })
+      }
+
+      const block = await prisma.designer_estimate_blocks.findUnique({
+        where: { id: blockId }
+      })
+
+      if (!block || !block.isActive || block.estimateId !== params.id) {
+        return NextResponse.json({ error: 'Блок не найден' }, { status: 404 })
+      }
+
+      const maxSortOrder = await prisma.designer_estimate_items.findFirst({
+        where: { blockId },
+        orderBy: { sortOrder: 'desc' },
+        select: { sortOrder: true }
+      })
+
+      const baseSortOrder = (maxSortOrder?.sortOrder ?? -1) + 1
+      const now = new Date()
+
+      await prisma.designer_estimate_items.createMany({
+        data: Array.from({ length: count }, (_, index) => ({
+          id: randomUUID(),
+          name: '',
+          manufacturer: null,
+          link: null,
+          imageUrl: null,
+          unit: 'шт.',
+          pricePerUnit: 0,
+          quantity: 1,
+          totalPrice: 0,
+          blockId,
+          notes: null,
+          sortOrder: baseSortOrder + index,
+          updatedAt: now
+        }))
+      })
+
+      return NextResponse.json({ success: true, created: count })
+    }
+
     const formData = await request.formData()
     const name = formData.get('name') as string
     const manufacturer = formData.get('manufacturer') as string
@@ -151,13 +222,7 @@ export async function POST(
 
       const buffer = Buffer.from(await imageFile.arrayBuffer())
       
-      const resizedBuffer = await sharp(buffer)
-        .resize(400, 400, {
-          fit: 'cover',
-          position: 'center'
-        })
-        .jpeg({ quality: 90 })
-        .toBuffer()
+      const resizedBuffer = await optimizeImage(buffer)
 
       const fileExtension = 'jpg'
       const key = `designer-estimates/${params.id}/${blockId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`

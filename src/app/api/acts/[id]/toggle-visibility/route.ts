@@ -17,13 +17,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Проверяем, что акт существует
     const act = await prisma.estimates.findUnique({
-      where: { 
-        id,
-        isAct: true 
-      }
+      where: { id }
     })
 
-    if (!act) {
+    if (!act || !act.isAct) {
       return NextResponse.json({ error: 'Акт не найден' }, { status: 404 })
     }
 
@@ -35,9 +32,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Обновляем видимость акта
     const updatedAct = await prisma.estimates.update({
       where: { id },
-      data: { showToClient },
+      data: { showToClient, updatedAt: new Date() },
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
@@ -48,7 +45,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     return NextResponse.json({ 
       success: true, 
-      act: updatedAct 
+      act: {
+        ...updatedAct,
+        client: updatedAct.clients
+      }
     })
 
   } catch (error) {

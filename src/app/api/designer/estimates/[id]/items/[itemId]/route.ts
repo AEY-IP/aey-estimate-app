@@ -2,10 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 import { uploadFile, deleteFile, getSignedDownloadUrl } from '@/lib/storage'
-import sharp from 'sharp'
 
 
 export const dynamic = 'force-dynamic'
+
+async function optimizeImage(buffer: Buffer): Promise<Buffer> {
+  try {
+    const sharpModule = await import('sharp')
+    return await sharpModule
+      .default(buffer)
+      .resize(400, 400, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .flatten({ background: '#ffffff' })
+      .jpeg({ quality: 90 })
+      .toBuffer()
+  } catch (error) {
+    console.warn('Sharp недоступен, загружаем изображение без оптимизации:', error)
+    return buffer
+  }
+}
+
 async function checkItemAccess(itemId: string, sessionId: string, role: string) {
   const item = await prisma.designer_estimate_items.findUnique({
     where: { id: itemId },
@@ -103,13 +121,7 @@ export async function PUT(
 
       const buffer = Buffer.from(await imageFile.arrayBuffer())
       
-      const resizedBuffer = await sharp(buffer)
-        .resize(400, 400, {
-          fit: 'cover',
-          position: 'center'
-        })
-        .jpeg({ quality: 90 })
-        .toBuffer()
+      const resizedBuffer = await optimizeImage(buffer)
 
       const fileExtension = 'jpg'
       const key = `designer-estimates/${params.id}/${accessCheck.item!.blockId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`

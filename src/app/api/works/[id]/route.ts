@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
+import { randomUUID } from 'crypto'
+import { Prisma } from '@prisma/client'
 
 
 export const dynamic = 'force-dynamic'
@@ -11,8 +13,8 @@ export async function GET(
     const work = await prisma.work_items.findUnique({
       where: { id: params.id },
       include: {
-        parameter: true,
-        block: true
+        room_parameters: true,
+        work_blocks: true
       }
     })
     
@@ -28,13 +30,13 @@ export async function GET(
       name: work.name,
       unit: work.unit,
       basePrice: work.price,
-      category: work.block.title,
+      category: work.work_blocks?.title || 'Разное',
       description: work.description,
       parameterId: work.parameterId,
       isActive: work.isActive,
       createdAt: work.createdAt,
       updatedAt: work.updatedAt,
-      parameter: work.parameter
+      parameter: work.room_parameters
     }
     
     return NextResponse.json({ work: transformedWork })
@@ -71,7 +73,11 @@ export async function PUT(
       // Если блок не найден, создаем новый
       if (!block) {
         block = await prisma.work_blocks.create({
-          data: { title: category }
+          data: {
+            id: randomUUID(),
+            title: category,
+            updatedAt: new Date()
+          }
         })
       }
       
@@ -92,8 +98,8 @@ export async function PUT(
       where: { id: params.id },
       data: updateData,
       include: {
-        parameter: true,
-        block: true
+        room_parameters: true,
+        work_blocks: true
       }
     })
 
@@ -102,17 +108,23 @@ export async function PUT(
       name: work.name,
       unit: work.unit,
       basePrice: work.price,
-      category: work.block.title,
+      category: work.work_blocks?.title || category || 'Разное',
       description: work.description,
       parameterId: work.parameterId,
       isActive: work.isActive,
       createdAt: work.createdAt,
       updatedAt: work.updatedAt,
-      parameter: work.parameter
+      parameter: work.room_parameters
     }
     
     return NextResponse.json({ work: transformedWork })
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Работа не найдена' },
+        { status: 404 }
+      )
+    }
     console.error('Ошибка обновления работы:', error)
     return NextResponse.json(
       { error: 'Ошибка обновления работы' },
@@ -137,8 +149,8 @@ export async function PATCH(
       where: { id: params.id },
       data: { isActive },
       include: {
-        parameter: true,
-        block: true
+        room_parameters: true,
+        work_blocks: true
       }
     })
 
@@ -147,17 +159,23 @@ export async function PATCH(
       name: work.name,
       unit: work.unit,
       basePrice: work.price,
-      category: work.block.title,
+      category: work.work_blocks?.title || 'Разное',
       description: work.description,
       parameterId: work.parameterId,
       isActive: work.isActive,
       createdAt: work.createdAt,
       updatedAt: work.updatedAt,
-      parameter: work.parameter
+      parameter: work.room_parameters
     }
     
     return NextResponse.json({ work: transformedWork })
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Работа не найдена' },
+        { status: 404 }
+      )
+    }
     console.error('Ошибка изменения статуса работы:', error)
     return NextResponse.json(
       { error: 'Ошибка изменения статуса работы' },
@@ -177,6 +195,12 @@ export async function DELETE(
     
     return NextResponse.json({ success: true })
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Работа не найдена' },
+        { status: 404 }
+      )
+    }
     console.error('Ошибка удаления работы:', error)
     return NextResponse.json(
       { error: 'Ошибка удаления работы' },

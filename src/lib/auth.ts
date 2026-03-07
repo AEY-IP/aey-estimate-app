@@ -245,11 +245,8 @@ export function checkClientAuth(request: NextRequest): ClientSession | null {
 // Проверка доступа внешних дизайнеров к основным системам
 export function canAccessMainSystem(session: Session | null): boolean {
   if (!session) return false
-  
-  // Внешние дизайнеры не имеют доступа к основным клиентам и сметам
-  if (session.role === 'DESIGNER' && session.designerType === 'EXTERNAL') {
-    return false
-  }
-  
-  return true
+
+  // Основная система (админ/менеджер контур) недоступна для дизайнеров.
+  // Для дизайнеров используются только /designer/* и /api/designer/* маршруты.
+  return session.role === 'ADMIN' || session.role === 'MANAGER'
 } 

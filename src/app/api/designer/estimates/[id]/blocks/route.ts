@@ -136,26 +136,15 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { name, description, parentId, level } = body
+    const { name, description } = body
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'Название блока обязательно' }, { status: 400 })
     }
 
-    if (parentId) {
-      const parentBlock = await prisma.designer_estimate_blocks.findUnique({
-        where: { id: parentId }
-      })
-
-      if (!parentBlock || parentBlock.estimateId !== params.id) {
-        return NextResponse.json({ error: 'Родительский блок не найден' }, { status: 404 })
-      }
-    }
-
     const maxSortOrder = await prisma.designer_estimate_blocks.findFirst({
       where: {
         estimateId: params.id,
-        parentId: parentId || null,
         isActive: true
       },
       orderBy: { sortOrder: 'desc' },
@@ -168,8 +157,8 @@ export async function POST(
         name: name.trim(),
         description: description?.trim() || null,
         estimateId: params.id,
-        parentId: parentId || null,
-        level: level || 1,
+        parentId: null,
+        level: 1,
         sortOrder: (maxSortOrder?.sortOrder ?? -1) + 1,
         updatedAt: new Date()
       },

@@ -57,6 +57,10 @@ export async function GET(
     const format = url.searchParams.get('format')
     const orientation = url.searchParams.get('orientation') || 'portrait'
     const primaryColor = url.searchParams.get('color') || '#7c3aed'
+    const styleParam = url.searchParams.get('style')
+    const shouldAutoPrint = url.searchParams.get('autoPrint') === '1'
+    const exportStyle: 'accent' | 'minimal' = styleParam === 'minimal' ? 'minimal' : 'accent'
+    const isMinimalStyle = exportStyle === 'minimal'
 
     // Функция для генерации оттенков цвета
     function hexToRgb(hex: string): { r: number, g: number, b: number } {
@@ -107,6 +111,30 @@ export async function GET(
 
     const colors = generateColorShades(primaryColor)
 
+    const escapeHtml = (value: unknown): string => {
+      const text = String(value ?? '')
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+    }
+
+    const sanitizeUrl = (value: unknown): string | null => {
+      const raw = String(value ?? '').trim()
+      if (!raw) return null
+      try {
+        const url = new URL(raw)
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+          return url.toString()
+        }
+      } catch {
+        return null
+      }
+      return null
+    }
+
     // Генерируем signed URLs для всех изображений
     const itemsWithImages = await Promise.all(
       estimate.designer_estimate_blocks.flatMap(block => 
@@ -130,148 +158,222 @@ export async function GET(
 
     // Рекурсивный подсчет стоимости блока с учетом дочерних
     function calculateBlockTotal(block: any): number {
-      const ownItemsTotal = block.designer_estimate_items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) || 0
-      const children = estimate.designer_estimate_blocks.filter((b: any) => b.parentId === block.id)
-      const childrenTotal = children.reduce((sum: number, child: any) => sum + calculateBlockTotal(child), 0)
-      return ownItemsTotal + childrenTotal
+      return block.designer_estimate_items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) || 0
     }
 
-    // Счетчики для нумерации блоков
-    const blockCounters: { [key: string]: number } = {}
-    
-    function getBlockNumber(block: any, parentNumber: string = ''): string {
-      if (!block.parentId) {
-        // Корневой блок
-        if (!blockCounters['root']) blockCounters['root'] = 0
-        blockCounters['root']++
-        return `${blockCounters['root']}`
-      } else {
-        // Дочерний блок
-        const key = `parent_${block.parentId}`
-        if (!blockCounters[key]) blockCounters[key] = 0
-        blockCounters[key]++
-        return `${parentNumber}.${blockCounters[key]}`
-      }
+    // Плоская нумерация блоков: 1, 2, 3... без вложенных 1.1/1.2
+    let flatBlockCounter = 0
+
+    function getBlockNumber(): string {
+      flatBlockCounter += 1
+      return `${flatBlockCounter}`
     }
 
-    function renderBlockHTML(block: any, level: number = 1, parentNumber: string = '', fontSize: number = 20): string {
+    function renderBlockMinimalHTML(block: any, level: number = 1, fontSize: number = 20): string {
       const ownItemsTotal = block.designer_estimate_items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) || 0
-      const children = estimate.designer_estimate_blocks.filter((b: any) => b.parentId === block.id)
-      const childrenTotal = children.reduce((sum: number, child: any) => sum + calculateBlockTotal(child), 0)
-      const blockTotal = ownItemsTotal + childrenTotal
 
-      const blockNumber = getBlockNumber(block, parentNumber)
-      
-      const bgColors = [colors.light1, colors.light2, colors.light3, colors.light1]
-      const bgColor = bgColors[(level - 1) % bgColors.length]
-      
-      const borderWidths = ['5px', '4px', '3px', '3px']
-      const borderWidth = borderWidths[(level - 1) % borderWidths.length]
+      const blockNumber = getBlockNumber()
+      const blockName = escapeHtml(block.name)
+      const blockDescription = escapeHtml(block.description)
+      const indentPx = (level - 1) * 10
 
       let html = `
-        <div class="block-wrapper" style="margin-bottom: 15px; margin-left: ${(level - 1) * 25}px; position: relative;">
-      `
-      
-      html += `
-          <div class="block-header-box" style="background: ${bgColor}; padding: 14px; border-left: ${borderWidth} solid ${colors.primary}; margin-bottom: 10px; border-radius: 8px; page-break-inside: avoid; page-break-after: avoid;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="vertical-align: top;">
-                  <div>
-                    <span style="background: ${colors.primary}; color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Courier New', monospace; min-width: 50px; text-align: center; display: inline-block; vertical-align: middle;">${blockNumber}</span>
-                    <h${level + 1} style="margin: 0; font-size: ${22 - level * 2}px; color: #1f2937; font-weight: 700; display: inline; vertical-align: middle; padding-left: 8px;">
-                      ${block.name}
-                    </h${level + 1}>
-                  </div>
-                  ${block.description ? `<p style="color: #6b7280; margin: 8px 0 0 0; font-size: 14px;">${block.description}</p>` : ''}
-                </td>
-                ${blockTotal > 0 ? `
-                  <td style="vertical-align: top; width: 140px; text-align: right;">
-                    <div style="padding: 12px 16px; background: white; border-radius: 8px;">
-                      <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Итого</div>
-                      <div style="font-size: ${fontSize}px; font-weight: 700; color: ${colors.primary}; line-height: 1;">
-                        ${blockTotal.toLocaleString('ru-RU')} ₽
-                      </div>
-                    </div>
-                  </td>
-                ` : ''}
-              </tr>
-            </table>
+        <section style="margin: 0 0 12px ${indentPx}px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px;">
+            <h${Math.min(level + 1, 4)} style="margin: 0; font-size: ${18 - Math.min(level, 3)}px; font-weight: 700; color: #111827;">
+              ${blockNumber}. ${blockName}
+            </h${Math.min(level + 1, 4)}>
           </div>
+          ${block.description ? `<p style="margin: 0 0 6px 0; font-size: 12px; color: #4b5563;">${blockDescription}</p>` : ''}
       `
 
       if (block.designer_estimate_items && block.designer_estimate_items.length > 0) {
-        html += '<div class="items-container" style="margin-bottom: 12px; page-break-before: avoid;">'
-        
+        const minimalBorderColor = colors.primary
+        const minimalHeaderBackground = colors.light1
+        const minimalBorder = `2px solid ${minimalBorderColor}`
+        const minimalInnerBorder = `1.5px solid ${minimalBorderColor}`
+        const minimalColWidthNo = '7%'
+        const minimalColWidthPhoto = '10%'
+        const minimalColWidthName = '43%'
+        const minimalColWidthUnit = '10%'
+        const minimalColWidthQty = '10%'
+        const minimalColWidthPrice = '10%'
+        const minimalColWidthTotal = '10%'
+
+        html += `
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 8px;">
+            <colgroup>
+              <col style="width: ${minimalColWidthNo};" />
+              <col style="width: ${minimalColWidthPhoto};" />
+              <col style="width: ${minimalColWidthName};" />
+              <col style="width: ${minimalColWidthUnit};" />
+              <col style="width: ${minimalColWidthQty};" />
+              <col style="width: ${minimalColWidthPrice};" />
+              <col style="width: ${minimalColWidthTotal};" />
+            </colgroup>
+            <thead>
+              <tr style="background: ${minimalHeaderBackground};">
+                <th style="border: ${minimalBorder}; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; color: #374151;">№</th>
+                <th style="border: ${minimalBorder}; padding: 6px 8px; text-align: center; font-size: 10px; text-transform: uppercase; color: #374151;">Фото</th>
+                <th style="border: ${minimalBorder}; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; color: #374151;">Наименование</th>
+                <th style="border: ${minimalBorder}; padding: 6px 8px; text-align: right; font-size: 10px; text-transform: uppercase; color: #374151;">Ед.</th>
+                <th style="border: ${minimalBorder}; padding: 6px 8px; text-align: right; font-size: 10px; text-transform: uppercase; color: #374151;">Кол-во</th>
+                <th style="border: ${minimalBorder}; padding: 6px 8px; text-align: right; font-size: 10px; text-transform: uppercase; color: #374151;">Цена</th>
+                <th style="border: ${minimalBorder}; padding: 6px 8px; text-align: right; font-size: 10px; text-transform: uppercase; color: #374151;">Сумма</th>
+              </tr>
+            </thead>
+            <tbody>
+        `
+
         block.designer_estimate_items.forEach((item: any, idx: number) => {
           const itemNumber = `${blockNumber}.${idx + 1}`
-          
+          const safeName = escapeHtml(item.name)
+          const safeManufacturer = escapeHtml(item.manufacturer)
+          const safeNotes = escapeHtml(item.notes).replace(/\n/g, '<br/>')
+          const itemLink = sanitizeUrl(item.link)
+          const safeImageUrl = sanitizeUrl(item.imageUrl)
+
           html += `
-            <div class="item-card-wrapper" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  ${item.imageUrl ? `
-                    <td style="vertical-align: top; width: 150px; padding-right: 12px;">
-                      <img src="${item.imageUrl}" alt="${item.name}" style="width: 137px; height: 137px; object-fit: cover; border-radius: 8px; border: 3px solid ${colors.light2}; display: block;" />
-                    </td>
-                  ` : ''}
-                  <td style="vertical-align: top;">
-                    <div>
-                      <span style="background: ${colors.primary}; color: white; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; line-height: 1; font-family: 'Courier New', monospace; min-width: 55px; text-align: center; display: inline-block; vertical-align: middle;">${itemNumber}</span>
-                      <span style="font-weight: 600; font-size: 15px; color: #111827; display: inline; vertical-align: middle; padding-left: 8px;">
-                        ${item.name}
-                      </span>
-                    </div>
-                    ${item.manufacturer ? `
-                      <div style="color: #6b7280; font-size: 13px; margin-top: 6px; padding-left: 8px; border-left: 3px solid ${colors.light2};">
-                        <strong>Производитель:</strong> ${item.manufacturer}
-                      </div>
-                    ` : ''}
-                    ${item.link ? `
-                      <div style="margin-top: 6px;">
-                        <a href="${item.link}" style="color: ${colors.primary}; text-decoration: none; font-size: 12px; padding: 4px 8px; background: ${colors.light1}; border-radius: 4px; display: inline-block;">
-                          🔗 Ссылка на товар
-                        </a>
-                      </div>
-                    ` : ''}
-                    ${item.notes ? `
-                      <div style="color: #6b7280; font-size: 12px; margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 6px; border-left: 3px solid ${colors.primary};">
-                        <strong style="color: #374151;">💬 Примечание:</strong><br/>
-                        ${item.notes}
-                      </div>
-                    ` : ''}
-                  </td>
-                  <td style="vertical-align: top; width: 140px; padding-left: 12px;">
-                    <div style="text-align: right; background: ${colors.light1}; padding: 12px 16px; border-radius: 8px;">
-                      <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Стоимость</div>
-                      <div style="font-size: ${fontSize}px; font-weight: 700; color: ${colors.primary}; line-height: 1;">
-                        ${item.totalPrice.toLocaleString('ru-RU')} ₽
-                      </div>
-                      <div style="font-size: 11px; color: #6b7280; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
-                        ${item.pricePerUnit.toLocaleString('ru-RU')} ₽ × ${item.quantity} ${item.unit}
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </div>
+            <tr>
+              <td style="border: ${minimalInnerBorder}; padding: 6px 8px; font-size: 11px; color: #111827;">${itemNumber}</td>
+              <td style="border: ${minimalInnerBorder}; padding: 6px; text-align: center; vertical-align: top; overflow: hidden;">
+                ${safeImageUrl
+                  ? `<img src="${safeImageUrl}" alt="${safeName}" style="display: block; width: 100%; max-width: 64px; height: auto; max-height: 64px; object-fit: contain; border: ${minimalInnerBorder}; border-radius: 6px; margin: 0 auto; box-sizing: border-box;" />`
+                  : ``
+                }
+              </td>
+              <td style="border: ${minimalInnerBorder}; padding: 6px 8px; font-size: 12px; color: #111827; line-height: 1.45; word-break: break-word;">
+                <div style="min-width: 0;">
+                  <div>${safeName}</div>
+                  ${item.manufacturer ? `<div style="margin-top: 2px; font-size: 10px; color: #6b7280;">Производитель: ${safeManufacturer}</div>` : ''}
+                  ${itemLink ? `<div style="margin-top: 2px; font-size: 10px;"><a href="${itemLink}" target="_blank" rel="noopener noreferrer" style="color: ${minimalBorderColor}; text-decoration: underline;">Ссылка</a></div>` : ''}
+                  ${item.notes ? `<div style="margin-top: 2px; font-size: 10px; color: #6b7280;">${safeNotes}</div>` : ''}
+                </div>
+              </td>
+              <td style="border: ${minimalInnerBorder}; padding: 6px 8px; text-align: right; font-size: 11px; color: #111827;">${escapeHtml(item.unit)}</td>
+              <td style="border: ${minimalInnerBorder}; padding: 6px 8px; text-align: right; font-size: 11px; color: #111827;">${item.quantity}</td>
+              <td style="border: ${minimalInnerBorder}; padding: 6px 8px; text-align: right; font-size: 11px; color: #111827;">${item.pricePerUnit.toLocaleString('ru-RU')} ₽</td>
+              <td style="border: ${minimalInnerBorder}; padding: 6px 8px; text-align: right; font-size: ${Math.max(fontSize - 8, 12)}px; font-weight: 700; color: ${minimalBorderColor};">${item.totalPrice.toLocaleString('ru-RU')} ₽</td>
+            </tr>
           `
         })
-        
-        html += '</div>'
+
+        html += `
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" style="border: ${minimalBorder}; padding: 6px 8px; text-align: right; font-size: 10px; text-transform: uppercase; color: #374151; background: ${minimalHeaderBackground};">Итого по разделу "${blockName}"</td>
+                <td style="border: ${minimalBorder}; padding: 6px 8px; text-align: right; font-size: ${Math.max(fontSize - 6, 12)}px; font-weight: 700; color: ${minimalBorderColor}; background: ${minimalHeaderBackground};">${ownItemsTotal.toLocaleString('ru-RU')} ₽</td>
+              </tr>
+            </tfoot>
+          </table>
+        `
       }
 
-      // Рендерим дочерние блоки с передачей номера родителя
-      children.forEach((child: any) => {
-        html += renderBlockHTML(child, level + 1, blockNumber, fontSize)
-      })
-
-      html += '</div>'
+      html += '</section>'
       return html
     }
 
-    const rootBlocks = estimate.designer_estimate_blocks.filter(b => !b.parentId)
-    const totalAmount = rootBlocks.reduce((sum: number, block: any) => sum + calculateBlockTotal(block), 0)
+    function renderBlockAccentHTML(block: any, level: number = 1, fontSize: number = 20): string {
+      const ownItemsTotal = block.designer_estimate_items?.reduce((sum: number, item: any) => sum + item.totalPrice, 0) || 0
+
+      const blockNumber = getBlockNumber()
+      const blockName = escapeHtml(block.name)
+      const blockDescription = escapeHtml(block.description)
+      const indentPx = (level - 1) * 14
+
+      let html = `
+        <section class="block-wrapper" style="margin: 0 0 16px ${indentPx}px; border: 1px solid ${colors.light2}; border-radius: 10px; overflow: hidden;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; page-break-inside: avoid; background: ${colors.light1}; border-bottom: 1px solid ${colors.light2}; padding: 10px 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="background: ${colors.primary}; color: white; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1; padding: 5px 9px; min-width: 42px; text-align: center;">${blockNumber}</span>
+              <h${Math.min(level + 1, 4)} style="margin: 0; font-size: ${19 - level}px; font-weight: 700; color: #111827; line-height: 1.25;">
+                ${blockName}
+              </h${Math.min(level + 1, 4)}>
+            </div>
+          </div>
+          <div style="padding: 0 12px 10px 12px;">
+            ${block.description ? `<p style="margin: 0 0 8px 0; color: #4b5563; font-size: 12px; line-height: 1.5;">${blockDescription}</p>` : ''}
+      `
+
+      if (block.designer_estimate_items && block.designer_estimate_items.length > 0) {
+        html += `
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden;">
+            <thead>
+              <tr style="background: ${colors.light1};">
+                <th style="padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; text-align: left; width: 58px;">№</th>
+                <th style="padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; text-align: left;">Позиция</th>
+                <th style="padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; text-align: right; width: 105px;">Кол-во</th>
+                <th style="padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; text-align: right; width: 130px;">Цена</th>
+                <th style="padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; text-align: right; width: 145px;">Сумма</th>
+              </tr>
+            </thead>
+            <tbody>
+        `
+
+        block.designer_estimate_items.forEach((item: any, idx: number) => {
+          const itemNumber = `${blockNumber}.${idx + 1}`
+          const safeName = escapeHtml(item.name)
+          const safeManufacturer = escapeHtml(item.manufacturer)
+          const safeNotes = escapeHtml(item.notes).replace(/\n/g, '<br/>')
+          const itemLink = sanitizeUrl(item.link)
+          const safeImageUrl = sanitizeUrl(item.imageUrl)
+
+          html += `
+            <tr style="border-top: 1px solid #e5e7eb;">
+              <td style="padding: 10px; vertical-align: top;">
+                <span style="background: ${colors.primary}; color: white; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1; padding: 4px 7px; display: inline-block;">
+                  ${itemNumber}
+                </span>
+              </td>
+              <td style="padding: 10px; vertical-align: top;">
+                <div style="display: flex; gap: 10px; align-items: flex-start;">
+                  ${safeImageUrl ? `<img src="${safeImageUrl}" alt="${safeName}" style="width: 58px; height: 58px; object-fit: cover; border-radius: 8px; border: 1px solid #d1d5db;" />` : ''}
+                  <div style="min-width: 0;">
+                    <div style="font-size: 13px; font-weight: 600; color: #111827; line-height: 1.4;">${safeName}</div>
+                    ${item.manufacturer ? `<div style="font-size: 11px; color: #4b5563; margin-top: 3px;">Производитель: ${safeManufacturer}</div>` : ''}
+                    ${itemLink ? `<div style="font-size: 11px; margin-top: 4px;"><a href="${itemLink}" target="_blank" rel="noopener noreferrer" style="color: ${colors.primary}; text-decoration: none;">Ссылка на товар</a></div>` : ''}
+                    ${item.notes ? `<div style="font-size: 10px; color: #6b7280; margin-top: 5px; line-height: 1.45;">${safeNotes}</div>` : ''}
+                  </div>
+                </div>
+              </td>
+              <td style="padding: 10px; vertical-align: top; text-align: right; font-size: 12px; color: #374151;">
+                ${item.quantity} ${escapeHtml(item.unit)}
+              </td>
+              <td style="padding: 10px; vertical-align: top; text-align: right; font-size: 12px; color: #374151;">
+                ${item.pricePerUnit.toLocaleString('ru-RU')} ₽
+              </td>
+              <td style="padding: 10px; vertical-align: top; text-align: right; font-size: ${Math.max(fontSize - 4, 13)}px; color: ${colors.primary}; font-weight: 700;">
+                ${item.totalPrice.toLocaleString('ru-RU')} ₽
+              </td>
+            </tr>
+          `
+        })
+
+        html += `
+            </tbody>
+            <tfoot>
+              <tr style="background: #fafafa; border-top: 1px solid #e5e7eb;">
+                <td colspan="4" style="padding: 10px; text-align: right; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px;">
+                  Итого по разделу "${blockName}"
+                </td>
+                <td style="padding: 10px; text-align: right; font-size: ${Math.max(fontSize - 2, 14)}px; color: ${colors.primary}; font-weight: 700;">
+                  ${ownItemsTotal.toLocaleString('ru-RU')} ₽
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        `
+      }
+
+      html += '</div></section>'
+      return html
+    }
+
+    const estimateName = escapeHtml(estimate.name)
+    const estimateDescription = escapeHtml(estimate.description).replace(/\n/g, '<br/>')
+    const flatBlocks = [...estimate.designer_estimate_blocks].sort((a, b) => a.sortOrder - b.sortOrder)
+    const totalAmount = flatBlocks.reduce((sum: number, block: any) => sum + calculateBlockTotal(block), 0)
 
     // Собираем все суммы для определения размера шрифта
     const allAmounts: number[] = []
@@ -302,16 +404,31 @@ export async function GET(
     }
 
     let blocksHTML = ''
-    rootBlocks.forEach(block => {
-      blocksHTML += renderBlockHTML(block, 1, '', amountFontSize)
+    flatBlocks.forEach(block => {
+      blocksHTML += isMinimalStyle
+        ? renderBlockMinimalHTML(block, 1, amountFontSize)
+        : renderBlockAccentHTML(block, 1, amountFontSize)
     })
+
+    const autoPrintScript = shouldAutoPrint
+      ? `
+        <script>
+          window.addEventListener('load', () => {
+            setTimeout(() => {
+              window.focus()
+              window.print()
+            }, 120)
+          })
+        </script>
+      `
+      : ''
 
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>${estimate.name}</title>
+        <title>${estimateName}</title>
         <style>
           @page { 
             size: A4 ${orientation === 'landscape' ? 'landscape' : 'portrait'}; 
@@ -332,12 +449,13 @@ export async function GET(
             text-align: center;
             margin-bottom: 25px;
             padding: 20px;
-            background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.dark} 100%);
-            color: white;
+            background: ${isMinimalStyle ? '#ffffff' : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.dark} 100%)`};
+            color: ${isMinimalStyle ? '#111827' : 'white'};
+            border: ${isMinimalStyle ? '1px solid #d1d5db' : 'none'};
             border-radius: 10px;
           }
           .header h1 {
-            color: white;
+            color: inherit;
             font-size: 28px;
             margin: 0 0 10px 0;
             font-weight: 700;
@@ -348,33 +466,14 @@ export async function GET(
             opacity: 0.95;
             margin: 8px 0 0 0;
           }
-          .meta {
-            margin: 20px 0;
-            padding: 15px;
-            background: ${colors.light1};
-            border-radius: 8px;
-            border: 1px solid ${colors.light2};
-          }
-          .meta-label {
-            font-size: 12px;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            font-weight: 600;
-          }
-          .meta-value {
-            font-size: 16px;
-            color: #111827;
-            font-weight: 600;
-          }
           .footer-total {
             margin-top: 25px;
             padding: 20px;
-            background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.dark} 100%);
-            color: white;
+            background: ${isMinimalStyle ? '#ffffff' : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.dark} 100%)`};
+            color: ${isMinimalStyle ? '#111827' : 'white'};
             text-align: center;
             border-radius: 10px;
+            border: ${isMinimalStyle ? '1px solid #d1d5db' : 'none'};
           }
           .footer-total-label {
             font-size: 14px;
@@ -425,10 +524,6 @@ export async function GET(
             .header-description {
               font-size: 13px !important;
               margin: 5px 0 0 0 !important;
-            }
-            .meta {
-              padding: 10px !important;
-              margin: 10px 0 !important;
             }
             .footer-total {
               padding: 15px !important;
@@ -482,27 +577,8 @@ export async function GET(
       </head>
       <body>
         <div class="header">
-          <h1>${estimate.name}</h1>
-          ${estimate.description ? `<p class="header-description">${estimate.description}</p>` : ''}
-        </div>
-        
-        <div class="meta">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="width: 33.33%; text-align: center; padding: 10px;">
-                <div class="meta-label">👤 Клиент</div>
-                <div class="meta-value">${estimate.designer_clients.name}</div>
-              </td>
-              <td style="width: 33.33%; text-align: center; padding: 10px;">
-                <div class="meta-label">✏️ Дизайнер</div>
-                <div class="meta-value">${estimate.users.name}</div>
-              </td>
-              <td style="width: 33.33%; text-align: center; padding: 10px;">
-                <div class="meta-label">📅 Дата</div>
-                <div class="meta-value">${new Date(estimate.createdAt).toLocaleDateString('ru-RU')}</div>
-              </td>
-            </tr>
-          </table>
+          <h1>${estimateName}</h1>
+          ${estimate.description ? `<p class="header-description">${estimateDescription}</p>` : ''}
         </div>
         
         ${blocksHTML}
@@ -511,6 +587,7 @@ export async function GET(
           <div class="footer-total-label">Общая стоимость сметы</div>
           <div class="footer-total-amount" style="font-size: ${totalFontSize}px;">${totalAmount.toLocaleString('ru-RU')} ₽</div>
         </div>
+        ${autoPrintScript}
       </body>
       </html>
     `

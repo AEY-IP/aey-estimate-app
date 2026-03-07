@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
           prisma.estimates.count({ 
             where: { 
               isAct: false,
-              client: {
+              clients: {
                 OR: [
                   { createdBy: session.id },
                   { managerId: session.id }
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
           prisma.estimates.count({ 
             where: { 
               isAct: false,
-              client: {
+              clients: {
                 designerId: session.id
               }
             } 

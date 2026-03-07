@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/database'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -33,7 +34,7 @@ export async function POST(
     // Проверяем, существует ли клиент
     const client = await prisma.clients.findUnique({
       where: { id: clientId },
-      include: { clientUser: true }
+      include: { client_users: true }
     })
 
     if (!client) {
@@ -44,7 +45,7 @@ export async function POST(
     }
 
     // Проверяем, есть ли уже доступ
-    if (client.clientUser) {
+    if (client.client_users) {
       return NextResponse.json(
         { error: 'Доступ к кабинету уже создан' },
         { status: 400 }
@@ -80,10 +81,12 @@ export async function POST(
     // Создаем доступ к кабинету
     const clientUser = await prisma.client_users.create({
       data: {
+        id: randomUUID(),
         username,
         passwordHash,
         plainPassword: password,
-        clientId
+        clientId,
+        updatedAt: new Date()
       }
     })
 

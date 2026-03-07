@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/database'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -71,6 +72,7 @@ export async function POST(
       // 1. Создаем новую смету
       const newEstimate = await tx.estimates.create({
         data: {
+          id: randomUUID(),
           title: newTitle.trim(),
           type: sourceEstimate.type,
           category: sourceEstimate.category,
@@ -78,7 +80,18 @@ export async function POST(
           showToClient: false, // Новая смета по умолчанию скрыта от клиента
           isAct: false, // Новая смета не акт
           clientId: targetClientId,
-          createdBy: session.user.id
+          createdBy: session.user.id,
+          totalWorksPrice: sourceEstimate.totalWorksPrice,
+          totalMaterialsPrice: sourceEstimate.totalMaterialsPrice,
+          totalPrice: sourceEstimate.totalPrice,
+          coefficientSettings: sourceEstimate.coefficientSettings,
+          coefficientsData: sourceEstimate.coefficientsData,
+          manualPrices: sourceEstimate.manualPrices,
+          materialsBlock: sourceEstimate.materialsBlock,
+          summaryMaterialsBlock: sourceEstimate.summaryMaterialsBlock,
+          summaryWorksBlock: sourceEstimate.summaryWorksBlock,
+          worksBlock: sourceEstimate.worksBlock,
+          updatedAt: new Date()
         }
       })
 
@@ -86,6 +99,7 @@ export async function POST(
       if (sourceEstimate.estimate_coefficients.length > 0) {
         await tx.estimate_coefficients.createMany({
           data: sourceEstimate.estimate_coefficients.map(coeff => ({
+            id: randomUUID(),
             estimateId: newEstimate.id,
             name: coeff.name,
             value: coeff.value,
@@ -98,12 +112,14 @@ export async function POST(
       for (const room of sourceEstimate.estimate_rooms) {
         const newRoom = await tx.estimate_rooms.create({
           data: {
+            id: randomUUID(),
             name: room.name,
             totalWorksPrice: room.totalWorksPrice,
             totalMaterialsPrice: room.totalMaterialsPrice,
             totalPrice: room.totalPrice,
             sortOrder: room.sortOrder,
-            estimateId: newEstimate.id
+            estimateId: newEstimate.id,
+            updatedAt: new Date()
           }
         })
 
@@ -111,6 +127,7 @@ export async function POST(
         if (room.estimate_works.length > 0) {
           await tx.estimate_works.createMany({
             data: room.estimate_works.map(work => ({
+              id: randomUUID(),
               quantity: work.quantity,
               price: work.price,
               totalPrice: work.totalPrice,
@@ -128,6 +145,7 @@ export async function POST(
         if (room.estimate_materials.length > 0) {
           await tx.estimate_materials.createMany({
             data: room.estimate_materials.map(material => ({
+              id: randomUUID(),
               name: material.name,
               unit: material.unit,
               quantity: material.quantity,
@@ -153,6 +171,10 @@ export async function POST(
 
   } catch (error) {
     console.error('Ошибка копирования сметы:', error)
+    if (error && typeof error === 'object' && 'code' in error) {
+      console.error('Prisma error code:', (error as any).code)
+      console.error('Prisma error meta:', (error as any).meta)
+    }
     return NextResponse.json(
       { error: 'Ошибка копирования сметы' },
       { status: 500 }
@@ -185,76 +207,53 @@ async function generateExportCache(tx: any, estimateId: string) {
 
     if (!estimate) return
 
-    // Формируем данные для кэша
-    const cacheData = {
-      estimate: {
-        id: estimate.id,
-        title: estimate.title,
-        type: estimate.type,
-        category: estimate.category,
-        notes: estimate.notes,
-        createdAt: estimate.createdAt,
-        updatedAt: estimate.updatedAt
-      },
-      client: {
-        id: estimate.clients.id,
-        name: estimate.clients.name
-      },
-      creator: {
-        id: estimate.users.id,
-        name: estimate.users.name
-      },
-      rooms: estimate.estimate_rooms.map(room => ({
+    const worksData = JSON.stringify(
+      estimate.estimate_rooms.map((room: any) => ({
         id: room.id,
         name: room.name,
-        totalWorksPrice: room.totalWorksPrice,
-        totalMaterialsPrice: room.totalMaterialsPrice,
-        totalPrice: room.totalPrice,
-        sortOrder: room.sortOrder,
-        works: room.estimate_works.map(work => ({
-          id: work.id,
-          workItemId: work.workItemId,
-          blockTitle: work.blockTitle,
-          manualWorkName: work.manualWorkName,
-          manualWorkUnit: work.manualWorkUnit,
-          quantity: work.quantity,
-          price: work.price,
-          totalPrice: work.totalPrice,
-          description: work.description,
-          workItem: work.work_items ? {
-            id: work.work_items.id,
-            name: work.work_items.name,
-            unit: work.work_items.unit,
-            price: work.work_items.price
-          } : null
-        })),
-        materials: room.estimate_materials.map(material => ({
-          id: material.id,
-          name: material.name,
-          unit: material.unit,
-          quantity: material.quantity,
-          price: material.price,
-          totalPrice: material.totalPrice
-        }))
-      })),
-      coefficients: estimate.estimate_coefficients.map(coeff => ({
+        works: room.estimate_works
+      }))
+    )
+    const materialsData = JSON.stringify(
+      estimate.estimate_rooms.map((room: any) => ({
+        id: room.id,
+        name: room.name,
+        materials: room.estimate_materials
+      }))
+    )
+    const coefficientsInfo = JSON.stringify({
+      applied: estimate.estimate_coefficients.map((coeff: any) => ({
         id: coeff.id,
         name: coeff.name,
         value: coeff.value,
         description: coeff.description
-      }))
-    }
+      })),
+      normal: 1,
+      final: 1,
+      global: 1
+    })
 
-    // Сохраняем кэш
     await tx.estimate_exports.upsert({
       where: { estimateId },
       update: {
-        data: cacheData,
+        worksData,
+        materialsData,
+        totalWorksPrice: estimate.totalWorksPrice || 0,
+        totalMaterialsPrice: estimate.totalMaterialsPrice || 0,
+        grandTotal: estimate.totalPrice || 0,
+        coefficientsInfo,
         updatedAt: new Date()
       },
       create: {
+        id: randomUUID(),
         estimateId,
-        data: cacheData
+        worksData,
+        materialsData,
+        totalWorksPrice: estimate.totalWorksPrice || 0,
+        totalMaterialsPrice: estimate.totalMaterialsPrice || 0,
+        grandTotal: estimate.totalPrice || 0,
+        coefficientsInfo,
+        updatedAt: new Date()
       }
     })
 

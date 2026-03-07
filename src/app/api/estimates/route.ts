@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { checkAuth, checkClientAuth, canAccessMainSystem } from '@/lib/auth'
+import { randomUUID } from 'crypto'
+import { prisma } from '@/lib/database'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
-
 export async function GET(request: NextRequest) {
   try {
     // Сначала пробуем cookie-авторизацию для админов
@@ -114,21 +113,21 @@ export async function GET(request: NextRequest) {
     const estimates = await prisma.estimates.findMany({
       where: whereCondition,
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             name: true
           }
         },
         // Пока не включаем rooms из-за возможных проблем с данными
-        coefficients: userType === 'admin',
-        exportCache: userType === 'client' // Включаем кеш экспорта только для клиентов
+        estimate_coefficients: userType === 'admin',
+        estimate_exports: true
       },
       orderBy: {
         createdAt: 'desc'
@@ -153,16 +152,16 @@ export async function GET(request: NextRequest) {
           createdAt: estimate.createdAt,
           updatedAt: estimate.updatedAt,
           isAct: estimate.isAct,
-          client: estimate.client,
-          creator: estimate.creator,
+          client: estimate.clients,
+          creator: estimate.users,
           // Добавляем кеш экспорта если есть
-          cache: estimate.exportCache ? {
-            worksData: JSON.parse(estimate.exportCache.worksData),
-            materialsData: JSON.parse(estimate.exportCache.materialsData),
-            totalWorksPrice: estimate.exportCache.totalWorksPrice,
-            totalMaterialsPrice: estimate.exportCache.totalMaterialsPrice,
-            grandTotal: estimate.exportCache.grandTotal,
-            coefficientsInfo: estimate.exportCache.coefficientsInfo ? JSON.parse(estimate.exportCache.coefficientsInfo) : {
+          cache: estimate.estimate_exports ? {
+            worksData: JSON.parse(estimate.estimate_exports.worksData),
+            materialsData: JSON.parse(estimate.estimate_exports.materialsData),
+            totalWorksPrice: estimate.estimate_exports.totalWorksPrice,
+            totalMaterialsPrice: estimate.estimate_exports.totalMaterialsPrice,
+            grandTotal: estimate.estimate_exports.grandTotal,
+            coefficientsInfo: estimate.estimate_exports.coefficientsInfo ? JSON.parse(estimate.estimate_exports.coefficientsInfo) : {
               normal: 1,
               final: 1,
               global: 1,
@@ -191,8 +190,8 @@ export async function GET(request: NextRequest) {
           updatedAt: estimate.updatedAt,
           isAct: estimate.isAct,
           showToClient: estimate.showToClient,
-          client: estimate.client,
-          creator: estimate.creator,
+          client: estimate.clients,
+          creator: estimate.users,
           // rooms: пока убираем из-за проблем с данными
           rooms: []
         }
@@ -248,6 +247,7 @@ export async function POST(request: NextRequest) {
     
     const newEstimate = await prisma.estimates.create({
       data: {
+        id: randomUUID(),
         title,
         type,
         category,
@@ -255,27 +255,34 @@ export async function POST(request: NextRequest) {
         createdBy: session.id,
         totalWorksPrice: 0,
         totalMaterialsPrice: 0,
-        totalPrice: 0
+        totalPrice: 0,
+        updatedAt: new Date()
       },
       include: {
-        client: {
+        clients: {
           select: {
             id: true,
             name: true
           }
         },
-        creator: {
+        users: {
           select: {
             id: true,
             username: true
           }
         },
-        rooms: true,
-        coefficients: true
+        estimate_rooms: true,
+        estimate_coefficients: true
       }
     })
     
-    return NextResponse.json(newEstimate)
+    return NextResponse.json({
+      ...newEstimate,
+      client: newEstimate.clients,
+      creator: newEstimate.users,
+      rooms: newEstimate.estimate_rooms,
+      coefficients: newEstimate.estimate_coefficients
+    })
   } catch (error) {
     console.error('Ошибка создания сметы:', error)
     return NextResponse.json(

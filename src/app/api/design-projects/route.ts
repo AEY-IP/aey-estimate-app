@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { checkAuth } from '@/lib/auth'
 import jwt from 'jsonwebtoken'
 import { getSignedDownloadUrl } from '@/lib/storage'
+import { randomUUID } from 'crypto'
+import { prisma } from '@/lib/database'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
 
+async function toSignedUrl(filePath: string): Promise<string> {
+  if (!filePath || filePath.startsWith('http')) {
+    return filePath
+  }
+
+  try {
+    const normalizedKey = filePath.replace(/^\/+/, '')
+    return await getSignedDownloadUrl(normalizedKey, 3600)
+  } catch (error) {
+    console.error('Ошибка генерации signed URL для файла дизайн-проекта:', filePath, error)
+    return filePath
+  }
+}
 // GET - получить все блоки дизайн-проектов клиента
 export async function GET(request: NextRequest) {
   try {
@@ -73,13 +86,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Получаем блоки дизайн-проектов
-    const designProjectBlocks = await (prisma as any).designProjectBlock.findMany({
+    const designProjectBlocks = await prisma.design_project_blocks.findMany({
       where: {
         clientId: clientId,
         isVisible: true
       },
       include: {
-        files: {
+        design_project_files: {
           where: { isVisible: true },
           orderBy: { sortOrder: 'asc' }
         }
@@ -91,11 +104,8 @@ export async function GET(request: NextRequest) {
     const blocksWithSignedUrls = await Promise.all(
       designProjectBlocks.map(async (block: any) => {
         const filesWithUrls = await Promise.all(
-          block.files.map(async (file: any) => {
-            let filePath = file.filePath;
-            if (filePath && !filePath.startsWith('http')) {
-              filePath = await getSignedDownloadUrl(filePath, 3600);
-            }
+          block.design_project_files.map(async (file: any) => {
+            const filePath = await toSignedUrl(file.filePath)
             return { ...file, filePath };
           })
         );
@@ -145,30 +155,35 @@ export async function POST(request: NextRequest) {
     }
 
     // Получаем максимальный sortOrder
-    const maxSortOrder = await (prisma as any).designProjectBlock.findFirst({
+    const maxSortOrder = await prisma.design_project_blocks.findFirst({
       where: { clientId },
       orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true }
     })
 
     // Создаем блок дизайн-проекта
-    const designProjectBlock = await (prisma as any).designProjectBlock.create({
+    const designProjectBlock = await prisma.design_project_blocks.create({
       data: {
+        id: randomUUID(),
         title: title.trim(),
         description: description?.trim() || null,
         clientId: clientId,
         createdBy: session.id,
-        sortOrder: (maxSortOrder?.sortOrder || 0) + 1
+        sortOrder: (maxSortOrder?.sortOrder || 0) + 1,
+        updatedAt: new Date()
       },
       include: {
-        files: {
+        design_project_files: {
           where: { isVisible: true },
           orderBy: { sortOrder: 'asc' }
         }
       }
     })
 
-    return NextResponse.json(designProjectBlock)
+    return NextResponse.json({
+      ...designProjectBlock,
+      files: designProjectBlock.design_project_files
+    })
   } catch (error) {
     console.error('Error creating design project block:', error)
     return NextResponse.json({ error: 'Ошибка создания блока дизайн-проекта' }, { status: 500 })

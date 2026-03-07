@@ -20,6 +20,22 @@ export default function ImageCropModal({ imageSrc, fileName, onCropComplete, onC
 
   const CROP_SIZE = 400
 
+  const clampPosition = (
+    next: { x: number; y: number },
+    img: HTMLImageElement,
+    currentScale: number
+  ) => {
+    const scaledWidth = img.width * currentScale
+    const scaledHeight = img.height * currentScale
+    const maxOffsetX = Math.max(0, (scaledWidth - CROP_SIZE) / 2)
+    const maxOffsetY = Math.max(0, (scaledHeight - CROP_SIZE) / 2)
+
+    return {
+      x: Math.max(-maxOffsetX, Math.min(maxOffsetX, next.x)),
+      y: Math.max(-maxOffsetY, Math.min(maxOffsetY, next.y))
+    }
+  }
+
   useEffect(() => {
     const img = new Image()
     img.onload = () => {
@@ -78,11 +94,12 @@ export default function ImageCropModal({ imageSrc, fileName, onCropComplete, onC
   }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDragging) return
-    setPosition({
+    if (!isDragging || !image) return
+    const next = {
       x: e.clientX - dragStart.x,
       y: e.clientY - dragStart.y
-    })
+    }
+    setPosition(clampPosition(next, image, scale))
   }
 
   const handleMouseUp = () => {
@@ -98,6 +115,10 @@ export default function ImageCropModal({ imageSrc, fileName, onCropComplete, onC
     cropCanvas.height = CROP_SIZE
     const ctx = cropCanvas.getContext('2d')
     if (!ctx) return
+
+    // Гарантируем непрозрачный фон, чтобы не появлялись черные поля после JPEG-конвертации.
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, CROP_SIZE, CROP_SIZE)
 
     // Вычисляем координаты для кропа
     const centerX = canvas.width / 2
@@ -127,6 +148,11 @@ export default function ImageCropModal({ imageSrc, fileName, onCropComplete, onC
       }
     }, 'image/jpeg', 0.95)
   }
+
+  useEffect(() => {
+    if (!image) return
+    setPosition((prev) => clampPosition(prev, image, scale))
+  }, [scale, image])
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">

@@ -43,20 +43,10 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, description, parentId, level } = body
+    const { name, description } = body
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'Название блока обязательно' }, { status: 400 })
-    }
-
-    if (parentId && parentId !== accessCheck.block!.parentId) {
-      const parentBlock = await prisma.designer_estimate_blocks.findUnique({
-        where: { id: parentId }
-      })
-
-      if (!parentBlock || parentBlock.estimateId !== params.id) {
-        return NextResponse.json({ error: 'Родительский блок не найден' }, { status: 404 })
-      }
     }
 
     const block = await prisma.designer_estimate_blocks.update({
@@ -64,8 +54,8 @@ export async function PUT(
       data: {
         name: name.trim(),
         description: description?.trim() || null,
-        parentId: parentId || null,
-        level: level || accessCheck.block!.level,
+        parentId: null,
+        level: 1,
         updatedAt: new Date()
       },
       include: {
@@ -105,11 +95,12 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { sortOrder, parentId } = body
+    const { sortOrder } = body
 
     const updateData: any = {}
     if (sortOrder !== undefined) updateData.sortOrder = sortOrder
-    if (parentId !== undefined) updateData.parentId = parentId || null
+    updateData.parentId = null
+    updateData.level = 1
 
     const block = await prisma.designer_estimate_blocks.update({
       where: { id: params.blockId },

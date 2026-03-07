@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth, checkClientAuth, canAccessMainSystem } from '@/lib/auth'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
@@ -487,6 +488,7 @@ export async function PUT(
               // Создаем новые работы
               const works = room.worksBlock.blocks.flatMap((block: any) =>
                 (block.items || []).map((item: any) => ({
+                  id: randomUUID(),
                   roomId: savedRoom.id,
                   quantity: item.quantity || 0,
                   price: item.unitPrice || 0,
@@ -539,11 +541,12 @@ export async function PUT(
               
               // Создаем новые материалы
               const materials = room.materialsBlock.items.map((item: any) => ({
+                id: randomUUID(),
                 roomId: savedRoom.id,
                 name: item.name,
                 unit: item.unit,
                 quantity: item.quantity || 0,
-                unitPrice: item.unitPrice || 0,
+                price: item.unitPrice || 0,
                 totalPrice: item.totalPrice || 0
               }))
               
@@ -578,10 +581,12 @@ export async function PUT(
               const roomParams = room.roomParameters.parameters
                 .filter((param: any) => param.parameterId && param.value !== undefined)
                 .map((param: any) => ({
+                  id: randomUUID(),
                   estimateId: params.id,
                   roomId: savedRoom.id,
                   parameterId: param.parameterId,
-                  value: param.value || 0
+                  value: param.value || 0,
+                  updatedAt: new Date()
                 }))
               
               if (roomParams.length > 0) {
@@ -619,9 +624,11 @@ export async function PUT(
       
       // Создаем новые глобальные параметры
       const globalParams = body.roomParameters.parameters.map((param: any) => ({
+        id: randomUUID(),
         estimateId: params.id,
         parameterId: param.parameterId,
-        value: param.value || 0
+        value: param.value || 0,
+        updatedAt: new Date()
       }))
       
       if (globalParams.length > 0) {
@@ -992,6 +999,7 @@ export async function DELETE(
     // Сохраняем удаленную смету в таблицу deleted_estimates
     await prisma.deleted_estimates.create({
       data: {
+        id: randomUUID(),
         originalId: estimate.id,
         title: estimate.title,
         type: estimate.type,

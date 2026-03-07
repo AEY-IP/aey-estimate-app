@@ -117,9 +117,9 @@ export function middleware(request: NextRequest) {
       }
     }
     
-    // Дизайнеры имеют доступ только к dashboard и своим клиентам
+    // Дизайнеры имеют доступ только к своему контуру (/designer/*).
     if (userRole === 'DESIGNER') {
-      const allowedPaths = ['/dashboard', '/clients', '/api/clients', '/api/design-projects', '/api/auth']
+      const allowedPaths = ['/dashboard', '/designer', '/api/designer', '/api/design-projects', '/api/auth']
       const isAllowed = allowedPaths.some(path => pathname.startsWith(path))
       
       if (!isAllowed && !pathname.startsWith('/api/client')) {

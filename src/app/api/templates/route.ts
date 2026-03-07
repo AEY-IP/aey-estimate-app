@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/database'
+import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
-const prisma = new PrismaClient()
 
 // GET /api/templates - Получить список шаблонов
 export async function GET(request: NextRequest) {
@@ -24,25 +24,25 @@ export async function GET(request: NextRequest) {
         isActive: true
       },
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             name: true,
             username: true
           }
         },
-        rooms: {
+        template_rooms: {
           include: {
-            works: {
+            template_works: {
               include: {
-                workItem: {
+                work_items: {
                   include: {
-                    block: true
+                    work_blocks: true
                   }
                 }
               }
             },
-            materials: true
+            template_materials: true
           }
         }
       },
@@ -51,7 +51,20 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(templates)
+    return NextResponse.json(
+      templates.map((template) => ({
+        ...template,
+        creator: template.users,
+        rooms: template.template_rooms.map((room) => ({
+          ...room,
+          works: room.template_works.map((work) => ({
+            ...work,
+            workItem: work.work_items
+          })),
+          materials: room.template_materials
+        }))
+      }))
+    )
   } catch (error) {
     console.error('Ошибка получения шаблонов:', error)
     return NextResponse.json(
@@ -94,43 +107,58 @@ export async function POST(request: NextRequest) {
     // Создаем шаблон с одним помещением по умолчанию
     const template = await prisma.templates.create({
       data: {
+        id: randomUUID(),
         name,
         type,
-        description,
+        description: description ?? null,
         createdBy: session.user.id,
-        rooms: {
+        updatedAt: new Date(),
+        template_rooms: {
           create: {
+            id: randomUUID(),
             name: 'Основное помещение',
-            sortOrder: 0
+            sortOrder: 0,
+            updatedAt: new Date()
           }
         }
       },
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             name: true,
             username: true
           }
         },
-        rooms: {
+        template_rooms: {
           include: {
-            works: {
+            template_works: {
               include: {
-                workItem: {
+                work_items: {
                   include: {
-                    block: true
+                    work_blocks: true
                   }
                 }
               }
             },
-            materials: true
+            template_materials: true
           }
         }
       }
     })
 
-    return NextResponse.json(template, { status: 201 })
+    return NextResponse.json({
+      ...template,
+      creator: template.users,
+      rooms: template.template_rooms.map((room) => ({
+        ...room,
+        works: room.template_works.map((work) => ({
+          ...work,
+          workItem: work.work_items
+        })),
+        materials: room.template_materials
+      }))
+    }, { status: 201 })
   } catch (error) {
     console.error('Ошибка создания шаблона:', error)
     return NextResponse.json(
