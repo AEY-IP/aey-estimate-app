@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
-import { uploadFile, deleteFile, getSignedDownloadUrl } from '@/lib/storage'
+import { uploadFile, deleteFile, getSignedDownloadUrl, extractKeyFromUrl } from '@/lib/storage'
 
 
 export const dynamic = 'force-dynamic'
+
+const resolveSignedImageUrl = async (imageUrl: string): Promise<string> => {
+  if (!imageUrl) return imageUrl
+  if (!imageUrl.startsWith('http')) {
+    return getSignedDownloadUrl(imageUrl, 3600)
+  }
+  const extractedKey = extractKeyFromUrl(imageUrl)
+  if (extractedKey) {
+    return getSignedDownloadUrl(extractedKey, 3600)
+  }
+  return imageUrl
+}
 
 async function optimizeImage(buffer: Buffer): Promise<Buffer> {
   try {
@@ -30,7 +42,15 @@ async function checkItemAccess(itemId: string, sessionId: string, role: string) 
     include: {
       designer_estimate_blocks: {
         include: {
-          designer_estimates: true
+          designer_estimates: {
+            include: {
+              designer_clients: {
+                select: {
+                  designerId: true
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -40,7 +60,11 @@ async function checkItemAccess(itemId: string, sessionId: string, role: string) 
     return { error: 'Позиция не найдена', status: 404 }
   }
 
-  if (role === 'DESIGNER' && item.designer_estimate_blocks.designer_estimates.designerId !== sessionId) {
+  if (
+    role === 'DESIGNER' &&
+    item.designer_estimate_blocks.designer_estimates.designerId !== sessionId &&
+    item.designer_estimate_blocks.designer_estimates.designer_clients?.designerId !== sessionId
+  ) {
     return { error: 'Доступ запрещен', status: 403 }
   }
 
@@ -154,8 +178,8 @@ export async function PUT(
 
     // Генерируем signed URL для изображения
     const itemWithSignedUrl = { ...item };
-    if (itemWithSignedUrl.imageUrl && !itemWithSignedUrl.imageUrl.startsWith('http')) {
-      itemWithSignedUrl.imageUrl = await getSignedDownloadUrl(itemWithSignedUrl.imageUrl, 3600);
+    if (itemWithSignedUrl.imageUrl) {
+      itemWithSignedUrl.imageUrl = await resolveSignedImageUrl(itemWithSignedUrl.imageUrl);
     }
 
     return NextResponse.json({

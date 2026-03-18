@@ -1,21 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
-import { getSignedDownloadUrl } from '@/lib/storage'
+import { getSignedDownloadUrl, extractKeyFromUrl } from '@/lib/storage'
 import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
+
+const resolveSignedImageUrl = async (imageUrl: string): Promise<string> => {
+  if (!imageUrl) return imageUrl
+  if (!imageUrl.startsWith('http')) {
+    return getSignedDownloadUrl(imageUrl, 3600)
+  }
+  const extractedKey = extractKeyFromUrl(imageUrl)
+  if (extractedKey) {
+    return getSignedDownloadUrl(extractedKey, 3600)
+  }
+  return imageUrl
+}
+
 async function checkEstimateAccess(estimateId: string, sessionId: string, role: string) {
   const estimate = await prisma.designer_estimates.findUnique({
-    where: { id: estimateId }
+    where: { id: estimateId },
+    include: {
+      designer_clients: {
+        select: {
+          designerId: true
+        }
+      }
+    }
   })
 
   if (!estimate || !estimate.isActive) {
     return { error: 'Смета не найдена', status: 404 }
   }
 
-  if (role === 'DESIGNER' && estimate.designerId !== sessionId) {
+  if (
+    role === 'DESIGNER' &&
+    estimate.designerId !== sessionId &&
+    estimate.designer_clients?.designerId !== sessionId
+  ) {
     return { error: 'Доступ запрещен', status: 403 }
   }
 
@@ -69,8 +93,8 @@ export async function GET(
       blocks.map(async (block) => {
         const itemsWithUrls = await Promise.all(
           block.designer_estimate_items.map(async (item) => {
-            if (item.imageUrl && !item.imageUrl.startsWith('http')) {
-              return { ...item, imageUrl: await getSignedDownloadUrl(item.imageUrl, 3600) };
+            if (item.imageUrl) {
+              return { ...item, imageUrl: await resolveSignedImageUrl(item.imageUrl) };
             }
             return item;
           })
@@ -81,8 +105,8 @@ export async function GET(
           (block.other_designer_estimate_blocks || []).map(async (child) => {
             const childItemsWithUrls = await Promise.all(
               (child.designer_estimate_items || []).map(async (item) => {
-                if (item.imageUrl && !item.imageUrl.startsWith('http')) {
-                  return { ...item, imageUrl: await getSignedDownloadUrl(item.imageUrl, 3600) };
+                if (item.imageUrl) {
+                  return { ...item, imageUrl: await resolveSignedImageUrl(item.imageUrl) };
                 }
                 return item;
               })

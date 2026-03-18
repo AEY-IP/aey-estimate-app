@@ -8,7 +8,15 @@ async function checkBlockAccess(blockId: string, sessionId: string, role: string
   const block = await prisma.designer_estimate_blocks.findUnique({
     where: { id: blockId },
     include: {
-      designer_estimates: true
+      designer_estimates: {
+        include: {
+          designer_clients: {
+            select: {
+              designerId: true
+            }
+          }
+        }
+      }
     }
   })
 
@@ -16,7 +24,11 @@ async function checkBlockAccess(blockId: string, sessionId: string, role: string
     return { error: 'Блок не найден', status: 404 }
   }
 
-  if (role === 'DESIGNER' && block.designer_estimates.designerId !== sessionId) {
+  if (
+    role === 'DESIGNER' &&
+    block.designer_estimates.designerId !== sessionId &&
+    block.designer_estimates.designer_clients?.designerId !== sessionId
+  ) {
     return { error: 'Доступ запрещен', status: 403 }
   }
 

@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
-import { uploadFile, getSignedDownloadUrl } from '@/lib/storage'
+import { uploadFile, getSignedDownloadUrl, extractKeyFromUrl } from '@/lib/storage'
 import { randomUUID } from 'crypto'
 
 
 export const dynamic = 'force-dynamic'
+
+const resolveSignedImageUrl = async (imageUrl: string): Promise<string> => {
+  if (!imageUrl) return imageUrl
+  if (!imageUrl.startsWith('http')) {
+    return getSignedDownloadUrl(imageUrl, 3600)
+  }
+  const extractedKey = extractKeyFromUrl(imageUrl)
+  if (extractedKey) {
+    return getSignedDownloadUrl(extractedKey, 3600)
+  }
+  return imageUrl
+}
 
 async function optimizeImage(buffer: Buffer): Promise<Buffer> {
   try {
@@ -27,14 +39,25 @@ async function optimizeImage(buffer: Buffer): Promise<Buffer> {
 
 async function checkEstimateAccess(estimateId: string, sessionId: string, role: string) {
   const estimate = await prisma.designer_estimates.findUnique({
-    where: { id: estimateId }
+    where: { id: estimateId },
+    include: {
+      designer_clients: {
+        select: {
+          designerId: true
+        }
+      }
+    }
   })
 
   if (!estimate || !estimate.isActive) {
     return { error: 'Смета не найдена', status: 404 }
   }
 
-  if (role === 'DESIGNER' && estimate.designerId !== sessionId) {
+  if (
+    role === 'DESIGNER' &&
+    estimate.designerId !== sessionId &&
+    estimate.designer_clients?.designerId !== sessionId
+  ) {
     return { error: 'Доступ запрещен', status: 403 }
   }
 
@@ -84,8 +107,8 @@ export async function GET(
 
     const itemsWithSignedUrls = await Promise.all(
       items.map(async (item) => {
-        if (item.imageUrl && !item.imageUrl.startsWith('http')) {
-          const signedUrl = await getSignedDownloadUrl(item.imageUrl, 3600)
+        if (item.imageUrl) {
+          const signedUrl = await resolveSignedImageUrl(item.imageUrl)
           return { ...item, imageUrl: signedUrl }
         }
         return item
@@ -263,9 +286,9 @@ export async function POST(
 
     // Генерируем signed URL для изображения
     const itemWithSignedUrl = { ...item };
-    if (itemWithSignedUrl.imageUrl && !itemWithSignedUrl.imageUrl.startsWith('http')) {
+    if (itemWithSignedUrl.imageUrl) {
       console.log('🔑 Генерируем signed URL для:', itemWithSignedUrl.imageUrl);
-      const signedUrl = await getSignedDownloadUrl(itemWithSignedUrl.imageUrl, 3600);
+      const signedUrl = await resolveSignedImageUrl(itemWithSignedUrl.imageUrl);
       console.log('✅ Signed URL:', signedUrl);
       itemWithSignedUrl.imageUrl = signedUrl;
     }

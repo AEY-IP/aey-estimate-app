@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
-import { getSignedDownloadUrl } from '@/lib/storage'
+import { getSignedDownloadUrl, extractKeyFromUrl } from '@/lib/storage'
 
 export const dynamic = 'force-dynamic'
 // import puppeteer from 'puppeteer'
@@ -44,7 +44,11 @@ export async function GET(
       return NextResponse.json({ error: 'Смета не найдена' }, { status: 404 })
     }
 
-    if (session.role === 'DESIGNER' && estimate.designerId !== session.id) {
+    if (
+      session.role === 'DESIGNER' &&
+      estimate.designerId !== session.id &&
+      estimate.designer_clients?.designerId !== session.id
+    ) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -135,14 +139,30 @@ export async function GET(
       return null
     }
 
+    const resolveSignedImageUrl = async (imageUrl: string): Promise<string> => {
+      if (!imageUrl) return imageUrl
+      if (!imageUrl.startsWith('http')) {
+        return getSignedDownloadUrl(imageUrl, 7200)
+      }
+
+      // Для старых записей с полным URL в БД пробуем извлечь key и дать signed URL.
+      const extractedKey = extractKeyFromUrl(imageUrl)
+      if (extractedKey) {
+        return getSignedDownloadUrl(extractedKey, 7200)
+      }
+
+      // Если это внешний URL, оставляем как есть.
+      return imageUrl
+    }
+
     // Генерируем signed URLs для всех изображений
     const itemsWithImages = await Promise.all(
       estimate.designer_estimate_blocks.flatMap(block => 
         block.designer_estimate_items.map(async (item: any) => {
-          if (item.imageUrl && !item.imageUrl.startsWith('http')) {
+          if (item.imageUrl) {
             return {
               ...item,
-              imageUrl: await getSignedDownloadUrl(item.imageUrl, 7200)
+              imageUrl: await resolveSignedImageUrl(item.imageUrl)
             }
           }
           return item

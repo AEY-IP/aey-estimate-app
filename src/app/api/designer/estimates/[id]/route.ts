@@ -48,7 +48,11 @@ export async function GET(
       return NextResponse.json({ error: 'Смета не найдена' }, { status: 404 })
     }
 
-    if (session.role === 'DESIGNER' && estimate.designerId !== session.id) {
+    if (
+      session.role === 'DESIGNER' &&
+      estimate.designerId !== session.id &&
+      estimate.designer_clients?.designerId !== session.id
+    ) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -127,14 +131,25 @@ export async function PUT(
     }
 
     const existingEstimate = await prisma.designer_estimates.findUnique({
-      where: { id: params.id }
+      where: { id: params.id },
+      include: {
+        designer_clients: {
+          select: {
+            designerId: true
+          }
+        }
+      }
     })
 
     if (!existingEstimate || !existingEstimate.isActive) {
       return NextResponse.json({ error: 'Смета не найдена' }, { status: 404 })
     }
 
-    if (session.role === 'DESIGNER' && existingEstimate.designerId !== session.id) {
+    if (
+      session.role === 'DESIGNER' &&
+      existingEstimate.designerId !== session.id &&
+      existingEstimate.designer_clients?.designerId !== session.id
+    ) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -185,14 +200,25 @@ export async function DELETE(
     }
 
     const existingEstimate = await prisma.designer_estimates.findUnique({
-      where: { id: params.id }
+      where: { id: params.id },
+      include: {
+        designer_clients: {
+          select: {
+            designerId: true
+          }
+        }
+      }
     })
 
     if (!existingEstimate) {
       return NextResponse.json({ error: 'Смета не найдена' }, { status: 404 })
     }
 
-    if (session.role === 'DESIGNER' && existingEstimate.designerId !== session.id) {
+    if (
+      session.role === 'DESIGNER' &&
+      existingEstimate.designerId !== session.id &&
+      existingEstimate.designer_clients?.designerId !== session.id
+    ) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
