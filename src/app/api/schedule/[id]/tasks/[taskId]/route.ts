@@ -42,7 +42,7 @@ export async function PATCH(
     }
 
     // Проверяем права доступа к проекту
-    if (session && session.role === 'MANAGER' && task.schedule_projects.clients.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && task.schedule_projects.clients.createdBy !== session.id && task.schedule_projects.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
@@ -123,7 +123,7 @@ export async function DELETE(
     }
 
     // Проверяем права доступа к проекту
-    if (session && session.role === 'MANAGER' && task.schedule_projects.clients.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && task.schedule_projects.clients.createdBy !== session.id && task.schedule_projects.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 

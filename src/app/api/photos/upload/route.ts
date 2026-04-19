@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ Client found:', { id: client.id, name: client.name });
 
     // Для менеджеров проверяем права доступа
-    if (session.role === 'MANAGER' && client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && client.createdBy !== session.id && client.managerId !== session.id) {
       console.log('❌ Access denied for manager:', { managerId: session.id, clientCreatedBy: client.createdBy });
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }

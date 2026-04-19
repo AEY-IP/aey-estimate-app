@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Для менеджеров проверяем права доступа к клиенту
-    if (session && session.role === 'MANAGER' && client.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && client.createdBy !== session.id && client.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 

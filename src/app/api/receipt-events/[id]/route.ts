@@ -32,7 +32,7 @@ export async function GET(
     }
 
     // Проверяем права доступа для менеджеров
-    if (session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id && receiptBlock.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -73,7 +73,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Блок не найден' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id && receiptBlock.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 
@@ -124,7 +124,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Блок не найден' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && receiptBlock.clients.createdBy !== session.id && receiptBlock.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 

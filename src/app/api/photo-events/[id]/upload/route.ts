@@ -81,7 +81,7 @@ export async function POST(
       where: {
         id: eventId,
         clients: {
-          ...(user.role !== 'ADMIN' ? { createdBy: user.id } : {})
+          ...(user.role !== 'ADMIN' ? { OR: [{ createdBy: user.id }, { managerId: user.id }] } : {})
         }
       },
       include: {

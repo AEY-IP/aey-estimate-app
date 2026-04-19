@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const client = await prisma.clients.findFirst({
       where: {
         id: clientId,
-        ...(user.role !== 'ADMIN' ? { createdBy: user.id } : {})
+        ...(user.role !== 'ADMIN' ? { OR: [{ createdBy: user.id }, { managerId: user.id }] } : {})
       }
     });
 
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     const client = await prisma.clients.findFirst({
       where: {
         id: clientId,
-        ...(user.role !== 'ADMIN' ? { createdBy: user.id } : {})
+        ...(user.role !== 'ADMIN' ? { OR: [{ createdBy: user.id }, { managerId: user.id }] } : {})
       }
     });
 

@@ -32,7 +32,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Чек не найден' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && receipt.receipt_blocks.clients.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && receipt.receipt_blocks.clients.createdBy !== session.id && receipt.receipt_blocks.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 

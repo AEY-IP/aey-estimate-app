@@ -48,7 +48,7 @@ export async function PUT(
       const client = await prisma.clients.findUnique({
         where: { id: estimate.clientId }
       })
-      if (!client || client.createdBy !== session.id) {
+      if (!client || (client.createdBy !== session.id && client.managerId !== session.id)) {
         return NextResponse.json(
           { error: 'Доступ запрещен' },
           { status: 403 }

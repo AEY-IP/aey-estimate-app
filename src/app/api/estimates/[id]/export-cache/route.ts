@@ -36,7 +36,7 @@ export async function GET(
     // Проверяем права доступа
     if (session) {
       // Авторизация как админ/менеджер
-      if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id) {
+      if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id && estimate.clients.managerId !== session.id) {
         return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
       }
     } else if (clientSession) {
@@ -158,7 +158,7 @@ export async function POST(
     }
 
     // Проверяем права доступа для менеджеров
-    if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id && estimate.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 

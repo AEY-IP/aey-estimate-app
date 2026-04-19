@@ -32,7 +32,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Фото не найдено' }, { status: 404 })
     }
 
-    if (session.role === 'MANAGER' && photo.photo_blocks.clients.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && photo.photo_blocks.clients.createdBy !== session.id && photo.photo_blocks.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 

@@ -17,7 +17,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Проверяем, что акт существует
     const act = await prisma.estimates.findUnique({
-      where: { id }
+      where: { id },
+      include: { clients: true }
     })
 
     if (!act || !act.isAct) {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Для менеджеров проверяем права доступа
-    if (session.role === 'MANAGER' && act.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && act.createdBy !== session.id && act.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
 

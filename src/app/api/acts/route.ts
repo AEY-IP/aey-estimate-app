@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
           where: { id: clientId, isActive: true }
         })
         
-        if (!client || client.createdBy !== session.id) {
+        if (!client || (client.createdBy !== session.id && client.managerId !== session.id)) {
           return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
         }
       }
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       // Для менеджеров показываем только акты их клиентов
       const managerClients = await prisma.clients.findMany({
         where: {
-          createdBy: session.id,
+          OR: [{ createdBy: session.id }, { managerId: session.id }],
           isActive: true
         },
         select: { id: true }

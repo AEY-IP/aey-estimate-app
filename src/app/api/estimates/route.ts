@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Для менеджеров проверяем права доступа
-      if (session && session.role === 'MANAGER' && client.createdBy !== session.id) {
+      if (session && session.role === 'MANAGER' && client.createdBy !== session.id && client.managerId !== session.id) {
         return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
       }
     }
@@ -81,12 +81,12 @@ export async function GET(request: NextRequest) {
       // Для менеджеров показываем только сметы их клиентов
       const managerClients = await prisma.clients.findMany({
         where: {
-          createdBy: session.id,
+          OR: [{ createdBy: session.id }, { managerId: session.id }],
           isActive: true
         },
         select: { id: true }
       })
-      
+
       whereCondition.clientId = {
         in: managerClients.map(client => client.id)
       }
@@ -241,7 +241,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Менеджеры могут создавать сметы только для своих клиентов
-    if (session.role === 'MANAGER' && client.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && client.createdBy !== session.id && client.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 })
     }
     

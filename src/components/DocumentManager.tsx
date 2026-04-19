@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Download, FileText, File, Image, Upload, Plus } from 'lucide-react';
+import { X, Download, FileText, File, Image, Upload, Plus, Trash2 } from 'lucide-react';
 
 interface Document {
   id: string;
@@ -28,6 +28,7 @@ export default function DocumentManager({ clientId, canUpload = true }: Document
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [newDocumentName, setNewDocumentName] = useState('');
   const [newDocumentDescription, setNewDocumentDescription] = useState('');
+  const [deletingDocument, setDeletingDocument] = useState<Document | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Загрузка документов
@@ -130,6 +131,21 @@ export default function DocumentManager({ clientId, canUpload = true }: Document
     const sizes = ['Байт', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const deleteDocument = async () => {
+    if (!deletingDocument) return;
+    try {
+      const response = await fetch(`/api/documents/${deletingDocument.id}`, { method: 'DELETE' });
+      if (response.ok) {
+        setDeletingDocument(null);
+        await loadDocuments();
+      } else {
+        alert('Ошибка удаления документа');
+      }
+    } catch {
+      alert('Ошибка сети при удалении документа');
+    }
   };
 
   const previewDocument = (document: Document) => {
@@ -270,7 +286,7 @@ export default function DocumentManager({ clientId, canUpload = true }: Document
                     </span>
                   </div>
                 </div>
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 flex items-center gap-1">
                   <a
                     href={document.filePath}
                     download={document.fileName}
@@ -280,6 +296,15 @@ export default function DocumentManager({ clientId, canUpload = true }: Document
                   >
                     <Download className="h-4 w-4" />
                   </a>
+                  {canUpload && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeletingDocument(document); }}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Удалить документ"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -336,6 +361,31 @@ export default function DocumentManager({ clientId, canUpload = true }: Document
         accept="image/*,.pdf"
         className="hidden"
       />
+
+      {deletingDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="font-medium mb-4">Удалить документ?</h3>
+            <p className="text-gray-600 mb-4">
+              Документ «{deletingDocument.name}» будет удалён безвозвратно.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={deleteDocument}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Удалить
+              </button>
+              <button
+                onClick={() => setDeletingDocument(null)}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {uploading && (
         <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg">

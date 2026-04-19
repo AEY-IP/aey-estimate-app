@@ -219,7 +219,7 @@ export async function GET(
       const client = await prisma.clients.findUnique({
         where: { id: estimate.clientId }
       })
-      if (!client || client.createdBy !== session.id) {
+      if (!client || (client.createdBy !== session.id && client.managerId !== session.id)) {
         return NextResponse.json(
           { error: 'Доступ запрещен' },
           { status: 403 }
@@ -911,7 +911,7 @@ export async function PATCH(
     }
 
     // Для менеджеров проверяем права доступа к клиенту
-    if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id && estimate.clients.managerId !== session.id) {
       return NextResponse.json(
         { error: 'Доступ запрещен' },
         { status: 403 }

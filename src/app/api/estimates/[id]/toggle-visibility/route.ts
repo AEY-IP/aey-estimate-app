@@ -135,7 +135,7 @@ export async function PATCH(
     }
 
     // Проверяем права доступа
-    if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id) {
+    if (session.role === 'MANAGER' && estimate.clients.createdBy !== session.id && estimate.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 

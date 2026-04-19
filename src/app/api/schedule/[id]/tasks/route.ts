@@ -39,7 +39,7 @@ export async function GET(
     }
 
     // Проверяем права доступа
-    if (session && session.role === 'MANAGER' && project.clients.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && project.clients.createdBy !== session.id && project.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
@@ -128,7 +128,7 @@ export async function POST(
     }
 
     // Проверяем права доступа
-    if (session && session.role === 'MANAGER' && project.clients.createdBy !== session.id) {
+    if (session && session.role === 'MANAGER' && project.clients.createdBy !== session.id && project.clients.managerId !== session.id) {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
