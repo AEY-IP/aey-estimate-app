@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadFile } from '@/lib/storage';
+import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
 
@@ -96,12 +97,14 @@ export async function POST(request: NextRequest) {
     // Сохраняем в базу данных
     const document = await prisma.documents.create({
       data: {
+        id: randomUUID(),
         name: title,
         fileName: file.name,
         filePath: uniqueFileName,
         fileSize: file.size,
         mimeType: file.type,
-        clientId: clientId
+        clientId: clientId,
+        updatedAt: new Date()
       }
     });
 

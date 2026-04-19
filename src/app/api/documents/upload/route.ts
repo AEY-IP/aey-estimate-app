@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadFile } from '@/lib/storage';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import { checkAuth, checkClientAuth } from '@/lib/auth';
 import { prisma } from '@/lib/database'
 
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
 
     // Сохраняем информацию о документе в БД
     const documentData: any = {
+      id: randomUUID(),
       clientId: clientId,
       name: name || file.name,
       fileName: file.name,
@@ -103,7 +105,8 @@ export async function POST(request: NextRequest) {
       mimeType: file.type,
       filePath: key,
       description: description || '',
-      category: category
+      category: category,
+      updatedAt: new Date()
     };
 
     // Добавляем blockId если указан (для блочной системы)
