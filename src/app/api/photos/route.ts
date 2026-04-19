@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { checkAuth, checkClientAuth } from '@/lib/auth';
 import { getSignedDownloadUrl } from '@/lib/storage';
 import { prisma } from '@/lib/database'
@@ -163,9 +164,11 @@ export async function POST(request: NextRequest) {
     // Создаем блок фотографий
     const photoBlock = await prisma.photo_blocks.create({
       data: {
+        id: randomUUID(),
         clientId,
         title,
-        description: description || ''
+        description: description || '',
+        updatedAt: new Date()
       }
     });
 

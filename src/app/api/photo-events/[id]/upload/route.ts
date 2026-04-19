@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadFile } from '@/lib/storage';
+import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/database';
 import { checkAuth } from '@/lib/auth';
 
@@ -134,6 +135,7 @@ export async function POST(
     // Сохраняем в базу данных
     const photo = await prisma.photos.create({
       data: {
+        id: randomUUID(),
         fileName: file.name,
         filePath: fileUrl,
         fileSize: file.size,

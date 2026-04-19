@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { prisma } from '@/lib/database'
 import { checkAuth } from '@/lib/auth'
 
@@ -71,11 +72,13 @@ export async function POST(
     // Создаем новость
     const newsItem = await prisma.project_news.create({
       data: {
+        id: randomUUID(),
         title: title.trim(),
         content: content.trim(),
         comment: comment?.trim() || null,
         type: newsType,
-        clientId
+        clientId,
+        updatedAt: new Date()
       }
     })
 

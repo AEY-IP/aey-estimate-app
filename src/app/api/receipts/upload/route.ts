@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadFile } from '@/lib/storage';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import { checkAuth, checkClientAuth } from '@/lib/auth';
 import { prisma } from '@/lib/database'
 
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
     // Сохраняем информацию о чеке в БД
     const receipt = await prisma.receipts.create({
       data: {
+        id: randomUUID(),
         blockId: blockId,
         fileName: file.name,
         filePath: key,

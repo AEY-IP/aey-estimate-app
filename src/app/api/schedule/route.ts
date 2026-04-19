@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { checkAuth, checkClientAuth } from '@/lib/auth';
 import { prisma } from '@/lib/database'
 
@@ -156,12 +157,14 @@ export async function POST(request: NextRequest) {
     // Создаем проект графика
     const project = await prisma.schedule_projects.create({
       data: {
+        id: randomUUID(),
         clientId,
         title,
         description: description || '',
         startDate: new Date(startDate),
         endDate: new Date(endDate),
-        createdBy: session!.id
+        createdBy: session!.id,
+        updatedAt: new Date()
       }
     });
 
@@ -193,15 +196,17 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < standardTasks.length; i++) {
       const task = await prisma.schedule_tasks.create({
         data: {
+          id: randomUUID(),
           projectId: project.id,
           title: standardTasks[i],
           description: '',
-          level: 0, // LVL 1 (индекс с 0)
+          level: 0,
           orderIndex: i,
-          plannedStart: new Date(startDate), // Временные даты, требуют редактирования
+          plannedStart: new Date(startDate),
           plannedEnd: new Date(endDate),
           progress: 0,
-          status: 'waiting'
+          status: 'waiting',
+          updatedAt: new Date()
         }
       });
       
