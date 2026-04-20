@@ -43,8 +43,25 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
   
+  let parsedSession: any
   try {
-    const session = JSON.parse(authSession.value)
+    let raw = authSession.value
+    try {
+      if (raw.includes('%')) raw = decodeURIComponent(raw)
+    } catch {}
+    try {
+      raw = Buffer.from(raw, 'base64').toString('utf-8')
+    } catch {}
+    parsedSession = JSON.parse(raw)
+  } catch (error) {
+    console.error('Ошибка парсинга сессии:', error)
+    const response = NextResponse.redirect(new URL('/', request.url))
+    response.cookies.delete('auth-session')
+    return response
+  }
+
+  try {
+    const session = parsedSession
     const userRole = session.role
     
     // Проверяем доступ к админским страницам
