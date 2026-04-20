@@ -3,6 +3,20 @@ import { NextRequest, NextResponse } from 'next/server'
 // Публичные страницы, доступные без авторизации
 const publicPaths = ['/login', '/client-login', '/']
 
+function decodeClientToken(token: string): { clientId: string; clientUserId: string; type: string; exp?: number } | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf-8'))
+    if (payload.type !== 'client' || !payload.clientId || !payload.clientUserId) return null
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null
+    return payload
+  } catch {
+    return null
+  }
+}
+
 // Админские страницы, доступные только админам
 const adminPaths = ['/admin', '/works', '/coefficients', '/room-parameters']
 
@@ -27,11 +41,18 @@ export function middleware(request: NextRequest) {
   // Обрабатываем клиентские страницы отдельно
   if (pathname.startsWith('/client-dashboard') || pathname.startsWith('/api/client')) {
     const clientToken = request.cookies.get('client-token')
-    
+
     if (!clientToken || !clientToken.value) {
       return NextResponse.redirect(new URL('/', request.url))
     }
-    
+
+    const decoded = decodeClientToken(clientToken.value)
+    if (!decoded) {
+      const response = NextResponse.redirect(new URL('/', request.url))
+      response.cookies.delete('client-token')
+      return response
+    }
+
     return NextResponse.next()
   }
   
