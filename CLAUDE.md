@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Critical Rules
+
+- **NEVER run database migrations** (`db:migrate`, `db:deploy`, or any `prisma migrate` command) without explicit user approval. Always describe what the migration will do and wait for confirmation first.
+- **NEVER deploy to production** (`git push`, `vercel deploy`, or any deployment command) without explicit user confirmation. Always show what will be deployed and ask before proceeding.
+
 ## Commands
 
 ```bash

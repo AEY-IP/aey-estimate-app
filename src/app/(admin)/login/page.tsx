@@ -137,6 +137,9 @@ export default function LoginPage() {
                 placeholder="Введите логин"
                 required
                 autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </div>
 
