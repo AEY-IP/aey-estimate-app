@@ -7,7 +7,9 @@ import { prisma } from '@/lib/database'
 export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json()
+    const body = await request.json()
+    const username = (body.username ?? '').trim()
+    const password = (body.password ?? '').trim()
 
     if (!username || !password) {
       return NextResponse.json(
@@ -16,9 +18,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Найти клиента по логину
-    const clientUser = await prisma.client_users.findUnique({
-      where: { username },
+    // Найти клиента по логину (case-insensitive для надёжности на мобильных)
+    const clientUser = await prisma.client_users.findFirst({
+      where: {
+        username: { equals: username, mode: 'insensitive' }
+      },
       include: {
         clients: true
       }
