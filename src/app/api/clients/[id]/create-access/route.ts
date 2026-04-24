@@ -15,13 +15,22 @@ function generatePassword(length: number = 6): string {
   return result
 }
 
-// Функция генерации логина
+const CYRILLIC_TO_LATIN: Record<string, string> = {
+  'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'z','з':'z',
+  'и':'i','й':'i','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r',
+  'с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'c','ч':'c','ш':'s','щ':'s',
+  'ъ':'','ы':'y','ь':'','э':'e','ю':'u','я':'y'
+}
+
+function transliterate(str: string): string {
+  return str.toLowerCase().split('').map(ch => CYRILLIC_TO_LATIN[ch] ?? ch).join('').replace(/[^a-z0-9]/g, '')
+}
+
 function generateUsername(clientName: string): string {
-  // Берем первые буквы слов и добавляем случайные цифры
   const words = clientName.split(' ').filter(word => word.length > 0)
-  let username = words.map(word => word[0].toLowerCase()).join('')
-  username += Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-  return username
+  const initials = words.map(word => transliterate(word[0])).join('')
+  const digits = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+  return (initials || 'u') + digits
 }
 
 export async function POST(

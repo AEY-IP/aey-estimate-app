@@ -26,6 +26,10 @@ export async function POST(
       return NextResponse.json({ error: 'Пароль должен быть не менее 4 символов' }, { status: 400 })
     }
 
+    if (/[а-яёА-ЯЁ]/.test(newPassword)) {
+      return NextResponse.json({ error: 'Пароль должен содержать только латинские буквы и цифры' }, { status: 400 })
+    }
+
     // Проверяем, что клиент существует и принадлежит текущему пользователю
     const client = await prisma.clients.findFirst({
       where: {
