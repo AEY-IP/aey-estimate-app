@@ -2128,10 +2128,6 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
       </div>
 
     <div class="disclaimer">
-      Работы, указанные в настоящем акте согласованы заказчиком дополнительно к смете (Приложение №2 к договору).
-      </div>
-    
-    <div class="disclaimer">
       Подписанием настоящего акта Заказчик подтверждает, что работы выполнены в полном объеме и с надлежащим качеством. Претензий относительно качества и объемов работ Заказчик не имеет.
     </div>
 
@@ -2146,7 +2142,7 @@ function generateSimpleActHTML(act: any, settings: any, clientData: any = null):
       </div>
     </div>
   </div>
-  
+
   <script>
     window.addEventListener('load', function() {
       setTimeout(function() {

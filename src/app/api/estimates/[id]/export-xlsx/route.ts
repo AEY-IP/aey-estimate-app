@@ -249,20 +249,22 @@ export async function GET(
     let allMaterials: any[] = []
 
     if (normalizedEstimate.exportCache) {
-      console.log('📊 Используем кеш экспорта для Excel')
-      console.log('📊 Кеш данные:', {
-        worksDataLength: normalizedEstimate.exportCache.worksData?.length || 0,
-        materialsDataLength: normalizedEstimate.exportCache.materialsData?.length || 0,
-        totalWorksPrice: normalizedEstimate.exportCache.totalWorksPrice,
-        totalMaterialsPrice: normalizedEstimate.exportCache.totalMaterialsPrice
-      })
       try {
-        // Парсим данные из кеша
         const worksData = JSON.parse(normalizedEstimate.exportCache.worksData)
         const materialsData = JSON.parse(normalizedEstimate.exportCache.materialsData)
-        
-        // Преобразуем данные кеша в формат для Excel
-        if (Array.isArray(worksData) && worksData.length > 0) {
+
+        // Проверяем что кэш в правильном формате: блоки с массивом items
+        // Старый формат хранил сырые объекты estimate_rooms (с полем works вместо items)
+        const isValidWorksFormat = Array.isArray(worksData) && (
+          worksData.length === 0 ||
+          (worksData[0].items !== undefined && !worksData[0].works)
+        )
+        const isValidMaterialsFormat = Array.isArray(materialsData) && (
+          materialsData.length === 0 ||
+          materialsData[0].unitPrice !== undefined || materialsData[0].quantity !== undefined
+        )
+
+        if (isValidWorksFormat) {
           worksData.forEach((block: any) => {
             if (block.items && Array.isArray(block.items)) {
               block.items.forEach((item: any) => {
@@ -278,10 +280,10 @@ export async function GET(
             }
           })
         } else {
-          console.log('⚠️ Кеш экспорта пуст или неправильный формат worksData')
+          console.log('⚠️ Кэш работ в старом формате — используем данные из БД')
         }
-        
-        if (Array.isArray(materialsData) && materialsData.length > 0) {
+
+        if (isValidMaterialsFormat) {
           materialsData.forEach((item: any) => {
             allMaterials.push({
               name: item.name,
@@ -292,11 +294,10 @@ export async function GET(
             })
           })
         } else {
-          console.log('⚠️ Кеш экспорта пуст или неправильный формат materialsData')
+          console.log('⚠️ Кэш материалов в старом формате — используем данные из БД')
         }
       } catch (error) {
         console.error('❌ Ошибка парсинга кеша экспорта:', error)
-        // Fallback к старому методу
         allWorks = []
         allMaterials = []
       }
@@ -399,36 +400,33 @@ export async function GET(
       }
       
       if (normalizedEstimate.rooms && normalizedEstimate.rooms.length > 0) {
-        normalizedEstimate.rooms.forEach((room: any, index: number) => {
-          console.log(`📊 Room ${index + 1} (${room.name}):`, {
-            worksCount: room.works?.length || 0,
-            materialsCount: room.materials?.length || 0
-          })
-          
+        normalizedEstimate.rooms.forEach((room: any) => {
           if (room.works && room.works.length > 0) {
             room.works.forEach((work: any) => {
+              const workName = work.workItem?.name || work.manualWorkName || 'Неизвестная работа'
+              const workUnit = work.workItem?.unit || work.manualWorkUnit || 'шт'
+              const unitPrice = work.price || 0
+              const qty = work.quantity || 0
               allWorks.push({
-                ...work,
-                blockTitle: work.blockTitle || 'Без блока',
-                workItem: work.workItem || { name: work.manualWorkName || 'Неизвестная работа', unit: work.manualWorkUnit || 'шт' },
-                quantity: work.quantity || 0,
-                price: work.price || 0,
-                totalPrice: work.totalPrice || 0,
-                roomContext: room.name
+                blockTitle: work.blockTitle || room.name || 'Без блока',
+                workItem: { name: workName, unit: workUnit },
+                quantity: qty,
+                price: unitPrice,
+                totalPrice: work.totalPrice || unitPrice * qty
               })
             })
           }
-          
+
           if (room.materials && room.materials.length > 0) {
             room.materials.forEach((material: any) => {
+              const unitPrice = material.price || 0
+              const qty = material.quantity || 0
               allMaterials.push({
-                ...material,
                 name: material.name || 'Неизвестный материал',
                 unit: material.unit || 'шт',
-                quantity: material.quantity || 0,
-                price: material.price || 0,
-                totalPrice: material.totalPrice || 0,
-                roomContext: room.name
+                quantity: qty,
+                price: unitPrice,
+                totalPrice: material.totalPrice || unitPrice * qty
               })
             })
           }
@@ -450,7 +448,8 @@ export async function GET(
           const unit = item.workItem?.unit || item.manualWorkUnit || item.unit || 'шт'
           const quantity = item.quantity || 0
           const unitPrice = item.price || 0
-          const totalPrice = item.totalPrice || (quantity * unitPrice)
+          // totalPrice = unitPrice * quantity, чтобы колонки были согласованы
+          const totalPrice = unitPrice * quantity
 
           addWorkItem(workRowNumber++, workName, unit, quantity, unitPrice, totalPrice)
         })
@@ -459,7 +458,7 @@ export async function GET(
 
       // Группируем по блокам
       const blockGroups: { [key: string]: any[] } = {}
-      
+
       items.forEach((item: any) => {
         const blockTitle = item.blockTitle || 'Без блока'
         if (!blockGroups[blockTitle]) {
@@ -471,16 +470,17 @@ export async function GET(
       // Добавляем каждый блок
       Object.entries(blockGroups).forEach(([blockTitle, blockItems]) => {
         addBlockHeader(blockTitle)
-        
+
         let blockTotal = 0
-        
+
         blockItems.forEach((item: any) => {
           const workName = item.workItem?.name || item.manualWorkName || 'Неизвестная работа'
           const unit = item.workItem?.unit || item.manualWorkUnit || 'шт'
           const quantity = item.quantity || 0
           const unitPrice = item.price || 0
-          const totalPrice = item.totalPrice || (quantity * unitPrice)
-          
+          // totalPrice = unitPrice * quantity, чтобы колонки были согласованы
+          const totalPrice = unitPrice * quantity
+
           blockTotal += totalPrice
           addWorkItem(workRowNumber++, workName, unit, quantity, unitPrice, totalPrice)
         })
@@ -494,26 +494,22 @@ export async function GET(
     addTableHeaders()
 
     // Добавляем работы в сводную таблицу
+    let totalWorksPrice = 0
     if (allWorks.length > 0) {
       addSectionHeader('РАБОТЫ')
       processWorkItems(allWorks, true)
-      
-      // Общий итог по работам (используем данные из кеша если есть)
-      const totalWorksPrice = normalizedEstimate.exportCache 
-        ? normalizedEstimate.exportCache.totalWorksPrice 
-        : allWorks.reduce((sum: number, work: any) => sum + (work.totalPrice || 0), 0)
+      // Считаем итог из позиций, чтобы он совпадал с суммой блоков в Excel
+      totalWorksPrice = allWorks.reduce((sum: number, work: any) => sum + (work.totalPrice || 0), 0)
       addSubtotal('ОБЩИЙ ИТОГ ПО РАБОТАМ', totalWorksPrice)
     }
 
     // Добавляем материалы в сводную таблицу
+    let totalMaterialsPrice = 0
     if (allMaterials.length > 0) {
       addSectionHeader('МАТЕРИАЛЫ')
       processWorkItems(allMaterials, false)
-      
-      // Общий итог по материалам (используем данные из кеша если есть)
-      const totalMaterialsPrice = normalizedEstimate.exportCache 
-        ? normalizedEstimate.exportCache.totalMaterialsPrice 
-        : allMaterials.reduce((sum: number, material: any) => sum + (material.totalPrice || 0), 0)
+      // Считаем итог из позиций, чтобы он совпадал с суммой строк в Excel
+      totalMaterialsPrice = allMaterials.reduce((sum: number, material: any) => sum + (material.totalPrice || 0), 0)
       addSubtotal('ОБЩИЙ ИТОГ ПО МАТЕРИАЛАМ', totalMaterialsPrice)
     }
 
@@ -524,10 +520,8 @@ export async function GET(
       currentRow++
     }
 
-    // Общий итог сметы (используем данные из кеша если есть)
-    const grandTotal = normalizedEstimate.exportCache 
-      ? normalizedEstimate.exportCache.grandTotal 
-      : normalizedEstimate.totalPrice || 0
+    // Общий итог = сумма работ + материалов (согласовано с позициями выше)
+    const grandTotal = totalWorksPrice + totalMaterialsPrice
     addSubtotal('ОБЩИЙ ИТОГ СМЕТЫ', grandTotal, true)
 
     // Настраиваем ширину колонок

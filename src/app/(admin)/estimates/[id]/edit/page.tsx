@@ -1011,62 +1011,66 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
           }
           setEstimate(estimateWithDates)
           
-          // Создаем кеш экспорта если смета видна клиенту
-          if (estimateWithDates.showToClient) {
-            try {
-              // Рассчитываем данные для кеша экспорта в правильном формате
-              const globalCoeff = calculateNormalCoefficients() * calculateFinalCoefficients()
-              
-              // Форматируем работы для клиентского просмотра
-              const worksData = updatedBlocks.map(block => ({
-                id: block.id,
-                title: block.title,
-                items: block.items.map(item => ({
-                  id: item.id,
-                  name: item.name,
-                  unit: item.unit,
-                  quantity: item.quantity,
-                  unitPrice: item.unitPrice, // уже с коэффициентами
-                  totalPrice: item.totalPrice // уже с коэффициентами
-                })),
-                totalPrice: block.totalPrice
-              }))
-              
-              // Форматируем материалы для клиентского просмотра
-              const materialsData = (estimate.materialsBlock?.items || []).map(item => ({
+          // Создаем кеш экспорта при каждом сохранении (для корректного Excel-экспорта)
+          try {
+            const globalCoeff = calculateNormalCoefficients() * calculateFinalCoefficients()
+
+            // Форматируем работы — unitPrice и totalPrice уже с коэффициентами из updatedBlocks
+            const worksData = updatedBlocks.map(block => ({
+              id: block.id,
+              title: block.title,
+              items: block.items.map(item => ({
                 id: item.id,
                 name: item.name,
                 unit: item.unit,
                 quantity: item.quantity,
-                unitPrice: Math.round(item.unitPrice * globalCoeff),
-                totalPrice: Math.round(item.unitPrice * globalCoeff * item.quantity)
-              }))
-              
-              const coefficientsInfo = {
-                normal: calculateNormalCoefficients(),
-                final: calculateFinalCoefficients(),
-                global: globalCoeff,
-                applied: getSelectedCoefficients()
+                unitPrice: item.unitPrice,
+                totalPrice: item.totalPrice // = unitPrice * quantity (точное произведение)
+              })),
+              totalPrice: block.totalPrice
+            }))
+
+            // Форматируем материалы: totalPrice = unitPrice * quantity (согласовано с колонками Excel)
+            const materialsData = (estimate.materialsBlock?.items || []).map(item => {
+              const unitPriceWithCoeff = Math.round(item.unitPrice * globalCoeff)
+              return {
+                id: item.id,
+                name: item.name,
+                unit: item.unit,
+                quantity: item.quantity,
+                unitPrice: unitPriceWithCoeff,
+                totalPrice: unitPriceWithCoeff * item.quantity
               }
-              
-              await fetch(`/api/estimates/${params.id}/export-cache`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  worksData,
-                  materialsData,
-                  totalWorksPrice,
-                  totalMaterialsPrice,
-                  grandTotal,
-                  coefficientsInfo
-                })
-              })
-              
-              console.log('✅ Кеш экспорта создан/обновлен')
-            } catch (cacheError) {
-              console.error('Ошибка создания кеша экспорта:', cacheError)
-              // Не показываем ошибку пользователю, просто логируем
+            })
+
+            // Считаем итоги из позиций (согласовано с тем, что будет показано в Excel)
+            const cacheWorksTotal = worksData.reduce((sum, block) =>
+              sum + block.items.reduce((bSum: number, item: any) => bSum + item.totalPrice, 0), 0)
+            const cacheMaterialsTotal = materialsData.reduce((sum, item) => sum + item.totalPrice, 0)
+
+            const coefficientsInfo = {
+              normal: calculateNormalCoefficients(),
+              final: calculateFinalCoefficients(),
+              global: globalCoeff,
+              applied: getSelectedCoefficients()
             }
+
+            await fetch(`/api/estimates/${params.id}/export-cache`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                worksData,
+                materialsData,
+                totalWorksPrice: cacheWorksTotal,
+                totalMaterialsPrice: cacheMaterialsTotal,
+                grandTotal: cacheWorksTotal + cacheMaterialsTotal,
+                coefficientsInfo
+              })
+            })
+
+            console.log('✅ Кеш экспорта создан/обновлен')
+          } catch (cacheError) {
+            console.error('Ошибка создания кеша экспорта:', cacheError)
           }
           
           alert('Смета успешно сохранена!')
@@ -1247,61 +1251,67 @@ export default function EditEstimatePage({ params }: { params: { id: string } })
             setRooms(roomsWithDates)
           }
           
-          // Создаем кеш экспорта если смета видна клиенту
-          if (estimateWithDates.showToClient) {
-            try {
-              // Рассчитываем данные для кеша экспорта (для rooms используем сводные данные)
-              
-              // Форматируем работы для клиентского просмотра
-              const worksData = summaryWorksBlocks.map(block => ({
-                id: block.id,
-                title: block.title,
-                items: block.items.map((item: any) => ({
-                  id: item.id,
-                  name: item.name,
-                  unit: item.unit,
-                  quantity: item.quantity,
-                  unitPrice: item.unitPrice, // уже с коэффициентами
-                  totalPrice: item.totalPrice // уже с коэффициентами
-                })),
-                totalPrice: block.totalPrice
-              }))
-              
-              // Форматируем материалы для клиентского просмотра
-              const materialsData = summaryMaterialsItems.map(item => ({
+          // Создаем кеш экспорта при каждом сохранении (для корректного Excel-экспорта)
+          try {
+            const globalCoeff = calculateNormalCoefficients() * calculateFinalCoefficients()
+
+            // Форматируем работы — цены уже с коэффициентами из summaryWorksBlocks
+            const worksData = summaryWorksBlocks.map(block => ({
+              id: block.id,
+              title: block.title,
+              items: block.items.map((item: any) => ({
                 id: item.id,
                 name: item.name,
                 unit: item.unit,
                 quantity: item.quantity,
-                unitPrice: item.unitPrice, // уже с коэффициентами
-                totalPrice: item.totalPrice // уже с коэффициентами
-              }))
-              
-              const coefficientsInfo = {
-                normal: calculateNormalCoefficients(),
-                final: calculateFinalCoefficients(),
-                global: calculateNormalCoefficients() * calculateFinalCoefficients(),
-                applied: getSelectedCoefficients()
+                unitPrice: item.unitPrice,
+                totalPrice: item.totalPrice
+              })),
+              totalPrice: block.totalPrice
+            }))
+
+            // Форматируем материалы с применением глобального коэффициента
+            // (summaryMaterialsItems хранят базовые цены из помещений)
+            const materialsData = summaryMaterialsItems.map((item: any) => {
+              const unitPriceWithCoeff = Math.round(item.unitPrice * globalCoeff)
+              return {
+                id: item.id,
+                name: item.name,
+                unit: item.unit,
+                quantity: item.quantity,
+                unitPrice: unitPriceWithCoeff,
+                totalPrice: unitPriceWithCoeff * item.quantity
               }
-              
-              await fetch(`/api/estimates/${params.id}/export-cache`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  worksData,
-                  materialsData,
-                  totalWorksPrice: totalSummaryWorksPrice,
-                  totalMaterialsPrice: totalSummaryMaterialsPrice,
-                  grandTotal: totalSummaryWorksPrice + totalSummaryMaterialsPrice,
-                  coefficientsInfo
-                })
-              })
-              
-              console.log('✅ Кеш экспорта для rooms создан/обновлен')
-            } catch (cacheError) {
-              console.error('Ошибка создания кеша экспорта:', cacheError)
-              // Не показываем ошибку пользователю, просто логируем
+            })
+
+            // Считаем итоги из позиций (согласовано с тем, что будет показано в Excel)
+            const cacheWorksTotal = worksData.reduce((sum: number, block: any) =>
+              sum + block.items.reduce((bSum: number, item: any) => bSum + item.totalPrice, 0), 0)
+            const cacheMaterialsTotal = materialsData.reduce((sum: number, item: any) => sum + item.totalPrice, 0)
+
+            const coefficientsInfo = {
+              normal: calculateNormalCoefficients(),
+              final: calculateFinalCoefficients(),
+              global: globalCoeff,
+              applied: getSelectedCoefficients()
             }
+
+            await fetch(`/api/estimates/${params.id}/export-cache`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                worksData,
+                materialsData,
+                totalWorksPrice: cacheWorksTotal,
+                totalMaterialsPrice: cacheMaterialsTotal,
+                grandTotal: cacheWorksTotal + cacheMaterialsTotal,
+                coefficientsInfo
+              })
+            })
+
+            console.log('✅ Кеш экспорта для rooms создан/обновлен')
+          } catch (cacheError) {
+            console.error('Ошибка создания кеша экспорта:', cacheError)
           }
           
           alert('Смета по помещениям успешно сохранена!')

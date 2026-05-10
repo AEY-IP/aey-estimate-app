@@ -2,6 +2,31 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Developer Session
+
+**At the start of every new conversation, before doing anything else, ask:**
+> "Кто работает? Колян или Серега?"
+
+Wait for the answer. Then apply the access rules below for the entire session.
+
+### Access Rules
+
+**Колян** — full access to the entire codebase, no restrictions.
+
+**Серега** — may only create or modify files within the schedule zone:
+- `src/app/(admin)/clients/[id]/schedule/`
+- `src/app/(admin)/dashboard/clients/[id]/schedule/`
+- `src/app/(client)/client-dashboard/schedule/`
+- `src/app/api/schedule/`
+- `src/app/api/client/schedule/`
+- Prisma models: `schedule_projects`, `schedule_tasks`, `project_schedule_items`
+
+**If working as Серега and a task requires touching files outside the schedule zone** (e.g. `src/lib/`, `src/types/`, `prisma/schema.prisma` for non-schedule models, any other API or UI), **stop and warn:**
+
+> ⚠️ Эта задача затрагивает файлы за пределами зоны графика: `<список файлов>`. Это зона Коляна. Продолжить нельзя без его согласования — свяжись с Коляном или переключи сессию на него.
+
+Do not proceed with out-of-zone changes until the user explicitly confirms.
+
 ## Critical Rules
 
 - **NEVER run database migrations** (`db:migrate`, `db:deploy`, or any `prisma migrate` command) without explicit user approval. Always describe what the migration will do and wait for confirmation first.
